@@ -154,7 +154,7 @@ def call() {
               echo '  TEST_MODE: ${TEST_MODE}' >> ${JOB_CONFIG_YAML_PATH}
               echo '  runOnBranch: "false"' >> ${JOB_CONFIG_YAML_PATH}
 
-              echo The job-config.yaml:
+              echo The job-config.yaml :
               cat ${JOB_CONFIG_YAML_PATH}
               """
 
@@ -199,10 +199,10 @@ def call() {
                     script {
                         try {
                             sh """
-            cd ${TESTGRID_HOME}/testgrid-dist/${TESTGRID_NAME}
-            ./testgrid finalize-run-testplan \
-            --product ${PRODUCT} --workspace ${PWD}
-            """
+                                cd ${TESTGRID_HOME}/testgrid-dist/${TESTGRID_NAME}
+                                ./testgrid finalize-run-testplan \
+                                --product ${PRODUCT} --workspace ${PWD}
+                            """
 
                             sh """
                                  cd ${TESTGRID_HOME}/testgrid-dist/${TESTGRID_NAME}
@@ -215,7 +215,6 @@ def call() {
                            1. Needs TestSuit.txt and output.properties files in relevant scenario directory.
                            2. DB needs to be updated on integration test result statues.
                         */
-                            def buckerName = getS3BucketName()
                             sh """
                                 export DISPLAY=:95.0
                                 cd ${TESTGRID_HOME}/testgrid-dist/${TESTGRID_NAME}

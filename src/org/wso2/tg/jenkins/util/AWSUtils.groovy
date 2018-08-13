@@ -18,15 +18,6 @@
 
 package org.wso2.tg.jenkins.util
 
-def getS3BucketName() {
-    loadProperties()
-    def bucket = properties['AWS_S3_BUCKET_NAME']
-    if ("${bucket}" == "null") {
-        bucket = "unknown"
-    }
-    return bucket
-}
-
 def uploadToS3() {
     def s3BucketName = getS3BucketName()
     sh """
@@ -45,4 +36,13 @@ def loadProperties() {
     node {
         properties = readProperties file: "${TESTGRID_HOME}/config.properties"
     }
+}
+
+def getS3BucketName() {
+    loadProperties()
+    def bucket = properties['AWS_S3_BUCKET_NAME']
+    if ("${bucket}" == "null") {
+        bucket = "unknown"
+    }
+    return bucket
 }
