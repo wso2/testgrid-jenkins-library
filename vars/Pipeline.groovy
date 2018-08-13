@@ -121,7 +121,7 @@ def call() {
                                                 "${TESTGRID_YAML_LOCATION}")]) {
                                 }
 
-                                configFileProvider([configFile(fileId: '3a63892b-06b8-483a-8a0d-74dffaf69c3d', targetLocation: 'workspace/testgrid-key.pem', variable: 'TESTGRIDKEY')]) {
+                                configFileProvider([configFile(fileId: 'testgrid-key', targetLocation: 'workspace/testgrid-key.pem', variable: 'TESTGRIDKEY')]) {
                                     sh """
                                         echo 'keyFileLocation: workspace/testgrid-key.pem' > ${JOB_CONFIG_YAML_PATH}
                                         chmod 400 workspace/testgrid-key.pem
