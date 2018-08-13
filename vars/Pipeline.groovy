@@ -224,17 +224,15 @@ def call() {
 
                             """
                             awsHelper.uploadCharts()
-                            script {
-                                //Send email for failed results.
-                                if (fileExists("${PWD}/builds/SummarizedEmailReport.html")) {
-                                    def emailBody = readFile "${PWD}/builds/SummarizedEmailReport.html"
-                                    email.send("'${env.JOB_NAME}' Integration Test Failure! #(${env.BUILD_NUMBER})", "${emailBody}")
-                                } else {
-                                    echo "No SummarizedEmailReport.html file found!!"
-                                    email.send("'${env.JOB_NAME}'#(${env.BUILD_NUMBER}) - SummarizedEmailReport.html " +
-                                            "file not found", "Could not find the summarized email report ${env.BUILD_URL}. This is an error in " +
-                                            "testgrid.")
-                                }
+                            //Send email for failed results.
+                            if (fileExists("${PWD}/builds/SummarizedEmailReport.html")) {
+                                def emailBody = readFile "${PWD}/builds/SummarizedEmailReport.html"
+                                email.send("'${env.JOB_NAME}' Integration Test Failure! #(${env.BUILD_NUMBER})", "${emailBody}")
+                            } else {
+                                echo "No SummarizedEmailReport.html file found!!"
+                                email.send("'${env.JOB_NAME}'#(${env.BUILD_NUMBER}) - SummarizedEmailReport.html " +
+                                        "file not found", "Could not find the summarized email report ${env.BUILD_URL}. This is an error in " +
+                                        "testgrid.")
                             }
                         } catch (e) {
                             currentBuild.result = "FAILED"

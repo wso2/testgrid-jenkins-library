@@ -27,9 +27,3 @@ def send(subject,  content) {
             subject: subject,
             body: content, mimeType: 'text/html')
 }
-
-boolean sendEmail(subject, content, attachmentPattern) {
-    return true
-}
-
-
