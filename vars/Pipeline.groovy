@@ -22,8 +22,6 @@ import org.wso2.tg.jenkins.util.Common
 import org.wso2.tg.jenkins.util.AWSUtils
 import org.wso2.tg.jenkins.executors.TestExecutor
 
-// First we need to validate all the properties, variables for not null or empty in //vars
-
 // The pipeline should resite in a call block
 def call() {
     def jobName = "dev"
@@ -35,8 +33,6 @@ def call() {
                     steps {
                         script {
                             echo "This is a test"
-                            def a = new Email()
-                            a.send("This is a Test Email", "This is the Test Content")
                         }
                     }
                 }

@@ -28,18 +28,18 @@ def uploadToS3() {
 def uploadCharts() {
     def s3BucketName = getS3BucketName()
     sh """
-      aws s3 sync ${TESTGRID_HOME}/jobs/${PRODUCT}/builds/ s3://${buckerName}/charts/${PRODUCT}/ --exclude "*" --include "*.png" --acl public-read
+      aws s3 sync ${TESTGRID_HOME}/jobs/${PRODUCT}/builds/ s3://${s3BucketName}/charts/${PRODUCT}/ --exclude "*" --include "*.png" --acl public-read
       """
 }
 
 def loadProperties() {
     node {
-        properties = readProperties file: "${TESTGRID_HOME}/config.properties"
+        def properties = readProperties file: "${TESTGRID_HOME}/config.properties"
     }
 }
 
 def getS3BucketName() {
-    loadProperties()
+    def properties = readProperties file: "${TESTGRID_HOME}/config.properties"
     def bucket = properties['AWS_S3_BUCKET_NAME']
     if ("${bucket}" == "null") {
         bucket = "unknown"
