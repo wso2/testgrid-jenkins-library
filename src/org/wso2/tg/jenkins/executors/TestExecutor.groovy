@@ -47,7 +47,7 @@ def runPlan(tPlan, node) {
       --file "${PWD}/${tPlan}"
       """
         script {
-            truncateTestRunLog()
+            commonUtil.truncateTestRunLog()
         }
     } catch (Exception err) {
         echo "Error : ${err}"
