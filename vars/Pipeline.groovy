@@ -80,6 +80,10 @@ def call() {
                 WUM_PRODUCT_VERSION = "${WUM_PRODUCT_VERSION}"
                 MAKE_DEV_HAPPY = "${MAKE_DEV_HAPPY}"
             }
+            
+            tools {
+                jdk 'jdk8'
+            }
 
             stages {
                 stage('Preparation') {
