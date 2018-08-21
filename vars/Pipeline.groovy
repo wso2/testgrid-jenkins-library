@@ -75,10 +75,10 @@ def call() {
                 PRODUCT_GIT_URL = "${PRODUCT_GIT_URL}"
                 PRODUCT_GIT_BRANCH = "${PRODUCT_GIT_BRANCH}"
                 PRODUCT_DIST_DOWNLOAD_API = "${PRODUCT_DIST_DOWNLOAD_API}"
-            }
-
-            tools {
-                jdk 'jdk8'
+                WUM_CHANNEL = ${WUM_CHANNEL}
+                PRODUCT_CODE = ${PRODUCT_CODE}
+                WUM_PRODUCT_VERSION = ${WUM_PRODUCT_VERSION}
+                MAKE_DEV_HAPPY = ${MAKE_DEV_HAPPY}
             }
 
             stages {
