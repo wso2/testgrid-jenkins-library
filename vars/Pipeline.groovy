@@ -156,7 +156,7 @@ def call() {
               echo '  WUM_CHANNEL: "${WUM_CHANNEL}"' >> ${JOB_CONFIG_YAML_PATH}
               echo '  PRODUCT_CODE: "${PRODUCT_CODE}"' >> ${JOB_CONFIG_YAML_PATH}
               echo '  WUM_PRODUCT_VERSION: "${WUM_PRODUCT_VERSION}"' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  MAKE_DEV_HAPPY: "${MAKE_DEV_HAPPY}"' >> ${JOB_CONFIG_YAML_PATH}
+              echo '  USE_CUSTOM_TESTNG: "${USE_CUSTOM_TESTNG}"' >> ${JOB_CONFIG_YAML_PATH}
 
               echo The job-config.yaml :
               cat ${JOB_CONFIG_YAML_PATH}
