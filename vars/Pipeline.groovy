@@ -75,6 +75,10 @@ def call() {
                 PRODUCT_GIT_URL = "${PRODUCT_GIT_URL}"
                 PRODUCT_GIT_BRANCH = "${PRODUCT_GIT_BRANCH}"
                 PRODUCT_DIST_DOWNLOAD_API = "${PRODUCT_DIST_DOWNLOAD_API}"
+                WUM_CHANNEL = "${WUM_CHANNEL}"
+                PRODUCT_CODE = "${PRODUCT_CODE}"
+                WUM_PRODUCT_VERSION = "${WUM_PRODUCT_VERSION}"
+                USE_CUSTOM_TESTNG = "${USE_CUSTOM_TESTNG}"
             }
 
             tools {
@@ -149,6 +153,10 @@ def call() {
               echo '  LATEST_PRODUCT_BUILD_ARTIFACTS_API: ${LATEST_PRODUCT_BUILD_ARTIFACTS_API}' >> ${JOB_CONFIG_YAML_PATH}
               echo '  TEST_MODE: ${TEST_MODE}' >> ${JOB_CONFIG_YAML_PATH}
               echo '  runOnBranch: "false"' >> ${JOB_CONFIG_YAML_PATH}
+              echo '  WUM_CHANNEL: "${WUM_CHANNEL}"' >> ${JOB_CONFIG_YAML_PATH}
+              echo '  PRODUCT_CODE: "${PRODUCT_CODE}"' >> ${JOB_CONFIG_YAML_PATH}
+              echo '  WUM_PRODUCT_VERSION: "${WUM_PRODUCT_VERSION}"' >> ${JOB_CONFIG_YAML_PATH}
+              echo '  USE_CUSTOM_TESTNG: "${USE_CUSTOM_TESTNG}"' >> ${JOB_CONFIG_YAML_PATH}
 
               echo The job-config.yaml :
               cat ${JOB_CONFIG_YAML_PATH}
