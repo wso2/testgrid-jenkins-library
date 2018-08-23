@@ -78,7 +78,7 @@ def call() {
                 WUM_CHANNEL = "${WUM_CHANNEL}"
                 PRODUCT_CODE = "${PRODUCT_CODE}"
                 WUM_PRODUCT_VERSION = "${WUM_PRODUCT_VERSION}"
-                MAKE_DEV_HAPPY = "${MAKE_DEV_HAPPY}"
+                USE_CUSTOM_TESTNG = "${USE_CUSTOM_TESTNG}"
             }
 
             tools {
