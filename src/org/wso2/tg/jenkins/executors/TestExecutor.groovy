@@ -23,29 +23,49 @@ import org.wso2.tg.jenkins.util.AWSUtils
 import org.wso2.tg.jenkins.alert.Slack
 
 
-def runPlan(tPlan, node) {
+def runPlan(tPlan, parallelNumber) {
     def commonUtil = new Common()
     def notfier = new Slack()
     def awsHelper = new AWSUtils()
-    name = commonUtil.getParameters("/testgrid/testgrid-home/jobs/${PRODUCT}/${tPlan}")
+    name = commonUtil.getParameters("${PWD}/${parallelNumber}/test-plans/${tPlan}")
     notfier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
-    echo "Executing Test Plan : ${tPlan} On node : ${node}"
+    echo "Executing Test Plan : ${tPlan} On directory : ${parallelNumber}"
     try {
         echo "Running Test-Plan: ${tPlan}"
         sh "java -version"
-        unstash name: "${JOB_CONFIG_YAML}"
-        dir("${PWD}") {
+        dir("${PWD}/${parallelNumber}") {
+            unstash name: "${JOB_CONFIG_YAML}"
             unstash name: "test-plans"
+            unstash name: "TestGridKey"
+            unstash name: "TestGridYaml"
+            sh "ls"
+            sh "cd test-plans && ls && pwd"
         }
+
+        // Clone scenario repo
+        dir("${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}") {
+            sh "mkdir -p ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}"
+            git branch: 'sshkey', url: "${SCENARIOS_REPOSITORY}"
+        }
+
+        // Clone infra repo
+        dir("${PWD}/${parallelNumber}/${INFRA_LOCATION}") {
+            // Clone scenario repo
+            sh "mkdir -p ${PWD}/${parallelNumber}/${INFRA_LOCATION}"
+            git branch: 'master', url: "${INFRASTRUCTURE_REPOSITORY}"
+        }
+        writeFile file: "${PWD}/${parallelNumber}/${INFRA_LOCATION}/deploy.sh", text: '#!/bin/sh' }
+
+        
         sh """
-      echo "Before PWD"
-      pwd
-      cd ${PWD}/${SCENARIOS_LOCATION}
-      git clean -fd
-      cd ${TESTGRID_HOME}/testgrid-dist/${TESTGRID_NAME}
-      ./testgrid run-testplan --product ${PRODUCT} \
-      --file "${PWD}/${tPlan}"
-      """
+            echo "Before PWD"
+            pwd
+            cd ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}
+            git clean -fd
+            cd ${TESTGRID_HOME}/testgrid-dist/${TESTGRID_NAME}
+            ./testgrid run-testplan --product ${PRODUCT} \
+            --file ${PWD}/${parallelNumber}/${tPlan} --workspace ${PWD}/${parallelNumber}            
+            """
         script {
             commonUtil.truncateTestRunLog()
         }
@@ -85,12 +105,14 @@ def getTestExecutionMap() {
                         if (executor == parallelExecCount) {
                             for (int i = processFileCount * (executor - 1); i < files.length; i++) {
                                 // Execution logic
-                                runPlan(files[i], "node1")
+                                int parallelNo = i + 1
+                                runPlan(files[i], parallelNo.toString())
                             }
                         } else {
                             for (int i = 0; i < processFileCount; i++) {
                                 int fileNo = processFileCount * (executor - 1) + i
-                                runPlan(files[fileNo], "node1")
+                                int parallelNo = fileNo + 1
+                                runPlan(files[fileNo], parallelNo.toString())
                             }
                         }
                     }
