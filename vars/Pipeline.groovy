@@ -56,7 +56,7 @@ def call() {
 
             environment {
                 TESTGRID_NAME = 'WSO2-TestGrid'
-                TESTGRID_DIST_LOCATION = '/testgrid/testgrid-home/testgrid-dist/'
+                TESTGRID_DIST_LOCATION = '/testgrid/testgrid-home/testgrid-dist/pasindu/'
                 TESTGRID_HOME = '/testgrid/testgrid-home/'
 
                 PRODUCT = "${JOB_BASE_NAME}"

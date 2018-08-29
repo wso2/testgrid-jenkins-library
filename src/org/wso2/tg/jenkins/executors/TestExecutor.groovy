@@ -63,7 +63,7 @@ def runPlan(tPlan, parallelNumber) {
             pwd
             cd ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}
             git clean -fd
-            cd ${TESTGRID_HOME}/testgrid-dist/${TESTGRID_NAME}
+            cd ${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}
             ./testgrid run-testplan --product ${PRODUCT} \
             --file ${PWD}/${parallelNumber}/${tPlan} --workspace ${PWD}/${parallelNumber}            
             """
