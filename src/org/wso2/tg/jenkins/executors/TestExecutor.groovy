@@ -27,8 +27,7 @@ def runPlan(tPlan, parallelNumber) {
     def commonUtil = new Common()
     def notfier = new Slack()
     def awsHelper = new AWSUtils()
-    name = commonUtil.getParameters("${PWD}/${parallelNumber}/${tPlan}")
-    notfier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
+    def name;
     echo "Executing Test Plan : ${tPlan} On directory : ${parallelNumber}"
     try {
         echo "Running Test-Plan: ${tPlan}"
@@ -41,6 +40,9 @@ def runPlan(tPlan, parallelNumber) {
             sh "ls"
             sh "cd test-plans && ls && pwd"
         }
+
+        name = commonUtil.getParameters("${PWD}/${parallelNumber}/${tPlan}")
+        notfier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
 
         // Clone scenario repo
         dir("${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}") {
@@ -55,7 +57,6 @@ def runPlan(tPlan, parallelNumber) {
             git branch: 'master', url: "${INFRASTRUCTURE_REPOSITORY}"
         }
         writeFile file: "${PWD}/${parallelNumber}/${INFRA_LOCATION}/deploy.sh", text: '#!/bin/sh'
-
         
         sh """
             echo "Before PWD"
