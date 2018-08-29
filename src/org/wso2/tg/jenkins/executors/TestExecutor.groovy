@@ -27,7 +27,7 @@ def runPlan(tPlan, parallelNumber) {
     def commonUtil = new Common()
     def notfier = new Slack()
     def awsHelper = new AWSUtils()
-    name = commonUtil.getParameters("${PWD}/${parallelNumber}/test-plans/${tPlan}")
+    name = commonUtil.getParameters("${PWD}/${parallelNumber}/${tPlan}")
     notfier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
     echo "Executing Test Plan : ${tPlan} On directory : ${parallelNumber}"
     try {
