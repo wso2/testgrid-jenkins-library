@@ -29,33 +29,42 @@ def runPlan(tPlan, parallelNumber) {
     def awsHelper = new AWSUtils()
     def name;
     echo "Executing Test Plan : ${tPlan} On directory : ${parallelNumber}"
+    
+    echo "Creating workspace and builds sub-directories"
+    sh """
+        mkdir -p ${PWD}/${node}/builds";
+        mkdir -p ${PWD}/${node}/workspace";
+        """
+
+    echo "Unstashing test-plans, key and testgrid.yaml to ${PWD}/${parallelNumber}"
+    dir("${PWD}/${parallelNumber}") {
+        unstash name: "${JOB_CONFIG_YAML}"
+        unstash name: "test-plans"
+        unstash name: "TestGridKey"
+        unstash name: "TestGridYaml"
+        sh "ls"
+        sh "ls test-plans/"
+    }
+
+    echo "Cloning ${SCENARIOS_REPOSITORY} and ${INFRASTRUCTURE_REPOSITORY}"
+    // Clone scenario repo
+    dir("${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}") {
+        sh "mkdir -p ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}"
+        git branch: 'sshkey', url: "${SCENARIOS_REPOSITORY}"
+    }
+    // Clone infra repo
+    dir("${PWD}/${parallelNumber}/${INFRA_LOCATION}") {
+        // Clone scenario repo
+        sh "mkdir -p ${PWD}/${parallelNumber}/${INFRA_LOCATION}"
+        git branch: 'master', url: "${INFRASTRUCTURE_REPOSITORY}"
+    }
+
     try {
         echo "Running Test-Plan: ${tPlan}"
         sh "java -version"
-        dir("${PWD}/${parallelNumber}") {
-            unstash name: "${JOB_CONFIG_YAML}"
-            unstash name: "test-plans"
-            unstash name: "TestGridKey"
-            unstash name: "TestGridYaml"
-            sh "ls"
-            sh "cd test-plans && ls && pwd"
-        }
-
         name = commonUtil.getParameters("${PWD}/${parallelNumber}/${tPlan}")
         notfier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
 
-        // Clone scenario repo
-        dir("${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}") {
-            sh "mkdir -p ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}"
-            git branch: 'sshkey', url: "${SCENARIOS_REPOSITORY}"
-        }
-
-        // Clone infra repo
-        dir("${PWD}/${parallelNumber}/${INFRA_LOCATION}") {
-            // Clone scenario repo
-            sh "mkdir -p ${PWD}/${parallelNumber}/${INFRA_LOCATION}"
-            git branch: 'master', url: "${INFRASTRUCTURE_REPOSITORY}"
-        }
         writeFile file: "${PWD}/${parallelNumber}/${INFRA_LOCATION}/deploy.sh", text: '#!/bin/sh'
         
         sh """
