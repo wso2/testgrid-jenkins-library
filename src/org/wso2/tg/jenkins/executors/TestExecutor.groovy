@@ -54,7 +54,7 @@ def runPlan(tPlan, parallelNumber) {
             sh "mkdir -p ${PWD}/${parallelNumber}/${INFRA_LOCATION}"
             git branch: 'master', url: "${INFRASTRUCTURE_REPOSITORY}"
         }
-        writeFile file: "${PWD}/${parallelNumber}/${INFRA_LOCATION}/deploy.sh", text: '#!/bin/sh' }
+        writeFile file: "${PWD}/${parallelNumber}/${INFRA_LOCATION}/deploy.sh", text: '#!/bin/sh'
 
         
         sh """
