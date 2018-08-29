@@ -32,8 +32,8 @@ def runPlan(tPlan, parallelNumber) {
     
     echo "Creating workspace and builds sub-directories"
     sh """
-        mkdir -p ${PWD}/${node}/builds";
-        mkdir -p ${PWD}/${node}/workspace";
+        mkdir -p ${PWD}/${parallelNumber}/builds";
+        mkdir -p ${PWD}/${parallelNumber}/workspace";
         """
 
     echo "Unstashing test-plans, key and testgrid.yaml to ${PWD}/${parallelNumber}"
