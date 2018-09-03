@@ -26,7 +26,9 @@ import org.wso2.tg.jenkins.executors.TestExecutor
 def call() {
     def uniqueId = System.getenv('uniqueId')
     def jobName = "dev"
+    echo uniqueId;
     if (uniqueId != null) {
+        echo "jobName is from uniqueId: " + uniqueId
         jobName = uniqueId
     }
     if (jobName == "test") {
