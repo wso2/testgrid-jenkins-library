@@ -52,6 +52,9 @@ def runPlan(tPlan, parallelNumber) {
         sh "mkdir -p ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}"
         git branch: 'master', url: "${SCENARIOS_REPOSITORY}"
     }
+    
+    sleep 5
+     echo "Cloning ${INFRASTRUCTURE_REPOSITORY} and ${INFRA_LOCATION}"
     // Clone infra repo
     dir("${PWD}/${parallelNumber}/${INFRA_LOCATION}") {
         // Clone scenario repo
