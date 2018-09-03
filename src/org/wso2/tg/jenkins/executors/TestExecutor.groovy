@@ -46,30 +46,33 @@ def runPlan(tPlan, parallelNumber) {
         sh "ls test-plans/"
     }
 
-    echo "Cloning ${SCENARIOS_REPOSITORY} and ${INFRASTRUCTURE_REPOSITORY}"
+    echo "Cloning ${SCENARIOS_REPOSITORY} into ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}"
     // Clone scenario repo
+    sh "mkdir -p ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}"
     dir("${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}") {
-        sh "mkdir -p ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}"
         git branch: 'master', url: "${SCENARIOS_REPOSITORY}"
     }
     
     sleep 5
-     echo "Cloning ${INFRASTRUCTURE_REPOSITORY} and ${INFRA_LOCATION}"
+     echo "Cloning ${INFRASTRUCTURE_REPOSITORY} into ${PWD}/${parallelNumber}/${INFRA_LOCATION}"
     // Clone infra repo
+    sh "mkdir -p ${PWD}/${parallelNumber}/${INFRA_LOCATION}"
     dir("${PWD}/${parallelNumber}/${INFRA_LOCATION}") {
         // Clone scenario repo
-        sh "mkdir -p ${PWD}/${parallelNumber}/${INFRA_LOCATION}"
         git branch: 'master', url: "${INFRASTRUCTURE_REPOSITORY}"
     }
+     dir("${PWD}/${parallelNumber}") {
+        sh "ls */*"
+     }
+
+    writeFile file: "${PWD}/${parallelNumber}/${INFRA_LOCATION}/deploy.sh", text: '#!/bin/sh'
 
     try {
         echo "Running Test-Plan: ${tPlan}"
         sh "java -version"
         name = commonUtil.getParameters("${PWD}/${parallelNumber}/${tPlan}")
-        notfier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
+        //notfier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
 
-        writeFile file: "${PWD}/${parallelNumber}/${INFRA_LOCATION}/deploy.sh", text: '#!/bin/sh'
-        
         sh """
             cd ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}
             git clean -fd
