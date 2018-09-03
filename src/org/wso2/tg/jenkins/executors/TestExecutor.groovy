@@ -50,7 +50,7 @@ def runPlan(tPlan, parallelNumber) {
     // Clone scenario repo
     dir("${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}") {
         sh "mkdir -p ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}"
-        git branch: 'sshkey', url: "${SCENARIOS_REPOSITORY}"
+        git branch: 'master', url: "${SCENARIOS_REPOSITORY}"
     }
     // Clone infra repo
     dir("${PWD}/${parallelNumber}/${INFRA_LOCATION}") {
