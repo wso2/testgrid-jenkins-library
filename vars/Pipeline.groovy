@@ -168,25 +168,27 @@ def call() {
               cat ${JOB_CONFIG_YAML_PATH}
               """
 
-                                stash name: "${JOB_CONFIG_YAML}", includes: "${JOB_CONFIG_YAML}"
-
-                                sh """
-                                  cd ${TESTGRID_HOME}/testgrid-dist/${TESTGRID_NAME}
-                                  ./testgrid generate-test-plan \
-                                      --product ${PRODUCT} \
-                                      --file ${JOB_CONFIG_YAML_PATH}
-                                """
-                                dir("${PWD}") {
-                                    stash name: "test-plans", includes: "test-plans/**"
-                                }
-                            } catch (e) {
-                                currentBuild.result = "FAILED"
-                            } finally {
-                                alert.sendNotification(currentBuild.result, "preparation", "#build_status_verbose")
-                            }
-                        }
+              stash name: "${JOB_CONFIG_YAML}", includes: "${JOB_CONFIG_YAML}"
+              stash name: "TestGridKey", includes: "workspace/testgrid-key.pem"
+              stash name: "TestGridYaml", includes: "${TESTGRID_YAML_LOCATION}"
+              
+                sh """
+                    cd ${TESTGRID_HOME}/testgrid-dist/${TESTGRID_NAME}
+                    ./testgrid generate-test-plan \
+                        --product ${PRODUCT} \
+                        --file ${JOB_CONFIG_YAML_PATH}
+                """
+                dir("${PWD}") {
+                    stash name: "test-plans", includes: "test-plans/**"
+                }
+            } catch (e) {
+                currentBuild.result = "FAILED"
+            } finally {
+                alert.sendNotification(currentBuild.result, "preparation", "#build_status_verbose")
+            }
                     }
                 }
+            }
 
                 stage('parallel-run') {
                     steps {
