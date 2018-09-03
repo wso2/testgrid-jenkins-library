@@ -24,11 +24,10 @@ import org.wso2.tg.jenkins.executors.TestExecutor
 
 // The pipeline should resite in a call block
 def call() {
-    def uniqueId = System.getenv('uniqueId')
+    def uniqueId = ${uniqueId} 
     def jobName = "dev"
     echo uniqueId;
     if (uniqueId != null) {
-        echo "jobName is from uniqueId: " + uniqueId
         jobName = uniqueId
     }
     if (jobName == "test") {
@@ -432,11 +431,6 @@ def call() {
                                 --product ${PRODUCT} \
                                 --groupBy scenario
                             """
-                            // Generate email-able report
-                            /* Prereq:
-                           1. Needs TestSuit.txt and output.properties files in relevant scenario directory.
-                           2. DB needs to be updated on integration test result statues.
-                        */
                             sh """
                                 export DISPLAY=:95.0
                                 cd ${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}
