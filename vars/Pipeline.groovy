@@ -99,7 +99,6 @@ def call() {
                                 alert.sendNotification('STARTED', "Initiation", "#build_status_verbose")
                                 alert.sendNotification('STARTED', "Initiation", "#build_status")
                                 echo pwd()
-                                echo ${uniqueId}
                                 deleteDir()
 
                                 // Clone scenario repo

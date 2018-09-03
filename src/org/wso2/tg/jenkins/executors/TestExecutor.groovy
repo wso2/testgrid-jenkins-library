@@ -71,16 +71,7 @@ def runPlan(tPlan, parallelNumber) {
         echo "Running Test-Plan: ${tPlan}"
         sh "java -version"
         name = commonUtil.getParameters("${PWD}/${parallelNumber}/${tPlan}")
-        //notfier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
-        if(parallelNumber==2) {
-               sh """
-            cd ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}
-            git clean -fd
-            cd ${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}
-            ./testgrid run-testplan -debug 5005 --product ${PRODUCT} \
-            --file ${PWD}/${parallelNumber}/${tPlan} --workspace ${PWD}/${parallelNumber}            
-            """
-        } else {
+        notfier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
         sh """
             cd ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}
             git clean -fd
@@ -88,7 +79,6 @@ def runPlan(tPlan, parallelNumber) {
             ./testgrid run-testplan --product ${PRODUCT} \
             --file ${PWD}/${parallelNumber}/${tPlan} --workspace ${PWD}/${parallelNumber}            
             """
-        }
         script {
             commonUtil.truncateTestRunLog()
         }
