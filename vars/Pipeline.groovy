@@ -24,7 +24,7 @@ import org.wso2.tg.jenkins.executors.TestExecutor
 
 // The pipeline should resite in a call block
 def call() {
-    def uniqueId = ${uniqueId} 
+    def uniqueId = System.env('uniqueId')
     def jobName = "dev"
     echo uniqueId;
     if (uniqueId != null) {
@@ -99,6 +99,7 @@ def call() {
                                 alert.sendNotification('STARTED', "Initiation", "#build_status_verbose")
                                 alert.sendNotification('STARTED', "Initiation", "#build_status")
                                 echo pwd()
+                                echo ${uniqueId}
                                 deleteDir()
 
                                 // Clone scenario repo
