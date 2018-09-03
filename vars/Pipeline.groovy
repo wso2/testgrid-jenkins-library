@@ -24,7 +24,7 @@ import org.wso2.tg.jenkins.executors.TestExecutor
 
 // The pipeline should resite in a call block
 def call() {
-    def uniqueId = System.env('uniqueId')
+    def uniqueId = env['uniqueId']
     def jobName = "dev"
     echo uniqueId;
     if (uniqueId != null) {
