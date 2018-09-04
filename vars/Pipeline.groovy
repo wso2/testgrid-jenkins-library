@@ -135,56 +135,56 @@ def call() {
                                 }
 
                                 sh """
-              echo 'infrastructureRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
-              echo 'deploymentRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
-              echo 'scenarioTestsRepository: ${SCENARIOS_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
-              echo 'testgridYamlLocation: ${TESTGRID_YAML_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
-              echo 'properties:' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  PRODUCT_GIT_URL: ${PRODUCT_GIT_URL}' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  PRODUCT_GIT_BRANCH: ${PRODUCT_GIT_BRANCH}' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  PRODUCT_DIST_DOWNLOAD_API: ${PRODUCT_DIST_DOWNLOAD_API}' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  SQL_DRIVERS_LOCATION_UNIX: ${SQL_DRIVERS_LOCATION_UNIX}' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  SQL_DRIVERS_LOCATION_WINDOWS: ${SQL_DRIVERS_LOCATION_WINDOWS}' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  SSH_KEY_LOCATION: ${PWD}/workspace/testgrid-key.pem' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  REMOTE_WORKSPACE_DIR_UNIX: ${REMOTE_WORKSPACE_DIR_UNIX}' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  REMOTE_WORKSPACE_DIR_WINDOWS: ${REMOTE_WORKSPACE_DIR_WINDOWS}' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  gitURL: ${PRODUCT_GIT_URL}' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  gitBranch: ${PRODUCT_GIT_BRANCH}' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  productDistDownloadApi: ${PRODUCT_DIST_DOWNLOAD_API}' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  sqlDriversLocationUnix: ${SQL_DRIVERS_LOCATION_UNIX}' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  sqlDriversLocationWindows: ${SQL_DRIVERS_LOCATION_WINDOWS}' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  sshKeyFileLocation: ${PWD}/workspace/testgrid-key.pem' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  RemoteWorkspaceDirPosix: ${REMOTE_WORKSPACE_DIR_UNIX}' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  LATEST_PRODUCT_RELEASE_API: ${LATEST_PRODUCT_RELEASE_API}' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  LATEST_PRODUCT_BUILD_ARTIFACTS_API: ${LATEST_PRODUCT_BUILD_ARTIFACTS_API}' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  TEST_MODE: ${TEST_MODE}' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  runOnBranch: "false"' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  WUM_CHANNEL: "${WUM_CHANNEL}"' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  PRODUCT_CODE: "${PRODUCT_CODE}"' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  WUM_PRODUCT_VERSION: "${WUM_PRODUCT_VERSION}"' >> ${JOB_CONFIG_YAML_PATH}
-              echo '  USE_CUSTOM_TESTNG: "${USE_CUSTOM_TESTNG}"' >> ${JOB_CONFIG_YAML_PATH}
+                                echo 'infrastructureRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
+                                echo 'deploymentRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
+                                echo 'scenarioTestsRepository: ${SCENARIOS_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
+                                echo 'testgridYamlLocation: ${TESTGRID_YAML_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
+                                echo 'properties:' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  PRODUCT_GIT_URL: ${PRODUCT_GIT_URL}' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  PRODUCT_GIT_BRANCH: ${PRODUCT_GIT_BRANCH}' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  PRODUCT_DIST_DOWNLOAD_API: ${PRODUCT_DIST_DOWNLOAD_API}' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  SQL_DRIVERS_LOCATION_UNIX: ${SQL_DRIVERS_LOCATION_UNIX}' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  SQL_DRIVERS_LOCATION_WINDOWS: ${SQL_DRIVERS_LOCATION_WINDOWS}' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  SSH_KEY_LOCATION: ${PWD}/workspace/testgrid-key.pem' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  REMOTE_WORKSPACE_DIR_UNIX: ${REMOTE_WORKSPACE_DIR_UNIX}' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  REMOTE_WORKSPACE_DIR_WINDOWS: ${REMOTE_WORKSPACE_DIR_WINDOWS}' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  gitURL: ${PRODUCT_GIT_URL}' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  gitBranch: ${PRODUCT_GIT_BRANCH}' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  productDistDownloadApi: ${PRODUCT_DIST_DOWNLOAD_API}' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  sqlDriversLocationUnix: ${SQL_DRIVERS_LOCATION_UNIX}' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  sqlDriversLocationWindows: ${SQL_DRIVERS_LOCATION_WINDOWS}' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  sshKeyFileLocation: ${PWD}/workspace/testgrid-key.pem' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  RemoteWorkspaceDirPosix: ${REMOTE_WORKSPACE_DIR_UNIX}' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  LATEST_PRODUCT_RELEASE_API: ${LATEST_PRODUCT_RELEASE_API}' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  LATEST_PRODUCT_BUILD_ARTIFACTS_API: ${LATEST_PRODUCT_BUILD_ARTIFACTS_API}' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  TEST_MODE: ${TEST_MODE}' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  runOnBranch: "false"' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  WUM_CHANNEL: "${WUM_CHANNEL}"' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  PRODUCT_CODE: "${PRODUCT_CODE}"' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  WUM_PRODUCT_VERSION: "${WUM_PRODUCT_VERSION}"' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  USE_CUSTOM_TESTNG: "${USE_CUSTOM_TESTNG}"' >> ${JOB_CONFIG_YAML_PATH}
 
-              echo The job-config.yaml :
-              cat ${JOB_CONFIG_YAML_PATH}
-              """
+                                echo The job-config.yaml :
+                                cat ${JOB_CONFIG_YAML_PATH}
+                                """
 
-              stash name: "${JOB_CONFIG_YAML}", includes: "${JOB_CONFIG_YAML}"
-              stash name: "TestGridKey", includes: "workspace/testgrid-key.pem"
-              stash name: "TestGridYaml", includes: "${TESTGRID_YAML_LOCATION}"
-              
-                sh """
-                    cd ${TESTGRID_HOME}/testgrid-dist/${TESTGRID_NAME}
-                    ./testgrid generate-test-plan \
-                        --product ${PRODUCT} \
-                        --file ${JOB_CONFIG_YAML_PATH}
-                """
-                dir("${PWD}") {
-                    stash name: "test-plans", includes: "test-plans/**"
-                }
-            } catch (e) {
-                currentBuild.result = "FAILED"
+                                stash name: "${JOB_CONFIG_YAML}", includes: "${JOB_CONFIG_YAML}"
+                                stash name: "TestGridKey", includes: "workspace/testgrid-key.pem"
+                                stash name: "TestGridYaml", includes: "${TESTGRID_YAML_LOCATION}"
+
+                                sh """
+                                    cd ${TESTGRID_HOME}/testgrid-dist/${TESTGRID_NAME}
+                                    ./testgrid generate-test-plan \
+                                        --product ${PRODUCT} \
+                                        --file ${JOB_CONFIG_YAML_PATH}
+                                """
+                                dir("${PWD}") {
+                                    stash name: "test-plans", includes: "test-plans/**"
+                                }
+                } catch (e) {
+                    currentBuild.result = "FAILED"
             } finally {
-                alert.sendNotification(currentBuild.result, "preparation", "#build_status_verbose")
+                    alert.sendNotification(currentBuild.result, "preparation", "#build_status_verbose")
             }
                     }
                 }

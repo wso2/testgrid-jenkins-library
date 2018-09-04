@@ -53,7 +53,6 @@ def runPlan(tPlan, parallelNumber) {
         git branch: 'master', url: "${SCENARIOS_REPOSITORY}"
     }
     
-    sleep 5
      echo "Cloning ${INFRASTRUCTURE_REPOSITORY} into ${PWD}/${parallelNumber}/${INFRA_LOCATION}"
     // Clone infra repo
     sh "mkdir -p ${PWD}/${parallelNumber}/${INFRA_LOCATION}"
@@ -72,13 +71,21 @@ def runPlan(tPlan, parallelNumber) {
         sh "java -version"
         name = commonUtil.getParameters("${PWD}/${parallelNumber}/${tPlan}")
         notfier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
+        // sh """
+        //     cd ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}
+        //     git clean -fd
+        //     cd ${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}
+        //     ./testgrid run-testplan --product ${PRODUCT} \
+        //     --file ${PWD}/${parallelNumber}/${tPlan} --workspace ${PWD}/${parallelNumber}            
+        //     """
+
         sh """
             cd ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}
             git clean -fd
-            cd ${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}
-            ./testgrid run-testplan --product ${PRODUCT} \
+            cd /
+            ./${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}testgrid run-testplan --product ${PRODUCT} \
             --file ${PWD}/${parallelNumber}/${tPlan} --workspace ${PWD}/${parallelNumber}            
-            """
+            """    
         script {
             commonUtil.truncateTestRunLog()
         }
