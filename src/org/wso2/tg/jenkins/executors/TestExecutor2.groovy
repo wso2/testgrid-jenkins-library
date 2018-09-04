@@ -84,7 +84,7 @@ def runPlan(tPlan, parallelNumber) {
             git clean -fd
             cd /
             ./${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}/testgrid run-testplan --product ${PRODUCT} \
-            --file ${PWD}/${parallelNumber}/${tPlan} --workspace ${PWD}/${parallelNumber}            
+            --file ${PWD}/${parallelNumber}/${tPlan} --workspace ${PWD}/${parallelNumber} --debug 5005            
             """    
         script {
             commonUtil.truncateTestRunLog()
