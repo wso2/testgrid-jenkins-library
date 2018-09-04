@@ -27,6 +27,9 @@ import org.wso2.tg.jenkins.executors.TestExecutor2
 def call() {
     def uniqueId = env['uniqueId']
     def jobName = "dev"
+    def gitWumUsername = env['GIT_WUM_USERNAME']
+    def gitWumPassword = env['GIT_WUM_PASSWORD']
+
     echo uniqueId;
     if (uniqueId != null) {
         jobName = uniqueId
@@ -75,10 +78,17 @@ def call() {
                 AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
                 tomcatUsername = credentials('TOMCAT_USERNAME')
                 tomcatPassword = credentials('TOMCAT_PASSWORD')
+
+                WUM_UAT_URL=credentials('WUM_UAT_URL')
+                WUM_UAT_APPKEY=credentials('WUM_UAT_APPKEY')
+                USER_NAME=credentials('WUM_USERNAME')
+                PASSWORD=credentials('WUM_PASSWORD')
+                GIT_WUM_USERNAME=credentials('GIT_WUM_USERNAME')
+                GIT_WUM_PASSWORD=credentials('GIT_WUM_PASSWORD')
+
                 PWD = pwd()
                 JOB_CONFIG_YAML = "job-config.yaml"
                 JOB_CONFIG_YAML_PATH = "${PWD}/${JOB_CONFIG_YAML}"
-
                 PRODUCT_GIT_URL = "${PRODUCT_GIT_URL}"
                 PRODUCT_GIT_BRANCH = "${PRODUCT_GIT_BRANCH}"
                 PRODUCT_DIST_DOWNLOAD_API = "${PRODUCT_DIST_DOWNLOAD_API}"
@@ -135,7 +145,19 @@ def call() {
                                     """
                                 }
 
+                                //Constructing the product git url if test mode is wum. Adding the Git username and password into the product git url.
                                 sh """
+                                
+                                if [ "$TEST_MODE" == "WUM" ]; then
+                                    git_url="${PRODUCT_GIT_URL}"
+                                    f1=`echo "${git_url}" | cut -d'/' -f1`
+                                    f2=`echo "${git_url}" | cut -d'g' -f2`
+                                    f3=`echo "${git_url}" | cut -d'.' -f3`
+                                    PRODUCT_GIT_URL="${f1}//${gitWumUsername}:${gitWumPassword}@g${f2}${f3}"
+                                else
+                                    PRODUCT_GIT_URL="${PRODUCT_GIT_URL}"
+                                fi
+
                                 echo 'infrastructureRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
                                 echo 'deploymentRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
                                 echo 'scenarioTestsRepository: ${SCENARIOS_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
@@ -287,6 +309,14 @@ def call() {
                 AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
                 tomcatUsername = credentials('TOMCAT_USERNAME')
                 tomcatPassword = credentials('TOMCAT_PASSWORD')
+
+                WUM_UAT_URL=credentials('WUM_UAT_URL')
+                WUM_UAT_APPKEY=credentials('WUM_UAT_APPKEY')
+                USER_NAME=credentials('WUM_USERNAME')
+                PASSWORD=credentials('WUM_PASSWORD')
+                GIT_WUM_USERNAME=credentials('GIT_WUM_USERNAME')
+                GIT_WUM_PASSWORD=credentials('GIT_WUM_PASSWORD')
+
                 PWD = pwd()
                 JOB_CONFIG_YAML = "job-config.yaml"
                 JOB_CONFIG_YAML_PATH = "${PWD}/${JOB_CONFIG_YAML}"
@@ -347,7 +377,17 @@ def call() {
                                     """
                                 }
 
-                                sh """
+                                    sh """
+                                    if [ "$TEST_MODE" == "WUM" ]; then
+                                        git_url="${PRODUCT_GIT_URL}"
+                                        f1=`echo "${git_url}" | cut -d'/' -f1`
+                                        f2=`echo "${git_url}" | cut -d'g' -f2`
+                                        f3=`echo "${git_url}" | cut -d'.' -f3`
+                                        PRODUCT_GIT_URL="${f1}//${gitWumUsername}:${gitWumPassword}@g${f2}${f3}"
+                                    else
+                                        PRODUCT_GIT_URL="${PRODUCT_GIT_URL}"
+                                    fi
+                                    
                                     echo 'infrastructureRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
                                     echo 'deploymentRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
                                     echo 'scenarioTestsRepository: ${SCENARIOS_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
