@@ -44,7 +44,7 @@ def runPlan(tPlan, parallelNumber) {
         sh"""
         cp /testgrid/testgrid-prod-key.pem ${PWD}/${parallelNumber}/workspace/testgrid-key.pem
         chmod 400 workspace/testgrid-key.pem
-        """"
+        """
         sh "ls"
         sh "ls test-plans/"
     }
