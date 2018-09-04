@@ -381,7 +381,6 @@ def call() {
                                     """
 
                                 stash name: "${JOB_CONFIG_YAML}", includes: "${JOB_CONFIG_YAML}"
-                                stash name: "TestGridKey", includes: "workspace/testgrid-key.pem"
                                 stash name: "TestGridYaml", includes: "${TESTGRID_YAML_LOCATION}"
 
                                 sh """

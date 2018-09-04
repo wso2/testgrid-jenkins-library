@@ -40,8 +40,9 @@ def runPlan(tPlan, parallelNumber) {
     dir("${PWD}/${parallelNumber}") {
         unstash name: "${JOB_CONFIG_YAML}"
         unstash name: "test-plans"
-        unstash name: "TestGridKey"
         unstash name: "TestGridYaml"
+        cp /testgrid/testgrid-prod-key.pem ${PWD}/${parallelNumber}/workspace/testgrid-key.pem
+        chmod 400 workspace/testgrid-key.pem
         sh "ls"
         sh "ls test-plans/"
     }
