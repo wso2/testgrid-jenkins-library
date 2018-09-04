@@ -23,29 +23,69 @@ import org.wso2.tg.jenkins.util.AWSUtils
 import org.wso2.tg.jenkins.alert.Slack
 
 
-def runPlan(tPlan, node) {
+def runPlan(tPlan, parallelNumber) {
     def commonUtil = new Common()
     def notfier = new Slack()
     def awsHelper = new AWSUtils()
-    name = commonUtil.getParameters("/testgrid/testgrid-home/jobs/${PRODUCT}/${tPlan}")
-    notfier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
-    echo "Executing Test Plan : ${tPlan} On node : ${node}"
+    def name;
+    echo "Executing Test Plan : ${tPlan} On directory : ${parallelNumber}"
+    
+    echo "Creating workspace and builds sub-directories"
+    sh """
+        mkdir -p ${PWD}/${parallelNumber}/builds
+        mkdir -p ${PWD}/${parallelNumber}/workspace
+        """
+
+    echo "Unstashing test-plans, key and testgrid.yaml to ${PWD}/${parallelNumber}"
+    dir("${PWD}/${parallelNumber}") {
+        unstash name: "${JOB_CONFIG_YAML}"
+        unstash name: "test-plans"
+        unstash name: "TestGridKey"
+        unstash name: "TestGridYaml"
+        sh "ls"
+        sh "ls test-plans/"
+    }
+
+    echo "Cloning ${SCENARIOS_REPOSITORY} into ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}"
+    // Clone scenario repo
+    sh "mkdir -p ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}"
+    dir("${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}") {
+        git branch: 'master', url: "${SCENARIOS_REPOSITORY}"
+    }
+    
+     echo "Cloning ${INFRASTRUCTURE_REPOSITORY} into ${PWD}/${parallelNumber}/${INFRA_LOCATION}"
+    // Clone infra repo
+    sh "mkdir -p ${PWD}/${parallelNumber}/${INFRA_LOCATION}"
+    dir("${PWD}/${parallelNumber}/${INFRA_LOCATION}") {
+        // Clone scenario repo
+        git branch: 'master', url: "${INFRASTRUCTURE_REPOSITORY}"
+    }
+     dir("${PWD}/${parallelNumber}") {
+        sh "ls */*"
+     }
+
+    writeFile file: "${PWD}/${parallelNumber}/${INFRA_LOCATION}/deploy.sh", text: '#!/bin/sh'
+
     try {
         echo "Running Test-Plan: ${tPlan}"
         sh "java -version"
-        unstash name: "${JOB_CONFIG_YAML}"
-        dir("${PWD}") {
-            unstash name: "test-plans"
-        }
+        name = commonUtil.getParameters("${PWD}/${parallelNumber}/${tPlan}")
+        notfier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
+        // sh """
+        //     cd ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}
+        //     git clean -fd
+        //     cd ${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}
+        //     ./testgrid run-testplan --product ${PRODUCT} \
+        //     --file ${PWD}/${parallelNumber}/${tPlan} --workspace ${PWD}/${parallelNumber}            
+        //     """
+
         sh """
-      echo "Before PWD"
-      pwd
-      cd ${PWD}/${SCENARIOS_LOCATION}
-      git clean -fd
-      cd ${TESTGRID_HOME}/testgrid-dist/${TESTGRID_NAME}
-      ./testgrid run-testplan --product ${PRODUCT} \
-      --file "${PWD}/${tPlan}"
-      """
+            cd ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}
+            git clean -fd
+            cd /
+            ./${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}/testgrid run-testplan --product ${PRODUCT} \
+            --file ${PWD}/${parallelNumber}/${tPlan} --workspace ${PWD}/${parallelNumber}            
+            """    
         script {
             commonUtil.truncateTestRunLog()
         }
@@ -85,12 +125,14 @@ def getTestExecutionMap() {
                         if (executor == parallelExecCount) {
                             for (int i = processFileCount * (executor - 1); i < files.length; i++) {
                                 // Execution logic
-                                runPlan(files[i], "node1")
+                                int parallelNo = i + 1
+                                runPlan(files[i], parallelNo.toString())
                             }
                         } else {
                             for (int i = 0; i < processFileCount; i++) {
                                 int fileNo = processFileCount * (executor - 1) + i
-                                runPlan(files[fileNo], "node1")
+                                int parallelNo = fileNo + 1
+                                runPlan(files[fileNo], parallelNo.toString())
                             }
                         }
                     }
@@ -100,3 +142,4 @@ def getTestExecutionMap() {
     }
     return tests
 }
+

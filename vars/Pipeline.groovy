@@ -21,6 +21,7 @@ import org.wso2.tg.jenkins.alert.Email
 import org.wso2.tg.jenkins.util.Common
 import org.wso2.tg.jenkins.util.AWSUtils
 import org.wso2.tg.jenkins.executors.TestExecutor
+import org.wso2.tg.jenkins.executors.TestExecutor2
 
 // The pipeline should resite in a call block
 def call() {
@@ -262,7 +263,7 @@ def call() {
         def email = new Email()
         def commonUtils = new Common()
         def awsHelper = new AWSUtils()
-        def testExecutor = new TestExecutor()
+        def testExecutor = new TestExecutor2()
         properties = null
 
         pipeline {
