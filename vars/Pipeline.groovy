@@ -27,8 +27,6 @@ import org.wso2.tg.jenkins.executors.TestExecutor2
 def call() {
     def uniqueId = env['uniqueId']
     def jobName = "dev"
-    def gitWumUsername = env['GIT_WUM_USERNAME']
-    def gitWumPassword = env['GIT_WUM_PASSWORD']
 
     echo uniqueId;
     if (uniqueId != null) {
@@ -146,24 +144,27 @@ def call() {
                                 }
 
                                 //Constructing the product git url if test mode is wum. Adding the Git username and password into the product git url.
+                                if("${TEST_MODE}"=="WUM"){
+                                    def url = "${PRODUCT_GIT_URL}"
+                                    def values = url.split('//g')
+                                    def productGitUrl = "${values[0]}//${GIT_WUM_USERNAME}:${GIT_WUM_PASSWORD}@g${values[1]}"
+                                    sh " echo 'PRODUCT_GIT_URL: ${productGitUrl}'"
+                                    sh """
+                                    echo '  PRODUCT_GIT_URL: ${productGitUrl}' >> ${JOB_CONFIG_YAML_PATH}
+                                    """
+                                }else{
+                                    sh """
+                                    echo '  PRODUCT_GIT_URL: ${PRODUCT_GIT_URL}' >> ${JOB_CONFIG_YAML_PATH}
+                                    """
+                                }
+
                                 sh """
-                                
-                                if [ "$TEST_MODE" == "WUM" ]; then
-                                    git_url="${PRODUCT_GIT_URL}"
-                                    f1=`echo "${git_url}" | cut -d'/' -f1`
-                                    f2=`echo "${git_url}" | cut -d'g' -f2`
-                                    f3=`echo "${git_url}" | cut -d'.' -f3`
-                                    PRODUCT_GIT_URL="${f1}//${gitWumUsername}:${gitWumPassword}@g${f2}${f3}"
-                                else
-                                    PRODUCT_GIT_URL="${PRODUCT_GIT_URL}"
-                                fi
 
                                 echo 'infrastructureRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
                                 echo 'deploymentRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
                                 echo 'scenarioTestsRepository: ${SCENARIOS_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
                                 echo 'testgridYamlLocation: ${TESTGRID_YAML_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
                                 echo 'properties:' >> ${JOB_CONFIG_YAML_PATH}
-                                echo '  PRODUCT_GIT_URL: ${PRODUCT_GIT_URL}' >> ${JOB_CONFIG_YAML_PATH}
                                 echo '  PRODUCT_GIT_BRANCH: ${PRODUCT_GIT_BRANCH}' >> ${JOB_CONFIG_YAML_PATH}
                                 echo '  PRODUCT_DIST_DOWNLOAD_API: ${PRODUCT_DIST_DOWNLOAD_API}' >> ${JOB_CONFIG_YAML_PATH}
                                 echo '  SQL_DRIVERS_LOCATION_UNIX: ${SQL_DRIVERS_LOCATION_UNIX}' >> ${JOB_CONFIG_YAML_PATH}
@@ -376,24 +377,28 @@ def call() {
                                         chmod 400 workspace/testgrid-key.pem
                                     """
                                 }
+                                //Constructing the product git url if test mode is wum. Adding the Git username and password into the product git url.
+                                if("${TEST_MODE}"=="WUM"){
+                                    def url = "${PRODUCT_GIT_URL}"
+                                    def values = url.split('//g')
+                                    def productGitUrl = "${values[0]}//${GIT_WUM_USERNAME}:${GIT_WUM_PASSWORD}@g${values[1]}"
+                                    sh " echo 'PRODUCT_GIT_URL: ${productGitUrl}'"
+                                    sh """
+                                    echo '  PRODUCT_GIT_URL: ${productGitUrl}' >> ${JOB_CONFIG_YAML_PATH}
+                                    """
+                                }else{
+                                    sh """
+                                    echo '  PRODUCT_GIT_URL: ${PRODUCT_GIT_URL}' >> ${JOB_CONFIG_YAML_PATH}
+                                    """
+                                }
 
                                     sh """
-                                    if [ "$TEST_MODE" == "WUM" ]; then
-                                        git_url="${PRODUCT_GIT_URL}"
-                                        f1=`echo "${git_url}" | cut -d'/' -f1`
-                                        f2=`echo "${git_url}" | cut -d'g' -f2`
-                                        f3=`echo "${git_url}" | cut -d'.' -f3`
-                                        PRODUCT_GIT_URL="${f1}//${gitWumUsername}:${gitWumPassword}@g${f2}${f3}"
-                                    else
-                                        PRODUCT_GIT_URL="${PRODUCT_GIT_URL}"
-                                    fi
                                     
                                     echo 'infrastructureRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
                                     echo 'deploymentRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
                                     echo 'scenarioTestsRepository: ${SCENARIOS_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
                                     echo 'testgridYamlLocation: ${TESTGRID_YAML_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
                                     echo 'properties:' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  PRODUCT_GIT_URL: ${PRODUCT_GIT_URL}' >> ${JOB_CONFIG_YAML_PATH}
                                     echo '  PRODUCT_GIT_BRANCH: ${PRODUCT_GIT_BRANCH}' >> ${JOB_CONFIG_YAML_PATH}
                                     echo '  PRODUCT_DIST_DOWNLOAD_API: ${PRODUCT_DIST_DOWNLOAD_API}' >> ${JOB_CONFIG_YAML_PATH}
                                     echo '  SQL_DRIVERS_LOCATION_UNIX: ${SQL_DRIVERS_LOCATION_UNIX}' >> ${JOB_CONFIG_YAML_PATH}
