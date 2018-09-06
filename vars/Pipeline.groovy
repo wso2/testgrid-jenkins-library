@@ -367,8 +367,7 @@ def call() {
                                 }
 
 
-
-                                sh """
+                                    sh """
                                     echo 'infrastructureRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
                                     echo 'deploymentRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
                                     echo 'scenarioTestsRepository: ${SCENARIOS_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
@@ -403,8 +402,6 @@ def call() {
 
                                 stash name: "${JOB_CONFIG_YAML}", includes: "${JOB_CONFIG_YAML}"
                                 stash name: "TestGridKey", includes: "workspace/testgrid-key.pem"
-
-
 
                                 sh """
                                   cd ${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}
