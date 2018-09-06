@@ -29,14 +29,14 @@ def runPlan(tPlan, parallelNumber) {
     def awsHelper = new AWSUtils()
     def name;
     echo "Executing Test Plan : ${tPlan} On directory : ${parallelNumber}"
-    
+    echo "*******************************************************************"
     echo "Creating workspace and builds sub-directories"
     sh """
         mkdir -p ${PWD}/${parallelNumber}/builds
         mkdir -p ${PWD}/${parallelNumber}/workspace
         """
-
-    echo "Unstashing test-plans, key and testgrid.yaml to ${PWD}/${parallelNumber}"
+    echo -e "/n*******************************************************************"
+    echo "Unstashing test-plans and testgrid.yaml to ${PWD}/${parallelNumber}"
     dir("${PWD}/${parallelNumber}") {
         unstash name: "${JOB_CONFIG_YAML}"
         unstash name: "test-plans"
@@ -45,24 +45,36 @@ def runPlan(tPlan, parallelNumber) {
         cp /testgrid/testgrid-prod-key.pem ${PWD}/${parallelNumber}/workspace/testgrid-key.pem
         chmod 400 workspace/testgrid-key.pem
         """
+        echo "Workspace directory content:"
         sh "ls"
         sh "ls test-plans/"
     }
-
+    
+    echo -e "/n********************************************************************"
     echo "Cloning ${SCENARIOS_REPOSITORY} into ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}"
     // Clone scenario repo
-    sh "mkdir -p ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}"
-    dir("${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}") {
-        git branch: 'master', url: "${SCENARIOS_REPOSITORY}"
-    }
-    
+    //sh "mkdir -p ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}"
+    // dir("${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}") {
+    //     git branch: 'master', url: "${SCENARIOS_REPOSITORY}"
+    // }
+    sh """
+        cd ${PWD}/${parallelNumber}
+        git clone ${SCENARIOS_REPOSITORY}
+    """
+
+
      echo "Cloning ${INFRASTRUCTURE_REPOSITORY} into ${PWD}/${parallelNumber}/${INFRA_LOCATION}"
     // Clone infra repo
-    sh "mkdir -p ${PWD}/${parallelNumber}/${INFRA_LOCATION}"
-    dir("${PWD}/${parallelNumber}/${INFRA_LOCATION}") {
-        // Clone scenario repo
-        git branch: 'master', url: "${INFRASTRUCTURE_REPOSITORY}"
-    }
+    // sh "mkdir -p ${PWD}/${parallelNumber}/${INFRA_LOCATION}"
+    // dir("${PWD}/${parallelNumber}/${INFRA_LOCATION}") {
+    //     // Clone scenario repo
+    //     git branch: 'master', url: "${INFRASTRUCTURE_REPOSITORY}"
+    // }
+     sh """
+        cd ${PWD}/${parallelNumber}
+        git clone ${INFRASTRUCTURE_REPOSITORY}
+    """
+
      dir("${PWD}/${parallelNumber}") {
         sh "ls */*"
      }
