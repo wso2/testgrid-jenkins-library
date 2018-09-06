@@ -22,15 +22,15 @@ import org.wso2.tg.jenkins.util.Common
 import org.wso2.tg.jenkins.util.AWSUtils
 import org.wso2.tg.jenkins.alert.Slack
 
-
+@NonCPS //to avoid java.io.NotSerializableException
 def runPlan(tPlan, parallelNumber) {
     def commonUtil = new Common()
     def notfier = new Slack()
     def awsHelper = new AWSUtils()
     def name;
+    //def m = (logLine =~ TEST_LOGLINE_END_REGEX) 
     sh """
         echo Executing Test Plan : ${tPlan} On directory : ${parallelNumber}
-        echo *******************************************************************
         echo Creating workspace and builds sub-directories
         rm -r -f ${PWD}/${parallelNumber}/
         mkdir -p ${PWD}/${parallelNumber}/builds
@@ -77,9 +77,7 @@ def runPlan(tPlan, parallelNumber) {
             .${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}/testgrid run-testplan --product ${PRODUCT} \
             --file ${PWD}/${parallelNumber}/${tPlan} --workspace ${PWD}/${parallelNumber}        
         """
-        script {
-            commonUtil.truncateTestRunLog(parallelNumber)
-        }
+
     } catch (Exception err) {
         echo "Error : ${err}"
         currentBuild.result = 'UNSTABLE'
@@ -89,6 +87,7 @@ def runPlan(tPlan, parallelNumber) {
     echo "RESULT: ${currentBuild.result}"
 
     script {
+        commonUtil.truncateTestRunLog(parallelNumber)
         awsHelper.uploadToS3()
     }
 }
