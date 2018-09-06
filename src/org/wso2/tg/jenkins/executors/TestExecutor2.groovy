@@ -22,13 +22,12 @@ import org.wso2.tg.jenkins.util.Common
 import org.wso2.tg.jenkins.util.AWSUtils
 import org.wso2.tg.jenkins.alert.Slack
 
-@NonCPS //to avoid java.io.NotSerializableException
 def runPlan(tPlan, parallelNumber) {
     def commonUtil = new Common()
     def notfier = new Slack()
     def awsHelper = new AWSUtils()
     def name;
-    //def m = (logLine =~ TEST_LOGLINE_END_REGEX) 
+    def m = (logLine =~ TEST_LOGLINE_END_REGEX) //to avoid java.io.NotSerializableException
     sh """
         echo Executing Test Plan : ${tPlan} On directory : ${parallelNumber}
         echo Creating workspace and builds sub-directories
