@@ -148,14 +148,10 @@ def call() {
                                     def url = "${PRODUCT_GIT_URL}"
                                     def values = url.split('//g')
                                     def productGitUrl = "${values[0]}//${GIT_WUM_USERNAME}:${GIT_WUM_PASSWORD}@g${values[1]}"
-                                    sh " echo 'PRODUCT_GIT_URL: ${productGitUrl}'"
-                                    sh """
-                                    echo '  PRODUCT_GIT_URL: ${productGitUrl}' >> ${JOB_CONFIG_YAML_PATH}
-                                    """
+                                    PRODUCT_GIT_URL = "${productGitUrl}"
+
                                 }else{
-                                    sh """
-                                    echo '  PRODUCT_GIT_URL: ${PRODUCT_GIT_URL}' >> ${JOB_CONFIG_YAML_PATH}
-                                    """
+                                    PRODUCT_GIT_URL = "${PRODUCT_GIT_URL}"
                                 }
 
                                 sh """
@@ -165,6 +161,7 @@ def call() {
                                 echo 'scenarioTestsRepository: ${SCENARIOS_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
                                 echo 'testgridYamlLocation: ${TESTGRID_YAML_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
                                 echo 'properties:' >> ${JOB_CONFIG_YAML_PATH}
+                                echo '  PRODUCT_GIT_URL: ${PRODUCT_GIT_URL}' >> ${JOB_CONFIG_YAML_PATH}
                                 echo '  PRODUCT_GIT_BRANCH: ${PRODUCT_GIT_BRANCH}' >> ${JOB_CONFIG_YAML_PATH}
                                 echo '  PRODUCT_DIST_DOWNLOAD_API: ${PRODUCT_DIST_DOWNLOAD_API}' >> ${JOB_CONFIG_YAML_PATH}
                                 echo '  SQL_DRIVERS_LOCATION_UNIX: ${SQL_DRIVERS_LOCATION_UNIX}' >> ${JOB_CONFIG_YAML_PATH}
@@ -363,14 +360,10 @@ def call() {
                                     def url = "${PRODUCT_GIT_URL}"
                                     def values = url.split('//g')
                                     def productGitUrl = "${values[0]}//${GIT_WUM_USERNAME}:${GIT_WUM_PASSWORD}@g${values[1]}"
-                                    sh " echo 'PRODUCT_GIT_URL: ${productGitUrl}'"
-                                    sh """
-                                    echo '  PRODUCT_GIT_URL: ${productGitUrl}' >> ${JOB_CONFIG_YAML_PATH}
-                                    """
+                                    PRODUCT_GIT_URL = "${productGitUrl}"
+
                                 }else{
-                                    sh """
-                                    echo '  PRODUCT_GIT_URL: ${PRODUCT_GIT_URL}' >> ${JOB_CONFIG_YAML_PATH}
-                                    """
+                                    PRODUCT_GIT_URL = "${PRODUCT_GIT_URL}"
                                 }
 
                                     sh """
@@ -380,6 +373,7 @@ def call() {
                                     echo 'scenarioTestsRepository: ${SCENARIOS_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
                                     echo 'testgridYamlLocation: ${TESTGRID_YAML_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
                                     echo 'properties:' >> ${JOB_CONFIG_YAML_PATH}
+                                    echo '  PRODUCT_GIT_URL: ${PRODUCT_GIT_URL}' >> ${JOB_CONFIG_YAML_PATH}
                                     echo '  PRODUCT_GIT_BRANCH: ${PRODUCT_GIT_BRANCH}' >> ${JOB_CONFIG_YAML_PATH}
                                     echo '  PRODUCT_DIST_DOWNLOAD_API: ${PRODUCT_DIST_DOWNLOAD_API}' >> ${JOB_CONFIG_YAML_PATH}
                                     echo '  SQL_DRIVERS_LOCATION_UNIX: ${SQL_DRIVERS_LOCATION_UNIX}' >> ${JOB_CONFIG_YAML_PATH}
@@ -408,7 +402,7 @@ def call() {
 
                                 stash name: "${JOB_CONFIG_YAML}", includes: "${JOB_CONFIG_YAML}"
                                 stash name: "TestGridKey", includes: "workspace/testgrid-key.pem"
-                                
+
 
                                 sh """
                                   cd ${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}
