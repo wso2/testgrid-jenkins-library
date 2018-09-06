@@ -54,7 +54,7 @@ def truncateTestRunLog(parallelNumber) {
         tail -n 50 \$file >> \$truncatedFile;
       done
     else
-        echo no logs found to truncate!
+        echo no logs found to truncate in ${TESTGRID_HOME}/jobs/${PRODUCT}/${parallelNumber}/builds!
     fi
    """
 }

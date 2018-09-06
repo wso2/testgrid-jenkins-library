@@ -22,13 +22,13 @@ import org.wso2.tg.jenkins.util.Common
 import org.wso2.tg.jenkins.util.AWSUtils
 import org.wso2.tg.jenkins.alert.Slack
 
-@NonCPS
+@NonCPS //to avoid java.io.NotSerializableException
 def runPlan(tPlan, parallelNumber) {
     def commonUtil = new Common()
     def notfier = new Slack()
     def awsHelper = new AWSUtils()
     def name;
-    //def m = (logLine =~ TEST_LOGLINE_END_REGEX) //to avoid java.io.NotSerializableException
+    //def m = (logLine =~ TEST_LOGLINE_END_REGEX) 
     sh """
         echo Executing Test Plan : ${tPlan} On directory : ${parallelNumber}
         echo Creating workspace and builds sub-directories
@@ -36,7 +36,7 @@ def runPlan(tPlan, parallelNumber) {
         mkdir -p ${PWD}/${parallelNumber}/builds
         mkdir -p ${PWD}/${parallelNumber}/workspace
         #Cloning should be done before unstashing TestGrid Yaml since its going to be injected inside the cloned repository
-
+        echo ********************************************************************
         echo Cloning ${SCENARIOS_REPOSITORY} into ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}
         cd ${PWD}/${parallelNumber}/workspace
         git clone ${SCENARIOS_REPOSITORY}
@@ -44,6 +44,7 @@ def runPlan(tPlan, parallelNumber) {
         echo Cloning ${INFRASTRUCTURE_REPOSITORY} into ${PWD}/${parallelNumber}/${INFRA_LOCATION}
         git clone ${INFRASTRUCTURE_REPOSITORY}
 
+        echo *******************************************************************
         echo Unstashing test-plans and testgrid.yaml to ${PWD}/${parallelNumber}
     """
     
@@ -76,9 +77,7 @@ def runPlan(tPlan, parallelNumber) {
             .${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}/testgrid run-testplan --product ${PRODUCT} \
             --file ${PWD}/${parallelNumber}/${tPlan} --workspace ${PWD}/${parallelNumber}        
         """
-        script {
-            commonUtil.truncateTestRunLog(parallelNumber)
-        }
+
     } catch (Exception err) {
         echo "Error : ${err}"
         currentBuild.result = 'UNSTABLE'
@@ -88,6 +87,7 @@ def runPlan(tPlan, parallelNumber) {
     echo "RESULT: ${currentBuild.result}"
 
     script {
+        commonUtil.truncateTestRunLog(parallelNumber)
         awsHelper.uploadToS3()
     }
 }
