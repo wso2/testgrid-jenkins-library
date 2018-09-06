@@ -58,7 +58,7 @@ def runPlan(tPlan, parallelNumber) {
     //     git branch: 'master', url: "${SCENARIOS_REPOSITORY}"
     // }
     sh """
-        cd ${PWD}/${parallelNumber}
+        cd ${PWD}/${parallelNumber}/workspace
         git clone ${SCENARIOS_REPOSITORY}
     """
 
@@ -71,7 +71,7 @@ def runPlan(tPlan, parallelNumber) {
     //     git branch: 'master', url: "${INFRASTRUCTURE_REPOSITORY}"
     // }
      sh """
-        cd ${PWD}/${parallelNumber}
+        cd ${PWD}/${parallelNumber}/workspace
         git clone ${INFRASTRUCTURE_REPOSITORY}
     """
 
