@@ -35,7 +35,7 @@ def runPlan(tPlan, parallelNumber) {
         mkdir -p ${PWD}/${parallelNumber}/builds
         mkdir -p ${PWD}/${parallelNumber}/workspace
         """
-    echo -e "/n*******************************************************************"
+    echo "*******************************************************************"
     echo "Unstashing test-plans and testgrid.yaml to ${PWD}/${parallelNumber}"
     dir("${PWD}/${parallelNumber}") {
         unstash name: "${JOB_CONFIG_YAML}"
@@ -50,7 +50,7 @@ def runPlan(tPlan, parallelNumber) {
         sh "ls test-plans/"
     }
     
-    echo -e "/n********************************************************************"
+    echo "********************************************************************"
     echo "Cloning ${SCENARIOS_REPOSITORY} into ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}"
     // Clone scenario repo
     //sh "mkdir -p ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}"
