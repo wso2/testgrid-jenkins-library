@@ -326,9 +326,9 @@ def call() {
                                         [configFile(fileId: "${PRODUCT}-testgrid-yaml", targetLocation:
                                                 "${TESTGRID_YAML_LOCATION}")]) {
                                 }
-                                echo 'keyFileLocation: workspace/testgrid-key.pem' > ${JOB_CONFIG_YAML_PATH}
 
                                 sh """
+                                    echo 'keyFileLocation: workspace/testgrid-key.pem' > ${JOB_CONFIG_YAML_PATH}
                                     echo 'infrastructureRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
                                     echo 'deploymentRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
                                     echo 'scenarioTestsRepository: ${SCENARIOS_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
