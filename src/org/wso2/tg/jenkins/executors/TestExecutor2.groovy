@@ -36,22 +36,11 @@ def runPlan(tPlan, parallelNumber) {
         mkdir -p ${PWD}/${parallelNumber}/builds
         mkdir -p ${PWD}/${parallelNumber}/workspace
         """
-    echo "*******************************************************************"
-    echo "Unstashing test-plans and testgrid.yaml to ${PWD}/${parallelNumber}"
-    dir("${PWD}/${parallelNumber}") {
-        unstash name: "${JOB_CONFIG_YAML}"
-        unstash name: "test-plans"
-        unstash name: "TestGridYaml"
-        sh"""
-        cp /testgrid/testgrid-prod-key.pem ${PWD}/${parallelNumber}/workspace/testgrid-key.pem
-        chmod 400 workspace/testgrid-key.pem
-        """
-        echo "Workspace directory content:"
-        sh "ls"
-        sh "ls test-plans/"
-    }
-    
-    echo "********************************************************************"
+
+    /*
+    Cloning should be done before unstashing TestGrid Yaml since its going to be injected inside the cloned repository
+    */
+  echo "********************************************************************"
     echo "Cloning ${SCENARIOS_REPOSITORY} into ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}"
     // Clone scenario repo
     //sh "mkdir -p ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}"
@@ -60,7 +49,7 @@ def runPlan(tPlan, parallelNumber) {
     // }
     sh """
         cd ${PWD}/${parallelNumber}/workspace
-        ls
+        ls workspace/
         git clone ${SCENARIOS_REPOSITORY}
     """
 
@@ -78,6 +67,23 @@ def runPlan(tPlan, parallelNumber) {
         git clone ${INFRASTRUCTURE_REPOSITORY}
     """
 
+
+    echo "*******************************************************************"
+    echo "Unstashing test-plans and testgrid.yaml to ${PWD}/${parallelNumber}"
+    dir("${PWD}/${parallelNumber}") {
+        unstash name: "${JOB_CONFIG_YAML}"
+        unstash name: "test-plans"
+        unstash name: "TestGridYaml"
+        sh"""
+        cp /testgrid/testgrid-prod-key.pem ${PWD}/${parallelNumber}/workspace/testgrid-key.pem
+        chmod 400 workspace/testgrid-key.pem
+        """
+        echo "Workspace directory content:"
+        sh "ls"
+        sh "ls test-plans/"
+    }
+    
+  
      dir("${PWD}/${parallelNumber}") {
         sh "ls */*"
      }
