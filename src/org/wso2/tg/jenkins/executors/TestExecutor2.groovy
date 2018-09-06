@@ -29,7 +29,6 @@ def runPlan(tPlan, parallelNumber) {
     def awsHelper = new AWSUtils()
     def name;
     sh """
-        alias echo='{ set +x; } 2> /dev/null; builtin echo'
         echo Executing Test Plan : ${tPlan} On directory : ${parallelNumber}
         echo *******************************************************************
         echo Creating workspace and builds sub-directories
