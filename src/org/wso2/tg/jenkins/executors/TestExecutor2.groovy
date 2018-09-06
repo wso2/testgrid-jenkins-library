@@ -60,6 +60,7 @@ def runPlan(tPlan, parallelNumber) {
     // }
     sh """
         cd ${PWD}/${parallelNumber}/workspace
+        ls
         git clone ${SCENARIOS_REPOSITORY}
     """
 
@@ -73,6 +74,7 @@ def runPlan(tPlan, parallelNumber) {
     // }
      sh """
         cd ${PWD}/${parallelNumber}/workspace
+        ls
         git clone ${INFRASTRUCTURE_REPOSITORY}
     """
 
