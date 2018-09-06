@@ -28,74 +28,55 @@ def runPlan(tPlan, parallelNumber) {
     def notfier = new Slack()
     def awsHelper = new AWSUtils()
     def name;
-    echo "Executing Test Plan : ${tPlan} On directory : ${parallelNumber}"
-    echo "*******************************************************************"
-    echo "Creating workspace and builds sub-directories"
     sh """
+        echo Executing Test Plan : ${tPlan} On directory : ${parallelNumber}
+        echo *******************************************************************
+        echo Creating workspace and builds sub-directories
         rm -r -f ${PWD}/${parallelNumber}/
         mkdir -p ${PWD}/${parallelNumber}/builds
         mkdir -p ${PWD}/${parallelNumber}/workspace
-        """
-
-    /*
-    Cloning should be done before unstashing TestGrid Yaml since its going to be injected inside the cloned repository
-    */
-  echo "********************************************************************"
-    echo "Cloning ${SCENARIOS_REPOSITORY} into ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}"
-    // Clone scenario repo
-    //sh "mkdir -p ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}"
-    // dir("${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}") {
-    //     git branch: 'master', url: "${SCENARIOS_REPOSITORY}"
-    // }
-    sh """
+        #Cloning should be done before unstashing TestGrid Yaml since its going to be injected inside the cloned repository
+        echo ********************************************************************
+        echo Cloning ${SCENARIOS_REPOSITORY} into ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}
         cd ${PWD}/${parallelNumber}/workspace
         git clone ${SCENARIOS_REPOSITORY}
-    """
 
-
-     echo "Cloning ${INFRASTRUCTURE_REPOSITORY} into ${PWD}/${parallelNumber}/${INFRA_LOCATION}"
-    // Clone infra repo
-    // sh "mkdir -p ${PWD}/${parallelNumber}/${INFRA_LOCATION}"
-    // dir("${PWD}/${parallelNumber}/${INFRA_LOCATION}") {
-    //     // Clone scenario repo
-    //     git branch: 'master', url: "${INFRASTRUCTURE_REPOSITORY}"
-    // }
-     sh """
-        cd ${PWD}/${parallelNumber}/workspace
+        echo Cloning ${INFRASTRUCTURE_REPOSITORY} into ${PWD}/${parallelNumber}/${INFRA_LOCATION}
         git clone ${INFRASTRUCTURE_REPOSITORY}
+
+        echo *******************************************************************
+        echo Unstashing test-plans and testgrid.yaml to ${PWD}/${parallelNumber}
     """
-
-
-    echo "*******************************************************************"
-    echo "Unstashing test-plans and testgrid.yaml to ${PWD}/${parallelNumber}"
+    
     dir("${PWD}/${parallelNumber}") {
         unstash name: "${JOB_CONFIG_YAML}"
         unstash name: "test-plans"
         unstash name: "TestGridYaml"
-        sh"""
+    }
+
+    sh """
         cp /testgrid/testgrid-prod-key.pem ${PWD}/${parallelNumber}/workspace/testgrid-key.pem
         chmod 400 workspace/testgrid-key.pem
-        """
-        echo "Workspace directory content:"
-        sh "ls"
-        echo "Test-plans directory content:"
-        sh "ls test-plans/"
-    }
+        echo Workspace directory content:
+        ls
+        echo Test-plans directory content:
+        ls test-plans/
+    """
 
     writeFile file: "${PWD}/${parallelNumber}/${INFRA_LOCATION}/deploy.sh", text: '#!/bin/sh'
     
-    echo "*******************************************************************"
     try {
-        echo "Running Test-Plan: ${tPlan}"
-        sh "java -version"
         name = commonUtil.getParameters("${PWD}/${parallelNumber}/${tPlan}")
         notfier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
 
         sh """
+            echo *******************************************************************
+            echo Running Test-Plan: ${tPlan}
+            java -version
             cd /
             .${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}/testgrid run-testplan --product ${PRODUCT} \
             --file ${PWD}/${parallelNumber}/${tPlan} --workspace ${PWD}/${parallelNumber}        
-            """
+        """
         script {
             commonUtil.truncateTestRunLog(parallelNumber)
         }
