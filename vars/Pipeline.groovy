@@ -27,6 +27,7 @@ import org.wso2.tg.jenkins.executors.TestExecutor2
 def call() {
     def uniqueId = env['uniqueId']
     def jobName = "dev"
+
     echo uniqueId;
     if (uniqueId != null) {
         jobName = uniqueId
@@ -75,10 +76,17 @@ def call() {
                 AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
                 tomcatUsername = credentials('TOMCAT_USERNAME')
                 tomcatPassword = credentials('TOMCAT_PASSWORD')
+
+                WUM_UAT_URL=credentials('WUM_UAT_URL')
+                WUM_UAT_APPKEY=credentials('WUM_UAT_APPKEY')
+                USER_NAME=credentials('WUM_USERNAME')
+                PASSWORD=credentials('WUM_PASSWORD')
+                GIT_WUM_USERNAME=credentials('GIT_WUM_USERNAME')
+                GIT_WUM_PASSWORD=credentials('GIT_WUM_PASSWORD')
+
                 PWD = pwd()
                 JOB_CONFIG_YAML = "job-config.yaml"
                 JOB_CONFIG_YAML_PATH = "${PWD}/${JOB_CONFIG_YAML}"
-
                 PRODUCT_GIT_URL = "${PRODUCT_GIT_URL}"
                 PRODUCT_GIT_BRANCH = "${PRODUCT_GIT_BRANCH}"
                 PRODUCT_DIST_DOWNLOAD_API = "${PRODUCT_DIST_DOWNLOAD_API}"
@@ -135,13 +143,28 @@ def call() {
                                     """
                                 }
 
+                                //Constructing the product git url if test mode is wum. Adding the Git username and password into the product git url.
+                                if("${TEST_MODE}"=="WUM"){
+                                    def url = "${PRODUCT_GIT_URL}"
+                                    def values = url.split('//g')
+                                    def productGitUrl = "${values[0]}//${GIT_WUM_USERNAME}:${GIT_WUM_PASSWORD}@g${values[1]}"
+                                    sh " echo 'PRODUCT_GIT_URL: ${productGitUrl}'"
+                                    sh """
+                                    echo '  PRODUCT_GIT_URL: ${productGitUrl}' >> ${JOB_CONFIG_YAML_PATH}
+                                    """
+                                }else{
+                                    sh """
+                                    echo '  PRODUCT_GIT_URL: ${PRODUCT_GIT_URL}' >> ${JOB_CONFIG_YAML_PATH}
+                                    """
+                                }
+
                                 sh """
+
                                 echo 'infrastructureRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
                                 echo 'deploymentRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
                                 echo 'scenarioTestsRepository: ${SCENARIOS_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
                                 echo 'testgridYamlLocation: ${TESTGRID_YAML_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
                                 echo 'properties:' >> ${JOB_CONFIG_YAML_PATH}
-                                echo '  PRODUCT_GIT_URL: ${PRODUCT_GIT_URL}' >> ${JOB_CONFIG_YAML_PATH}
                                 echo '  PRODUCT_GIT_BRANCH: ${PRODUCT_GIT_BRANCH}' >> ${JOB_CONFIG_YAML_PATH}
                                 echo '  PRODUCT_DIST_DOWNLOAD_API: ${PRODUCT_DIST_DOWNLOAD_API}' >> ${JOB_CONFIG_YAML_PATH}
                                 echo '  SQL_DRIVERS_LOCATION_UNIX: ${SQL_DRIVERS_LOCATION_UNIX}' >> ${JOB_CONFIG_YAML_PATH}
@@ -287,6 +310,14 @@ def call() {
                 AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
                 tomcatUsername = credentials('TOMCAT_USERNAME')
                 tomcatPassword = credentials('TOMCAT_PASSWORD')
+
+                WUM_UAT_URL=credentials('WUM_UAT_URL')
+                WUM_UAT_APPKEY=credentials('WUM_UAT_APPKEY')
+                USER_NAME=credentials('WUM_USERNAME')
+                PASSWORD=credentials('WUM_PASSWORD')
+                GIT_WUM_USERNAME=credentials('GIT_WUM_USERNAME')
+                GIT_WUM_PASSWORD=credentials('GIT_WUM_PASSWORD')
+
                 PWD = pwd()
                 JOB_CONFIG_YAML = "job-config.yaml"
                 JOB_CONFIG_YAML_PATH = "${PWD}/${JOB_CONFIG_YAML}"
@@ -327,6 +358,22 @@ def call() {
                                                 "${TESTGRID_YAML_LOCATION}")]) {
                                 }
 
+
+                                //Constructing the product git url if test mode is wum. Adding the Git username and password into the product git url.
+                                if("${TEST_MODE}"=="WUM"){
+                                    def url = "${PRODUCT_GIT_URL}"
+                                    def values = url.split('//g')
+                                    def productGitUrl = "${values[0]}//${GIT_WUM_USERNAME}:${GIT_WUM_PASSWORD}@g${values[1]}"
+                                    sh " echo 'PRODUCT_GIT_URL: ${productGitUrl}'"
+                                    sh """
+                                    echo '  PRODUCT_GIT_URL: ${productGitUrl}' >> ${JOB_CONFIG_YAML_PATH}
+                                    """
+                                }else{
+                                    sh """
+                                    echo '  PRODUCT_GIT_URL: ${PRODUCT_GIT_URL}' >> ${JOB_CONFIG_YAML_PATH}
+                                    """
+                                }   
+
                                 sh """
                                     echo 'keyFileLocation: workspace/testgrid-key.pem' > ${JOB_CONFIG_YAML_PATH}
                                     echo 'infrastructureRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
@@ -334,7 +381,6 @@ def call() {
                                     echo 'scenarioTestsRepository: ${SCENARIOS_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
                                     echo 'testgridYamlLocation: ${TESTGRID_YAML_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
                                     echo 'properties:' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  PRODUCT_GIT_URL: ${PRODUCT_GIT_URL}' >> ${JOB_CONFIG_YAML_PATH}
                                     echo '  PRODUCT_GIT_BRANCH: ${PRODUCT_GIT_BRANCH}' >> ${JOB_CONFIG_YAML_PATH}
                                     echo '  PRODUCT_DIST_DOWNLOAD_API: ${PRODUCT_DIST_DOWNLOAD_API}' >> ${JOB_CONFIG_YAML_PATH}
                                     echo '  SQL_DRIVERS_LOCATION_UNIX: ${SQL_DRIVERS_LOCATION_UNIX}' >> ${JOB_CONFIG_YAML_PATH}
