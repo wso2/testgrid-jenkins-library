@@ -28,7 +28,7 @@ def runPlan(tPlan, parallelNumber) {
     def notfier = new Slack()
     def awsHelper = new AWSUtils()
     def name;
-    def m = (logLine =~ TEST_LOGLINE_END_REGEX) //to avoid java.io.NotSerializableException
+    //def m = (logLine =~ TEST_LOGLINE_END_REGEX) //to avoid java.io.NotSerializableException
     sh """
         echo Executing Test Plan : ${tPlan} On directory : ${parallelNumber}
         echo *******************************************************************
