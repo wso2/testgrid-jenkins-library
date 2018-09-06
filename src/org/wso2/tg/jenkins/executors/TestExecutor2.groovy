@@ -31,13 +31,12 @@ def runPlan(tPlan, parallelNumber) {
     //def m = (logLine =~ TEST_LOGLINE_END_REGEX) //to avoid java.io.NotSerializableException
     sh """
         echo Executing Test Plan : ${tPlan} On directory : ${parallelNumber}
-        echo *******************************************************************
         echo Creating workspace and builds sub-directories
         rm -r -f ${PWD}/${parallelNumber}/
         mkdir -p ${PWD}/${parallelNumber}/builds
         mkdir -p ${PWD}/${parallelNumber}/workspace
         #Cloning should be done before unstashing TestGrid Yaml since its going to be injected inside the cloned repository
-        echo ********************************************************************
+
         echo Cloning ${SCENARIOS_REPOSITORY} into ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}
         cd ${PWD}/${parallelNumber}/workspace
         git clone ${SCENARIOS_REPOSITORY}
@@ -45,7 +44,6 @@ def runPlan(tPlan, parallelNumber) {
         echo Cloning ${INFRASTRUCTURE_REPOSITORY} into ${PWD}/${parallelNumber}/${INFRA_LOCATION}
         git clone ${INFRASTRUCTURE_REPOSITORY}
 
-        echo *******************************************************************
         echo Unstashing test-plans and testgrid.yaml to ${PWD}/${parallelNumber}
     """
     
