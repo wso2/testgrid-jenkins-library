@@ -29,6 +29,7 @@ def runPlan(tPlan, parallelNumber) {
     def awsHelper = new AWSUtils()
     def name;
     sh """
+        alias echo='{ set +x; } 2> /dev/null; builtin echo'
         echo Executing Test Plan : ${tPlan} On directory : ${parallelNumber}
         echo *******************************************************************
         echo Creating workspace and builds sub-directories
@@ -56,11 +57,11 @@ def runPlan(tPlan, parallelNumber) {
 
     sh """
         cp /testgrid/testgrid-prod-key.pem ${PWD}/${parallelNumber}/workspace/testgrid-key.pem
-        chmod 400 workspace/testgrid-key.pem
+        chmod 400 ${PWD}/${parallelNumber}/workspace/testgrid-key.pem
         echo Workspace directory content:
-        ls
+        ls ${PWD}/${parallelNumber}/
         echo Test-plans directory content:
-        ls test-plans/
+        ls ${PWD}/${parallelNumber}/test-plans/
     """
 
     writeFile file: "${PWD}/${parallelNumber}/${INFRA_LOCATION}/deploy.sh", text: '#!/bin/sh'
