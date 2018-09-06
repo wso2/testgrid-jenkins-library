@@ -358,6 +358,7 @@ def call() {
                                                 "${TESTGRID_YAML_LOCATION}")]) {
                                 }
 
+
                                 //Constructing the product git url if test mode is wum. Adding the Git username and password into the product git url.
                                 if("${TEST_MODE}"=="WUM"){
                                     def url = "${PRODUCT_GIT_URL}"
@@ -371,10 +372,10 @@ def call() {
                                     sh """
                                     echo '  PRODUCT_GIT_URL: ${PRODUCT_GIT_URL}' >> ${JOB_CONFIG_YAML_PATH}
                                     """
-                                }
+                                }   
 
-                                    sh """
-                                    
+                                sh """
+
                                     echo 'infrastructureRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
                                     echo 'deploymentRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
                                     echo 'scenarioTestsRepository: ${SCENARIOS_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
@@ -407,8 +408,7 @@ def call() {
                                     """
 
                                 stash name: "${JOB_CONFIG_YAML}", includes: "${JOB_CONFIG_YAML}"
-                                stash name: "TestGridKey", includes: "workspace/testgrid-key.pem"
-                                
+                                stash name: "TestGridYaml", includes: "${TESTGRID_YAML_LOCATION}"
 
                                 sh """
                                   cd ${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}
