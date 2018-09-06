@@ -78,36 +78,26 @@ def runPlan(tPlan, parallelNumber) {
         """
         echo "Workspace directory content:"
         sh "ls"
+        echo "Test-plans directory content:"
         sh "ls test-plans/"
     }
-    
-  
-     dir("${PWD}/${parallelNumber}") {
-        sh "ls */*"
-     }
 
     writeFile file: "${PWD}/${parallelNumber}/${INFRA_LOCATION}/deploy.sh", text: '#!/bin/sh'
-
+    
+    echo "*******************************************************************"
     try {
         echo "Running Test-Plan: ${tPlan}"
         sh "java -version"
         name = commonUtil.getParameters("${PWD}/${parallelNumber}/${tPlan}")
         notfier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
-        // sh """
-        //     cd ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}
-        //     git clean -fd
-        //     cd ${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}
-        //     ./testgrid run-testplan --product ${PRODUCT} \
-        //     --file ${PWD}/${parallelNumber}/${tPlan} --workspace ${PWD}/${parallelNumber}            
-        //     """
 
         sh """
             cd /
             .${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}/testgrid run-testplan --product ${PRODUCT} \
             --file ${PWD}/${parallelNumber}/${tPlan} --workspace ${PWD}/${parallelNumber}        
-            """    
+            """
         script {
-            commonUtil.truncateTestRunLog()
+            commonUtil.truncateTestRunLog(parallelNumber)
         }
     } catch (Exception err) {
         echo "Error : ${err}"
