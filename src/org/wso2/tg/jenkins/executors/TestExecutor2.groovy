@@ -32,6 +32,7 @@ def runPlan(tPlan, parallelNumber) {
     echo "*******************************************************************"
     echo "Creating workspace and builds sub-directories"
     sh """
+        rm -r -f ${PWD}/${parallelNumber}/
         mkdir -p ${PWD}/${parallelNumber}/builds
         mkdir -p ${PWD}/${parallelNumber}/workspace
         """
