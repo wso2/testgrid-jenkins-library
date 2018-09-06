@@ -314,19 +314,6 @@ def call() {
                                 echo pwd()
                                 deleteDir()
 
-                                // Clone scenario repo
-                                sh "mkdir -p ${SCENARIOS_LOCATION}"
-                                dir("${SCENARIOS_LOCATION}") {
-                                    git branch: 'master', url: "${SCENARIOS_REPOSITORY}"
-                                }
-
-                                // Clone infra repo
-                                sh "mkdir -p ${INFRA_LOCATION}"
-                                dir("${INFRA_LOCATION}") {
-                                    git branch: 'master', url: "${INFRASTRUCTURE_REPOSITORY}"
-                                }
-                                writeFile file: "${INFRA_LOCATION}/deploy.sh", text: '#!/bin/sh'
-
                                 sh """
                                   echo ${TESTGRID_NAME}
                                   cd ${TESTGRID_DIST_LOCATION}
@@ -338,13 +325,6 @@ def call() {
                                 configFileProvider(
                                         [configFile(fileId: "${PRODUCT}-testgrid-yaml", targetLocation:
                                                 "${TESTGRID_YAML_LOCATION}")]) {
-                                }
-
-                                configFileProvider([configFile(fileId: 'testgrid-key', targetLocation: 'workspace/testgrid-key.pem', variable: 'TESTGRIDKEY')]) {
-                                    sh """
-                                        echo 'keyFileLocation: workspace/testgrid-key.pem' > ${JOB_CONFIG_YAML_PATH}
-                                        chmod 400 workspace/testgrid-key.pem
-                                    """
                                 }
 
                                 sh """
