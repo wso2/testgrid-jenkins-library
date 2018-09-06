@@ -357,7 +357,6 @@ def call() {
                                         [configFile(fileId: "${PRODUCT}-testgrid-yaml", targetLocation:
                                                 "${TESTGRID_YAML_LOCATION}")]) {
                                 }
-                                echo 'keyFileLocation: workspace/testgrid-key.pem' > ${JOB_CONFIG_YAML_PATH}
 
 
                                 //Constructing the product git url if test mode is wum. Adding the Git username and password into the product git url.
@@ -376,7 +375,7 @@ def call() {
                                 }   
 
                                 sh """
-
+                                    echo 'keyFileLocation: workspace/testgrid-key.pem' > ${JOB_CONFIG_YAML_PATH}
                                     echo 'infrastructureRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
                                     echo 'deploymentRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
                                     echo 'scenarioTestsRepository: ${SCENARIOS_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
