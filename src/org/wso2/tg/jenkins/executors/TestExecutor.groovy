@@ -26,7 +26,6 @@ def runPlan(tPlan, parallelNumber) {
     def commonUtil = new Common()
     def notfier = new Slack()
     def awsHelper = new AWSUtils()
-    def name;
     sh """
         echo Executing Test Plan : ${tPlan} On directory : ${parallelNumber}
         echo Creating workspace and builds sub-directories
@@ -61,11 +60,10 @@ def runPlan(tPlan, parallelNumber) {
     """
 
     writeFile file: "${PWD}/${parallelNumber}/${INFRA_LOCATION}/deploy.sh", text: '#!/bin/sh'
-    
-    try {
-        name = commonUtil.getParameters("${PWD}/${parallelNumber}/${tPlan}")
-        notfier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
 
+    def name = commonUtil.getParameters("${PWD}/${parallelNumber}/${tPlan}")
+    notfier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
+    try {
         sh """
             echo Running Test-Plan: ${tPlan}
             java -version
@@ -81,7 +79,7 @@ def runPlan(tPlan, parallelNumber) {
     } finally {
         notfier.sendNotification(currentBuild.result, "Parallel \n Infra : " + name, "#build_status_verbose")
     }
-
+    
     echo "RESULT: ${currentBuild.result}"
     script {
         awsHelper.uploadToS3()
