@@ -74,7 +74,7 @@ def runPlan(tPlan, parallelNumber) {
             java -version
             #Need to change directory to root to run the next command properly
             cd /
-            .${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}/testgrid run-testplan --product ${PRODUCT} \
+            .${TESTGRID_HOME}/testgrid-dist/${TESTGRID_NAME}/testgrid run-testplan --product ${PRODUCT} \
             --file ${PWD}/${parallelNumber}/${tPlan} --workspace ${PWD}/${parallelNumber}        
         """
         commonUtil.truncateTestRunLog(parallelNumber)
