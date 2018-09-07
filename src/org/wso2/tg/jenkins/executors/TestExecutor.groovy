@@ -33,7 +33,8 @@ def runPlan(tPlan, parallelNumber) {
         rm -r -f ${PWD}/${parallelNumber}/
         mkdir -p ${PWD}/${parallelNumber}/builds
         mkdir -p ${PWD}/${parallelNumber}/workspace
-        #Cloning should be done before unstashing TestGrid Yaml since its going to be injected inside the cloned repository
+        #Cloning should be done before unstashing TestGridYaml since its going to be injected
+        #inside the cloned repository
         echo ********************************************************************
         echo Cloning ${SCENARIOS_REPOSITORY} into ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}
         cd ${PWD}/${parallelNumber}/workspace
@@ -71,6 +72,7 @@ def runPlan(tPlan, parallelNumber) {
             echo *******************************************************************
             echo Running Test-Plan: ${tPlan}
             java -version
+            #Need to change directory to root to run the next command properly
             cd /
             .${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}/testgrid run-testplan --product ${PRODUCT} \
             --file ${PWD}/${parallelNumber}/${tPlan} --workspace ${PWD}/${parallelNumber}        
@@ -82,7 +84,7 @@ def runPlan(tPlan, parallelNumber) {
     } finally {
         notfier.sendNotification(currentBuild.result, "Parallel \n Infra : " + name, "#build_status_verbose")
     }
-    
+
     echo "RESULT: ${currentBuild.result}"
     script {
         awsHelper.uploadToS3()
