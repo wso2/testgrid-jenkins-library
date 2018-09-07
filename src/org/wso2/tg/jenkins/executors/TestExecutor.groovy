@@ -22,41 +22,70 @@ import org.wso2.tg.jenkins.util.Common
 import org.wso2.tg.jenkins.util.AWSUtils
 import org.wso2.tg.jenkins.alert.Slack
 
-
-def runPlan(tPlan, node) {
+def runPlan(tPlan, parallelNumber) {
     def commonUtil = new Common()
     def notfier = new Slack()
     def awsHelper = new AWSUtils()
-    name = commonUtil.getParameters("/testgrid/testgrid-home/jobs/${PRODUCT}/${tPlan}")
-    notfier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
-    echo "Executing Test Plan : ${tPlan} On node : ${node}"
-    try {
-        echo "Running Test-Plan: ${tPlan}"
-        sh "java -version"
+    def name;
+    sh """
+        echo Executing Test Plan : ${tPlan} On directory : ${parallelNumber}
+        echo Creating workspace and builds sub-directories
+        rm -r -f ${PWD}/${parallelNumber}/
+        mkdir -p ${PWD}/${parallelNumber}/builds
+        mkdir -p ${PWD}/${parallelNumber}/workspace
+        #Cloning should be done before unstashing TestGridYaml since its going to be injected
+        #inside the cloned repository
+        echo ********************************************************************
+        echo Cloning ${SCENARIOS_REPOSITORY} into ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}
+        cd ${PWD}/${parallelNumber}/workspace
+        git clone ${SCENARIOS_REPOSITORY}
+
+        echo Cloning ${INFRASTRUCTURE_REPOSITORY} into ${PWD}/${parallelNumber}/${INFRA_LOCATION}
+        git clone ${INFRASTRUCTURE_REPOSITORY}
+
+        echo *******************************************************************
+        echo Unstashing test-plans and testgrid.yaml to ${PWD}/${parallelNumber}
+    """
+    
+    dir("${PWD}/${parallelNumber}") {
         unstash name: "${JOB_CONFIG_YAML}"
-        dir("${PWD}") {
-            unstash name: "test-plans"
-        }
+        unstash name: "test-plans"
+        unstash name: "TestGridYaml"
+    }
+
+    sh """
+        cp /testgrid/testgrid-prod-key.pem ${PWD}/${parallelNumber}/workspace/testgrid-key.pem
+        chmod 400 ${PWD}/${parallelNumber}/workspace/testgrid-key.pem
+        echo Workspace directory content:
+        ls ${PWD}/${parallelNumber}/
+        echo Test-plans directory content:
+        ls ${PWD}/${parallelNumber}/test-plans/
+    """
+
+    writeFile file: "${PWD}/${parallelNumber}/${INFRA_LOCATION}/deploy.sh", text: '#!/bin/sh'
+    
+    try {
+        name = commonUtil.getParameters("${PWD}/${parallelNumber}/${tPlan}")
+        notfier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
+
         sh """
-      echo "Before PWD"
-      pwd
-      cd ${PWD}/${SCENARIOS_LOCATION}
-      git clean -fd
-      cd ${TESTGRID_HOME}/testgrid-dist/${TESTGRID_NAME}
-      ./testgrid run-testplan --product ${PRODUCT} \
-      --file "${PWD}/${tPlan}"
-      """
-        script {
-            commonUtil.truncateTestRunLog()
-        }
+            echo *******************************************************************
+            echo Running Test-Plan: ${tPlan}
+            java -version
+            #Need to change directory to root to run the next command properly
+            cd /
+            .${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}/testgrid run-testplan --product ${PRODUCT} \
+            --file ${PWD}/${parallelNumber}/${tPlan} --workspace ${PWD}/${parallelNumber}        
+        """
+        commonUtil.truncateTestRunLog(parallelNumber)
     } catch (Exception err) {
         echo "Error : ${err}"
         currentBuild.result = 'UNSTABLE'
     } finally {
         notfier.sendNotification(currentBuild.result, "Parallel \n Infra : " + name, "#build_status_verbose")
     }
-    echo "RESULT: ${currentBuild.result}"
 
+    echo "RESULT: ${currentBuild.result}"
     script {
         awsHelper.uploadToS3()
     }
@@ -85,12 +114,14 @@ def getTestExecutionMap() {
                         if (executor == parallelExecCount) {
                             for (int i = processFileCount * (executor - 1); i < files.length; i++) {
                                 // Execution logic
-                                runPlan(files[i], "node1")
+                                int parallelNo = i + 1
+                                runPlan(files[i], parallelNo.toString())
                             }
                         } else {
                             for (int i = 0; i < processFileCount; i++) {
                                 int fileNo = processFileCount * (executor - 1) + i
-                                runPlan(files[fileNo], "node1")
+                                int parallelNo = fileNo + 1
+                                runPlan(files[fileNo], parallelNo.toString())
                             }
                         }
                     }
