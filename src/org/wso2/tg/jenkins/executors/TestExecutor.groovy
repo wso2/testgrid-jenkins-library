@@ -35,7 +35,6 @@ def runPlan(tPlan, parallelNumber) {
         mkdir -p ${PWD}/${parallelNumber}/workspace
         #Cloning should be done before unstashing TestGridYaml since its going to be injected
         #inside the cloned repository
-        echo ********************************************************************
         echo Cloning ${SCENARIOS_REPOSITORY} into ${PWD}/${parallelNumber}/${SCENARIOS_LOCATION}
         cd ${PWD}/${parallelNumber}/workspace
         git clone ${SCENARIOS_REPOSITORY}
@@ -43,7 +42,6 @@ def runPlan(tPlan, parallelNumber) {
         echo Cloning ${INFRASTRUCTURE_REPOSITORY} into ${PWD}/${parallelNumber}/${INFRA_LOCATION}
         git clone ${INFRASTRUCTURE_REPOSITORY}
 
-        echo *******************************************************************
         echo Unstashing test-plans and testgrid.yaml to ${PWD}/${parallelNumber}
     """
     
@@ -69,12 +67,11 @@ def runPlan(tPlan, parallelNumber) {
         notfier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
 
         sh """
-            echo *******************************************************************
             echo Running Test-Plan: ${tPlan}
             java -version
             #Need to change directory to root to run the next command properly
             cd /
-            .${TESTGRID_HOME}/testgrid-dist/pasindu/${TESTGRID_NAME}/testgrid run-testplan --product ${PRODUCT} \
+            .${TESTGRID_HOME}/testgrid-dist/${TESTGRID_NAME}/testgrid run-testplan --product ${PRODUCT} \
             --file ${PWD}/${parallelNumber}/${tPlan} --workspace ${PWD}/${parallelNumber}        
         """
         commonUtil.truncateTestRunLog(parallelNumber)
