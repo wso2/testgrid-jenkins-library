@@ -22,10 +22,10 @@ def getTimestamp(Date date = new Date()) {
     return date.format('yyyyMMddHHmmss', TimeZone.getTimeZone('GMT')) as String
 }
 
-def truncateTestRunLog() {
+def truncateTestRunLog(parallelNumber) {
     sh """
-    if [ -d "${TESTGRID_HOME}/jobs/${PRODUCT}/builds" ]; then
-        cd ${TESTGRID_HOME}/jobs/${PRODUCT}
+    if [ -d "${TESTGRID_HOME}/jobs/${PRODUCT}/${parallelNumber}/builds" ]; then
+        cd ${TESTGRID_HOME}/jobs/${PRODUCT}/${parallelNumber}
       for file in builds/*/test-run.log ; do
         truncatedFile=\$(dirname \$file)/truncated-\$(basename \$file);
         head -n 10 \$file > \$truncatedFile;
@@ -35,7 +35,7 @@ def truncateTestRunLog() {
         tail -n 50 \$file >> \$truncatedFile;
       done
     else
-        echo no logs found to truncate!
+        echo no logs found to truncate in ${TESTGRID_HOME}/jobs/${PRODUCT}/${parallelNumber}/builds!
     fi
    """
 }

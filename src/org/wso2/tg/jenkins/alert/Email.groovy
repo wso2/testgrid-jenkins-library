@@ -23,7 +23,7 @@ package org.wso2.tg.jenkins.alert
  * @param content body of the Email
  */
 def send(subject,  content) {
-    emailext(to: "${EMAIL_TO_LIST},kasung@wso2.com,lasanthad@wso2.com,yasassri@wso2.com",
+    emailext(to: "${EMAIL_TO_LIST}",
             subject: subject,
             body: content, mimeType: 'text/html')
 }
