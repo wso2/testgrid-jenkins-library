@@ -82,7 +82,7 @@ def runPlan(tPlan, parallelNumber) {
     
     echo "RESULT: ${currentBuild.result}"
     script {
-        awsHelper.uploadToS3()
+        awsHelper.uploadToS3(parallelNumber)
     }
 }
 
