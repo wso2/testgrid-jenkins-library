@@ -235,7 +235,7 @@ def call() {
                             //Send email for failed results.
                             if (fileExists("${PWD}/builds/SummarizedEmailReport.html")) {
                                 def emailBody = readFile "${PWD}/builds/SummarizedEmailReport.html"
-                                email.send("'${env.JOB_NAME}' Integration Test Failure! #(${env.BUILD_NUMBER})", "${emailBody}")
+                                email.send("'${env.JOB_NAME}' Integration Test Results! #(${env.BUILD_NUMBER})", "${emailBody}")
                             } else {
                                 echo "No SummarizedEmailReport.html file found!!"
                                 email.send("'${env.JOB_NAME}'#(${env.BUILD_NUMBER}) - SummarizedEmailReport.html " +
