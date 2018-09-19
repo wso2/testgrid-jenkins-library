@@ -73,8 +73,11 @@ def call() {
                 TESTGRID_HOME = '/testgrid/testgrid-home/'
 
                 PRODUCT = "${JOB_BASE_NAME}"
-
                 TESTGRID_YAML_LOCATION = "${INFRA_LOCATION}/jobs/${PRODUCT}/testgrid.yaml"
+
+                if (${TESTGRID_YAML}) {
+                    TESTGRID_YAML_LOCATION = "${INFRA_LOCATION}/jobs/${PRODUCT}/${TESTGRID_YAML}"
+                }
 
                 AWS_ACCESS_KEY_ID = credentials('AWS_ACCESS_KEY_ID')
                 AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
