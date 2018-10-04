@@ -54,3 +54,10 @@ def getParameters(file) {
     //echo "This is the name" + name
     return name
 }
+
+def getTestPlanId(file) {
+    echo "This is the file " + file.toString()
+     def tpyaml = readFile(file)
+     def m = tpyaml =~ /(id:)([A-z :'0-9\.-]*)(\n)/
+    return m[0][2].trim()
+ }
