@@ -86,12 +86,13 @@ def runPlan(tPlan, parallelNumber) {
     }
 }
 
-def getTestExecutionMap() {
+def getTestExecutionMap(parallel_executor_count) {
     def commonUtils = new Common()
-    def parallelExecCount = 12
+    def parallelExecCount = parallel_executor_count as int
     def name = "unknown"
     def tests = [:]
     def files = findFiles(glob: '**/test-plans/*.yaml')
+    echo "Parallel exec count "+ parallelExecCount
     for (int f = 1; f < parallelExecCount + 1 && f <= files.length; f++) {
         def executor = f
         name = commonUtils.getParameters("${PWD}/test-plans/" + files[f - 1].name)
