@@ -98,6 +98,7 @@ def call() {
                 PRODUCT_CODE = "${PRODUCT_CODE}"
                 WUM_PRODUCT_VERSION = "${WUM_PRODUCT_VERSION}"
                 USE_CUSTOM_TESTNG = "${USE_CUSTOM_TESTNG}"
+                EXECUTOR_COUNT = "${EXECUTOR_COUNT}"
             }
 
             tools {
@@ -167,6 +168,7 @@ def call() {
                                     echo '  WUM_PRODUCT_VERSION: "${WUM_PRODUCT_VERSION}"' >> ${JOB_CONFIG_YAML_PATH}
                                     echo '  USE_CUSTOM_TESTNG: "${USE_CUSTOM_TESTNG}"' >> ${JOB_CONFIG_YAML_PATH}
                                     
+                                    
 				                    echo The job-config.yaml :
                                     cat ${JOB_CONFIG_YAML_PATH}
                                     """
@@ -197,7 +199,12 @@ def call() {
                         script {
                             def name = "unknown"
                             try {
-                                def tests = testExecutor.getTestExecutionMap()
+                                parallel_executor_count = 12
+                                if(env.EXECUTOR_COUNT != "null"){
+                                    echo "executor count is"+ env.EXECUTOR_COUNT
+                                    parallel_executor_count = env.EXECUTOR_COUNT
+                                }
+                                def tests = testExecutor.getTestExecutionMap(parallel_executor_count)
                                 parallel tests
                             } catch (e) {
                                 currentBuild.result = "FAILED"
