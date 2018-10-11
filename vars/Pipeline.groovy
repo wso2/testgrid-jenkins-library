@@ -240,8 +240,8 @@ def call() {
                             """
                             awsHelper.uploadCharts()
                             //Send email for failed results.
-                            if (fileExists("${PWD}/builds/SummarizedEmailReport.html")) {
-                                def emailBody = readFile "${PWD}/builds/SummarizedEmailReport.html"
+                            if (fileExists("${PWD}/SummarizedEmailReport.html")) {
+                                def emailBody = readFile "${PWD}/SummarizedEmailReport.html"
                                 email.send("'${env.JOB_NAME}' Integration Test Results! #(${env.BUILD_NUMBER})", "${emailBody}")
                             } else {
                                 echo "No SummarizedEmailReport.html file found!!"
