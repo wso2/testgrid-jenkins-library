@@ -43,7 +43,7 @@ pipeline {
                           mkdir wum_script
                           cp -f ${SCENARIOS_LOCATION}/apim-test-integration/newshell.sh ${SCENARIOS_LOCATION}/wum_script
                           cd ${SCENARIOS_LOCATION}/wum_script 
-                          sh newshell.sh
+                          sh get-wum-uat-products.sh
                     
                     """
                 }
