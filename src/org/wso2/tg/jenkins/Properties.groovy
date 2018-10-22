@@ -37,33 +37,32 @@ class Properties {
     // Job Properties which are set when init is called
     static def PRODUCT
     static def TESTGRID_YAML_LOCATION
-    static def AWS_ACCESS_KEY_ID            = ""
-    static def AWS_SECRET_ACCESS_KEY        = ""
-    static def TOMCAT_USERNAME              = ""
-    static def TOMCAT_PASSWORD              = ""
-    static def TEST_MODE                    = ""
-    static def WUM_UAT_URL                  = ""
-    static def WUM_UAT_APP_KEY              = ""
-    static def USER_NAME                    = ""
-    static def PASSWORD                     = ""
-    static def GIT_WUM_USERNAME             = ""
-    static def GIT_WUM_PASSWORD             = ""
-    static def JOB_CONFIG_YAML_PATH         = ""
-    static def PRODUCT_GIT_URL              = ""
-    static def PRODUCT_GIT_BRANCH           = ""
-    static def PRODUCT_DIST_DOWNLOAD_API    = ""
-    static def WUM_CHANNEL                  = ""
-    static def PRODUCT_CODE                 = ""
-    static def WUM_PRODUCT_VERSION          = ""
-    static def USE_CUSTOM_TESTNG            = ""
-    static def EXECUTOR_COUNT               = ""
+    static def AWS_ACCESS_KEY_ID
+    static def AWS_SECRET_ACCESS_KEY
+    static def TOMCAT_USERNAME
+    static def TOMCAT_PASSWORD
+    static def TEST_MODE
+    static def WUM_UAT_URL
+    static def WUM_UAT_APP_KEY
+    static def USER_NAME
+    static def PASSWORD
+    static def GIT_WUM_USERNAME
+    static def GIT_WUM_PASSWORD
+    static def JOB_CONFIG_YAML_PATH
+    static def PRODUCT_GIT_URL
+    static def PRODUCT_GIT_BRANCH
+    static def PRODUCT_DIST_DOWNLOAD_API
+    static def WUM_CHANNEL
+    static def PRODUCT_CODE
+    static def WUM_PRODUCT_VERSION
+    static def USE_CUSTOM_TESTNG
+    static def EXECUTOR_COUNT
     static def INFRA_LOCATION
     static def LATEST_PRODUCT_RELEASE_API
     static def LATEST_PRODUCT_BUILD_ARTIFACTS_API
     static def WORKSPACE
     static def SCENARIOS_REPOSITORY
     static def INFRASTRUCTURE_REPOSITORY
-
 
     def initProperties(def propertyMap) {
         Common util = new Common()
@@ -108,6 +107,5 @@ class Properties {
         } else {
             PRODUCT_GIT_URL = propertyMap.get(Constants.PRODUCT_GIT_URL)
         }
-
     }
 }
