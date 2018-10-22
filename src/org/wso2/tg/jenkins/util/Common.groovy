@@ -18,14 +18,17 @@
 
 package org.wso2.tg.jenkins.util
 
+import org.wso2.tg.jenkins.Properties
+
 def getTimestamp(Date date = new Date()) {
     return date.format('yyyyMMddHHmmss', TimeZone.getTimeZone('GMT')) as String
 }
 
 def truncateTestRunLog(parallelNumber) {
+    def props = Properties.instance
     sh """
-    if [ -d "${TESTGRID_HOME}/jobs/${PRODUCT}/${parallelNumber}/builds" ]; then
-        cd ${TESTGRID_HOME}/jobs/${PRODUCT}/${parallelNumber}
+    if [ -d "${props.TESTGRID_HOME}/jobs/${props.PRODUCT}/${parallelNumber}/builds" ]; then
+        cd ${props.TESTGRID_HOME}/jobs/${props.PRODUCT}/${parallelNumber}
       for file in builds/*/test-run.log ; do
         truncatedFile=\$(dirname \$file)/truncated-\$(basename \$file);
         head -n 10 \$file > \$truncatedFile;
@@ -35,7 +38,7 @@ def truncateTestRunLog(parallelNumber) {
         tail -n 50 \$file >> \$truncatedFile;
       done
     else
-        echo no logs found to truncate in ${TESTGRID_HOME}/jobs/${PRODUCT}/${parallelNumber}/builds!
+        echo no logs found to truncate in ${props.TESTGRID_HOME}/jobs/${props.PRODUCT}/${parallelNumber}/builds!
     fi
    """
 }
@@ -57,7 +60,28 @@ def getParameters(file) {
 
 def getTestPlanId(file) {
     echo "This is the file " + file.toString()
-     def tpyaml = readFile(file)
-     def m = tpyaml =~ /(id:)([A-z :'0-9\.-]*)(\n)/
+    def tpyaml = readFile(file)
+    def m = tpyaml =~ /(id:)([A-z :'0-9\.-]*)(\n)/
     return m[0][2].trim()
- }
+}
+
+def getRandomNumber(limit) {
+    return Math.abs(new Random().nextInt() % limit) + 1 as int
+}
+
+/**
+ *
+ * @return current working directory
+ */
+def getCurrentWorkspace() {
+    return pwd()
+}
+
+def getCredentials(def key) {
+//    Jenkins jenkins = Jenkins.getInstance()
+//    def store = jenkins.getExtensionList('com.cloudbees.plugins.credentials.SystemCredentialsProvider')[0].getStore()
+//    // get credentials domain
+//    def domain = Domain.global()
+//    store.getCredentials(domain)
+    return credentials(key).toString()
+}

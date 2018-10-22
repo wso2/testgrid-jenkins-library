@@ -16,16 +16,20 @@
  * under the License.
  */
 
-package org.wso2.tg.jenkins.alert
+package org.wso2.tg.jenkins.util
 
 /**
- * Sends Email notifications
+ * Create the given directory.
  *
- * @param subject subject of the Email
- * @param content body of the Email
+ * @param directoryPath full qualified path Of directory
+ * @throws IOException if file creation fails
  */
-def send(subject,  content) {
-//    emailext(to: "${EMAIL_TO_LIST}",
-//            subject: subject,
-//            body: content, mimeType: 'text/html')
+def createDirectory(directoryPath) throws IOException{
+    echo "Creating the directory " + directoryPath
+    File file = new File (directoryPath)
+    boolean created = file.mkdirs()
+    if (!created) {
+        throw IOException("Error while creating the directory " +file.getAbsolutePath())
+    }
+    echo "Finish creating the directory"
 }

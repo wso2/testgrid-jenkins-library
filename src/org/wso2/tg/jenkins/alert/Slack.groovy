@@ -18,6 +18,7 @@
 
 package org.wso2.tg.jenkins.alert
 
+
 /**
  * Sends out a slack notification to a given channel.
  * @param buildStatus status of the build
@@ -50,7 +51,7 @@ def sendNotification(String buildStatus = 'STARTED', phase, channel) {
     }
 
     // Send notifications
-    slackSend(channel: channel, color: colorCode, message: summary)
+    //slackSend(channel: channel, color: colorCode, message: summary)
 
 }
 

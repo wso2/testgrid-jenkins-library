@@ -15,8 +15,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.wso2.tg.jenkins
 
-def TETESTGRID_HOMESTGRID_HOME = "/testgrid/testgrid-home"
 
-// TODO: read the configuration file and create a constant map
-def getProperty(){}
+@Singleton
+class PipelineContext {
+
+    static def context
+
+    static def setContext(def context) {
+        this.context = context
+    }
+
+    static def getContext() {
+        return this.context
+    }
+}
