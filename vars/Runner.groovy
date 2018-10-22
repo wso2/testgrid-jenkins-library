@@ -34,7 +34,7 @@ def call() {
     PipelineContext.instance.setContext(this)
     // Initializing environment properties
     def props = Properties.instance
-    props.instance.initProperties(currentBuild.getRawBuild().getEnvironment())
+    props.instance.initProperties()
 
     // For scaling we need to create slave nodes before starting the pipeline and schedule it appropriately
     def alert = new Slack()

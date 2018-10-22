@@ -17,8 +17,6 @@
  */
 package org.wso2.tg.jenkins
 
-import org.wso2.tg.jenkins.util.Common
-
 @Singleton
 class Properties {
 
@@ -64,48 +62,80 @@ class Properties {
     static def SCENARIOS_REPOSITORY
     static def INFRASTRUCTURE_REPOSITORY
 
-    def initProperties(def propertyMap) {
-        Common util = new Common()
+    def initProperties() {
 
-        PRODUCT = propertyMap.get(Constants.PRODUCT)
+        PRODUCT = getJobProperty(Constants.PRODUCT)
         WORKSPACE = TESTGRID_HOME + "/jobs/" + PRODUCT
         TESTGRID_YAML_LOCATION = "/testgrid" + ".yaml"
         JOB_CONFIG_YAML_PATH = WORKSPACE + "/" + JOB_CONFIG_YAML
-        TEST_MODE = propertyMap.get(Constants.TEST_MODE)
-        GIT_WUM_USERNAME = util.getCredentials('GIT_WUM_USERNAME')
-        GIT_WUM_PASSWORD = util.getCredentials('GIT_WUM_PASSWORD')
-        PRODUCT_GIT_URL = getProductGitUrl(propertyMap)
-        PRODUCT_GIT_BRANCH = propertyMap.get(Constants.PRODUCT_GIT_BRANCH)
-        PRODUCT_DIST_DOWNLOAD_API = propertyMap.get(Constants.PRODUCT_DIST_DOWNLOAD_API)
-        WUM_CHANNEL = propertyMap.get(Constants.WUM_CHANNEL)
-        PRODUCT_CODE = propertyMap.get(Constants.PRODUCT_CODE)
-        WUM_PRODUCT_VERSION = propertyMap.get(Constants.WUM_PRODUCT_VERSION)
-        USE_CUSTOM_TESTNG = propertyMap.get(Constants.USE_CUSTOM_TESTNG)
-        EXECUTOR_COUNT = propertyMap.get(Constants.EXECUTOR_COUNT)
-        AWS_ACCESS_KEY_ID = util.getCredentials('AWS_ACCESS_KEY_ID')
-        AWS_SECRET_ACCESS_KEY = util.getCredentials('AWS_SECRET_ACCESS_KEY')
-        TOMCAT_USERNAME = util.getCredentials('TOMCAT_USERNAME')
-        TOMCAT_PASSWORD = util.getCredentials('TOMCAT_PASSWORD')
-        WUM_UAT_URL = util.getCredentials('WUM_UAT_URL')
-        WUM_UAT_APP_KEY = util.getCredentials('WUM_UAT_APPKEY')
-        USER_NAME = util.getCredentials('WUM_USERNAME')
-        PASSWORD = util.getCredentials('WUM_PASSWORD')
-        INFRA_LOCATION = propertyMap.get(Constants.INFRA_LOCATION)
-        LATEST_PRODUCT_RELEASE_API = propertyMap.get(Constants.LATEST_PRODUCT_RELEASE_API)
-        LATEST_PRODUCT_BUILD_ARTIFACTS_API = propertyMap.get(Constants.LATEST_PRODUCT_BUILD_ARTIFACTS_API)
-        SCENARIOS_REPOSITORY = propertyMap.get(Constants.SCENARIOS_REPOSITORY)
-        INFRASTRUCTURE_REPOSITORY = propertyMap.get(Constants.INFRASTRUCTURE_REPOSITORY)
+        TEST_MODE = getJobProperty(Constants.TEST_MODE)
+        GIT_WUM_USERNAME = getCredentials('GIT_WUM_USERNAME')
+        GIT_WUM_PASSWORD = getCredentials('GIT_WUM_PASSWORD')
+        PRODUCT_GIT_URL = getProductGitUrl()
+        PRODUCT_GIT_BRANCH = getJobProperty(Constants.PRODUCT_GIT_BRANCH)
+        PRODUCT_DIST_DOWNLOAD_API = getJobProperty(Constants.PRODUCT_DIST_DOWNLOAD_API)
+        WUM_CHANNEL = getJobProperty(Constants.WUM_CHANNEL, false)
+        PRODUCT_CODE = getJobProperty(Constants.PRODUCT_CODE, false)
+        WUM_PRODUCT_VERSION = getJobProperty(Constants.WUM_PRODUCT_VERSION, false)
+        USE_CUSTOM_TESTNG = getJobProperty(Constants.USE_CUSTOM_TESTNG)
+        EXECUTOR_COUNT = getJobProperty(Constants.EXECUTOR_COUNT)
+        AWS_ACCESS_KEY_ID = getCredentials('AWS_ACCESS_KEY_ID')
+        AWS_SECRET_ACCESS_KEY = getCredentials('AWS_SECRET_ACCESS_KEY')
+        TOMCAT_USERNAME = getCredentials('TOMCAT_USERNAME')
+        TOMCAT_PASSWORD = getCredentials('TOMCAT_PASSWORD')
+        WUM_UAT_URL = getCredentials('WUM_UAT_URL')
+        WUM_UAT_APP_KEY = getCredentials('WUM_UAT_APPKEY')
+        USER_NAME = getCredentials('WUM_USERNAME')
+        PASSWORD = getCredentials('WUM_PASSWORD')
+        INFRA_LOCATION = getJobProperty(Constants.INFRA_LOCATION)
+        LATEST_PRODUCT_RELEASE_API = getJobProperty(Constants.LATEST_PRODUCT_RELEASE_API)
+        LATEST_PRODUCT_BUILD_ARTIFACTS_API = getJobProperty(Constants.LATEST_PRODUCT_BUILD_ARTIFACTS_API)
+        SCENARIOS_REPOSITORY = getJobProperty(Constants.SCENARIOS_REPOSITORY)
+        INFRASTRUCTURE_REPOSITORY = getJobProperty(Constants.INFRASTRUCTURE_REPOSITORY)
     }
 
-    private def getProductGitUrl(def propertyMap) {
+    /**
+     * Validate mandatory properties and return property value.
+     *
+     * @propertyMap map of properties
+     * @property property to be validated and read
+     * @isMandatory specify whether the property is mandatory
+     */
+    private def getJobProperty(def property, boolean isMandatory = true) {
+        def ctx = PipelineContext.getContext()
+        def propertyMap = ctx.currentBuild.getRawBuild().getEnvironment()
+        def prop = propertyMap.get(property)
+        if (prop == null || prop.trim() == "" && isMandatory) {
+            ctx.echo "A mandatory prop " + property + " is empty or null"
+            throw new Exception("A mandatory property " + property + " is empty or null")
+        }
+        ctx.echo "Property : " + property + " value is set as " + prop
+        return prop
+    }
+
+    private def getProductGitUrl() {
+        def ctx = PipelineContext.getContext()
+        def propertyMap = ctx.currentBuild.getRawBuild().getEnvironment()
         //Constructing the product git url if test mode is wum. Adding the Git username and password into the product git url.
+        def productGitUrl
         if (TEST_MODE == "WUM") {
             def url = propertyMap.get(Constants.PRODUCT_GIT_URL)
             def values = url.split('//g')
-            def productGitUrl = "${values[0]}//${GIT_WUM_USERNAME}:${GIT_WUM_PASSWORD}@g${values[1]}"
-            PRODUCT_GIT_URL = productGitUrl
+            productGitUrl = "${values[0]}//${GIT_WUM_USERNAME}:${GIT_WUM_PASSWORD}@g${values[1]}"
         } else {
-            PRODUCT_GIT_URL = propertyMap.get(Constants.PRODUCT_GIT_URL)
+            productGitUrl = propertyMap.get(Constants.PRODUCT_GIT_URL)
         }
+        return productGitUrl
+    }
+
+    private def getCredentials(def key, boolean isMandatory = true){
+        def ctx = PipelineContext.getContext()
+        def cred = ctx.credentials(key).toString()
+        if (cred == null || cred.trim() == "" && isMandatory) {
+            ctx.echo "A mandatory credential is empty or null " + key
+            throw new Exception("A mandatory property " + key + " is empty or null")
+        }
+        ctx.echo "Credential for key : " + key + " is found."
+        return cred
     }
 }
