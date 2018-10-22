@@ -73,17 +73,6 @@ def call() {
                                             "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}")]) {
                             }
 
-                            //Constructing the product git url if test mode is wum. Adding the Git username and password into the product git url.
-                            if ("${props.TEST_MODE}" == "WUM") {
-                                def url = "${props.PRODUCT_GIT_URL}"
-                                def values = url.split('//g')
-                                def productGitUrl =
-                                        "${values[0]}//${props.GIT_WUM_USERNAME}:${props.GIT_WUM_PASSWORD}@g${values[1]}"
-                                PRODUCT_GIT_URL = "${productGitUrl}"
-
-                            } else {
-                                PRODUCT_GIT_URL = "${props.PRODUCT_GIT_URL}"
-                            }
                             echo "Creating Job config!!!!"
                             // Creating the job config file
                             ws.createJobConfigYamlFile("${props.JOB_CONFIG_YAML_PATH}")

@@ -34,9 +34,9 @@ class Properties {
     static def SCENARIOS_LOCATION           ="workspace/apim-test-integration"
     static def CONFIG_PROPERTY_FILE_PATH    = TESTGRID_HOME + "/config.properties"
 
-    // Job Properties
-    static def PRODUCT                      = ""
-    static def TESTGRID_YAML_LOCATION       = ""
+    // Job Properties which are set when init is called
+    static def PRODUCT
+    static def TESTGRID_YAML_LOCATION
     static def AWS_ACCESS_KEY_ID            = ""
     static def AWS_SECRET_ACCESS_KEY        = ""
     static def TOMCAT_USERNAME              = ""
@@ -48,7 +48,6 @@ class Properties {
     static def PASSWORD                     = ""
     static def GIT_WUM_USERNAME             = ""
     static def GIT_WUM_PASSWORD             = ""
-    static def CURRENT_WORKSPACE            = ""
     static def JOB_CONFIG_YAML_PATH         = ""
     static def PRODUCT_GIT_URL              = ""
     static def PRODUCT_GIT_BRANCH           = ""
@@ -58,23 +57,25 @@ class Properties {
     static def WUM_PRODUCT_VERSION          = ""
     static def USE_CUSTOM_TESTNG            = ""
     static def EXECUTOR_COUNT               = ""
-    static def INFRA_LOCATION               = ""
-    static def LATEST_PRODUCT_RELEASE_API   = ""
-    static def LATEST_PRODUCT_BUILD_ARTIFACTS_API   = ""
-    static def WORKSPACE                    = ""
-    static def SCENARIOS_REPOSITORY         = ""
-    static def INFRASTRUCTURE_REPOSITORY    = ""
+    static def INFRA_LOCATION
+    static def LATEST_PRODUCT_RELEASE_API
+    static def LATEST_PRODUCT_BUILD_ARTIFACTS_API
+    static def WORKSPACE
+    static def SCENARIOS_REPOSITORY
+    static def INFRASTRUCTURE_REPOSITORY
 
 
     def initProperties(def propertyMap) {
         Common util = new Common()
 
         PRODUCT = propertyMap.get(Constants.PRODUCT)
-        //CURRENT_WORKSPACE = util.getCurrentWorkspace().toString()
         WORKSPACE = TESTGRID_HOME + "/jobs/" + PRODUCT
         TESTGRID_YAML_LOCATION = "/testgrid" + ".yaml"
         JOB_CONFIG_YAML_PATH = WORKSPACE + "/" + JOB_CONFIG_YAML
-        PRODUCT_GIT_URL = propertyMap.get(Constants.PRODUCT_GIT_URL)
+        TEST_MODE = propertyMap.get(Constants.TEST_MODE)
+        GIT_WUM_USERNAME = util.getCredentials('GIT_WUM_USERNAME')
+        GIT_WUM_PASSWORD = util.getCredentials('GIT_WUM_PASSWORD')
+        PRODUCT_GIT_URL = getProductGitUrl(propertyMap)
         PRODUCT_GIT_BRANCH = propertyMap.get(Constants.PRODUCT_GIT_BRANCH)
         PRODUCT_DIST_DOWNLOAD_API = propertyMap.get(Constants.PRODUCT_DIST_DOWNLOAD_API)
         WUM_CHANNEL = propertyMap.get(Constants.WUM_CHANNEL)
@@ -90,13 +91,25 @@ class Properties {
         WUM_UAT_APP_KEY = util.getCredentials('WUM_UAT_APPKEY')
         USER_NAME = util.getCredentials('WUM_USERNAME')
         PASSWORD = util.getCredentials('WUM_PASSWORD')
-        GIT_WUM_USERNAME = util.getCredentials('GIT_WUM_USERNAME')
-        GIT_WUM_PASSWORD = util.getCredentials('GIT_WUM_PASSWORD')
-        TEST_MODE = propertyMap.get(Constants.TEST_MODE)
         INFRA_LOCATION = propertyMap.get(Constants.INFRA_LOCATION)
         LATEST_PRODUCT_RELEASE_API = propertyMap.get(Constants.LATEST_PRODUCT_RELEASE_API)
         LATEST_PRODUCT_BUILD_ARTIFACTS_API = propertyMap.get(Constants.LATEST_PRODUCT_BUILD_ARTIFACTS_API)
         SCENARIOS_REPOSITORY = propertyMap.get(Constants.SCENARIOS_REPOSITORY)
         INFRASTRUCTURE_REPOSITORY = propertyMap.get(Constants.INFRASTRUCTURE_REPOSITORY)
+    }
+
+    private def getProductGitUrl(def propertyMap) {
+        //Constructing the product git url if test mode is wum. Adding the Git username and password into the product git url.
+        if (TEST_MODE == "WUM") {
+            def url = "${props.PRODUCT_GIT_URL}"
+            def values = url.split('//g')
+            def productGitUrl =
+                    "${values[0]}//${GIT_WUM_USERNAME}:${GIT_WUM_PASSWORD}@g${values[1]}"
+            PRODUCT_GIT_URL = "${productGitUrl}"
+
+        } else {
+            PRODUCT_GIT_URL = propertyMap.get(Constants.PRODUCT_GIT_URL)
+        }
+
     }
 }
