@@ -67,30 +67,30 @@ class Properties {
         WORKSPACE = TESTGRID_HOME + "/jobs/" + PRODUCT
         TESTGRID_YAML_LOCATION = "/testgrid" + ".yaml"
         JOB_CONFIG_YAML_PATH = WORKSPACE + "/" + JOB_CONFIG_YAML
-        TEST_MODE = getJobProperty(Constants.TEST_MODE)
-        GIT_WUM_USERNAME = getCredentials(Constants.GIT_WUM_USERNAME)
-        GIT_WUM_PASSWORD = getCredentials(Constants.GIT_WUM_PASSWORD)
+        TEST_MODE = getJobProperty("TEST_MODE")
+        GIT_WUM_USERNAME = getCredentials("GIT_WUM_USERNAME")
+        GIT_WUM_PASSWORD = getCredentials("GIT_WUM_PASSWORD")
         PRODUCT_GIT_URL = getProductGitUrl()
-        PRODUCT_GIT_BRANCH = getJobProperty(Constants.PRODUCT_GIT_BRANCH)
-        PRODUCT_DIST_DOWNLOAD_API = getJobProperty(Constants.PRODUCT_DIST_DOWNLOAD_API)
-        WUM_CHANNEL = getJobProperty(Constants.WUM_CHANNEL, false)
-        PRODUCT_CODE = getJobProperty(Constants.PRODUCT_CODE, false)
-        WUM_PRODUCT_VERSION = getJobProperty(Constants.WUM_PRODUCT_VERSION, false)
-        USE_CUSTOM_TESTNG = getJobProperty(Constants.USE_CUSTOM_TESTNG)
-        EXECUTOR_COUNT = getJobProperty(Constants.EXECUTOR_COUNT)
-        AWS_ACCESS_KEY_ID = getCredentials(Constants.AWS_ACCESS_KEY_ID)
-        AWS_SECRET_ACCESS_KEY = getCredentials(Constants.AWS_SECRET_ACCESS_KEY)
-        TOMCAT_USERNAME = getCredentials(Constants.TOMCAT_USERNAME)
-        TOMCAT_PASSWORD = getCredentials(Constants.TOMCAT_PASSWORD)
-        WUM_UAT_URL = getCredentials(Constants.WUM_UAT_URL)
-        WUM_UAT_APP_KEY = getCredentials(Constants.WUM_UAT_APPKEY)
-        USER_NAME = getCredentials(Constants.WUM_USERNAME)
-        PASSWORD = getCredentials(Constants.WUM_PASSWORD)
-        INFRA_LOCATION = getJobProperty(Constants.INFRA_LOCATION)
-        LATEST_PRODUCT_RELEASE_API = getJobProperty(Constants.LATEST_PRODUCT_RELEASE_API)
-        LATEST_PRODUCT_BUILD_ARTIFACTS_API = getJobProperty(Constants.LATEST_PRODUCT_BUILD_ARTIFACTS_API)
-        SCENARIOS_REPOSITORY = getJobProperty(Constants.SCENARIOS_REPOSITORY)
-        INFRASTRUCTURE_REPOSITORY = getJobProperty(Constants.INFRASTRUCTURE_REPOSITORY)
+        PRODUCT_GIT_BRANCH = getJobProperty("PRODUCT_GIT_BRANCH")
+        PRODUCT_DIST_DOWNLOAD_API = getJobProperty("PRODUCT_DIST_DOWNLOAD_API")
+        WUM_CHANNEL = getJobProperty("WUM_CHANNEL, false")
+        PRODUCT_CODE = getJobProperty("PRODUCT_CODE, false")
+        WUM_PRODUCT_VERSION = getJobProperty("WUM_PRODUCT_VERSION, false")
+        USE_CUSTOM_TESTNG = getJobProperty("USE_CUSTOM_TESTNG")
+        EXECUTOR_COUNT = getJobProperty("EXECUTOR_COUNT")
+        AWS_ACCESS_KEY_ID = getCredentials("AWS_ACCESS_KEY_ID")
+        AWS_SECRET_ACCESS_KEY = getCredentials("AWS_SECRET_ACCESS_KEY")
+        TOMCAT_USERNAME = getCredentials("TOMCAT_USERNAME")
+        TOMCAT_PASSWORD = getCredentials("TOMCAT_PASSWORD")
+        WUM_UAT_URL = getCredentials("WUM_UAT_URL")
+        WUM_UAT_APP_KEY = getCredentials("WUM_UAT_APPKEY")
+        USER_NAME = getCredentials("WUM_USERNAME")
+        PASSWORD = getCredentials("WUM_PASSWORD")
+        INFRA_LOCATION = getJobProperty("INFRA_LOCATION")
+        LATEST_PRODUCT_RELEASE_API = getJobProperty("LATEST_PRODUCT_RELEASE_API")
+        LATEST_PRODUCT_BUILD_ARTIFACTS_API = getJobProperty("LATEST_PRODUCT_BUILD_ARTIFACTS_API")
+        SCENARIOS_REPOSITORY = getJobProperty("SCENARIOS_REPOSITORY")
+        INFRASTRUCTURE_REPOSITORY = getJobProperty("INFRASTRUCTURE_REPOSITORY")
     }
 
     /**
@@ -118,11 +118,11 @@ class Properties {
         //Constructing the product git url if test mode is wum. Adding the Git username and password into the product git url.
         def productGitUrl
         if (TEST_MODE == "WUM") {
-            def url = propertyMap.get(Constants.PRODUCT_GIT_URL)
+            def url = propertyMap.get("PRODUCT_GIT_URL")
             def values = url.split('//g')
             productGitUrl = "${values[0]}//${GIT_WUM_USERNAME}:${GIT_WUM_PASSWORD}@g${values[1]}"
         } else {
-            productGitUrl = propertyMap.get(Constants.PRODUCT_GIT_URL)
+            productGitUrl = propertyMap.get("PRODUCT_GIT_URL")
         }
         return productGitUrl
     }
