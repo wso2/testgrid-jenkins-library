@@ -63,7 +63,7 @@ class Properties {
 
     def initProperties() {
 
-        PRODUCT = getJobProperty("PRODUCT")
+        PRODUCT = getJobProperty("JOB_BASE_NAME")
         WORKSPACE = TESTGRID_HOME + "/jobs/" + PRODUCT
         TESTGRID_YAML_LOCATION = "/testgrid" + ".yaml"
         JOB_CONFIG_YAML_PATH = WORKSPACE + "/" + JOB_CONFIG_YAML
