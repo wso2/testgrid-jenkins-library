@@ -18,7 +18,6 @@
 
 package org.wso2.tg.jenkins.util
 
-import com.cloudbees.groovy.cps.NonCPS
 import org.wso2.tg.jenkins.Properties
 
 def uploadToS3(testPlanId) {
@@ -31,8 +30,7 @@ def uploadToS3(testPlanId) {
 def uploadCharts() {
     def props = Properties.instance
     sh """
-      aws s3 sync ${props.TESTGRID_HOME}/jobs/${props.PRODUCT}/builds/ ${getS3WorkspaceURL()}/charts/${props.PRODUCT}/ 
---exclude "*" --include "*.png" --acl public-read
+      aws s3 sync ${props.TESTGRID_HOME}/jobs/${props.PRODUCT}/ ${getS3WorkspaceURL()}/charts/${props.PRODUCT}/ --exclude "*" --include "*.png" --acl public-read
       """
 }
 

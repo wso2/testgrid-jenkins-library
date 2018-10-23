@@ -28,7 +28,6 @@ class Properties {
     static def SQL_DRIVERS_LOCATION_WINDOWS ="/testgrid/sql-drivers"
     static def REMOTE_WORKSPACE_DIR_UNIX    ="/opt/wso2/workspace"
     static def REMOTE_WORKSPACE_DIR_WINDOWS ="c:/testgrid/workspace"
-    static def DEPLOYMENT_LOCATION          ="workspace/testgrid"
     static def SCENARIOS_LOCATION           ="workspace/apim-test-integration"
     static def CONFIG_PROPERTY_FILE_PATH    = TESTGRID_HOME + "/config.properties"
 

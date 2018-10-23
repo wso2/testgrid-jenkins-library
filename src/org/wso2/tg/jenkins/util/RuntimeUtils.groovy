@@ -3,9 +3,8 @@ package org.wso2.tg.jenkins.util
 import org.wso2.tg.jenkins.Properties
 
 /**
- * Util methods required by the TG runtime.
+ * Increases TG runtime memory.
  */
-
 def increaseTestGridRuntimeMemory(min, max) {
     def props = Properties.instance
     sh """

@@ -30,7 +30,7 @@ import org.wso2.tg.jenkins.util.WorkSpaceUtils
 
 // The pipeline should reside in a call block
 def call() {
-    // Setting the current pipeline context
+    // Setting the current pipeline context, this should be done initially
     PipelineContext.instance.setContext(this)
     // Initializing environment properties
     def props = Properties.instance
@@ -55,14 +55,18 @@ def call() {
         tools {
             jdk 'jdk8'
         }
+        // These variables are needed by the shell scripts when setting up and running tests
+        environment {
+            TESTGRID_HOME = "${props.TESTGRID_HOME}"
+        }
 
         stages {
             stage('Preparation') {
                 steps {
                     script {
                         try {
-                            //alert.sendNotification('STARTED', "Initiation", "#build_status_verbose")
-                            //alert.sendNotification('STARTED', "Initiation", "#build_status")
+                            alert.sendNotification('STARTED', "Initiation", "#build_status_verbose")
+                            alert.sendNotification('STARTED', "Initiation", "#build_status")
                             deleteDir()
                             pwd()
                             // Increasing the TG JVM memory params
@@ -84,14 +88,14 @@ def call() {
                             echo "Generating test plans!!"
                             tgExecutor.generateTesPlans(props.PRODUCT, props.JOB_CONFIG_YAML_PATH)
 
-                            echo "Stashing testplans to be used in different slave nodes"
+                            echo "Stashing test plans to be used in different slave nodes"
                             dir("${props.WORKSPACE}") {
                                 stash name: "test-plans", includes: "test-plans/**"
                             }
                         } catch (e) {
                             currentBuild.result = "FAILED"
                         } finally {
-                            //alert.sendNotification(currentBuild.result, "preparation", "#build_status_verbose")
+                            alert.sendNotification(currentBuild.result, "preparation", "#build_status_verbose")
                         }
                     }
                 }
@@ -111,7 +115,7 @@ def call() {
                             parallel tests
                         } catch (e) {
                             currentBuild.result = "FAILED"
-                            //alert.sendNotification(currentBuild.result, "Parallel", "#build_status_verbose")
+                            alert.sendNotification(currentBuild.result, "Parallel", "#build_status_verbose")
                         }
                     }
                 }
