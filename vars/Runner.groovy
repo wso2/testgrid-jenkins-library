@@ -45,7 +45,6 @@ def call() {
     def tgExecutor = new TestGridExecutor()
     def runtime = new RuntimeUtils()
     def ws = new WorkSpaceUtils()
-    def log = new Logger()
 
     pipeline {
         agent {
@@ -78,7 +77,7 @@ def call() {
                                     [configFile(fileId: "${props.PRODUCT}-testgrid-yaml", targetLocation:
                                             "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}")]) {
                             }
-
+                            def log = new Logger()
                             log.info("Creating Job config!!!!")
                             // Creating the job config file
                             ws.createJobConfigYamlFile("${props.JOB_CONFIG_YAML_PATH}")
