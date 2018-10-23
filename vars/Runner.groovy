@@ -16,6 +16,8 @@
  * under the License.
  */
 
+
+import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.PipelineContext
 import org.wso2.tg.jenkins.alert.Slack
 import org.wso2.tg.jenkins.alert.Email
@@ -43,6 +45,7 @@ def call() {
     def tgExecutor = new TestGridExecutor()
     def runtime = new RuntimeUtils()
     def ws = new WorkSpaceUtils()
+    def log = new Logger()
 
     pipeline {
         agent {
@@ -76,7 +79,7 @@ def call() {
                                             "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}")]) {
                             }
 
-                            echo "Creating Job config!!!!"
+                            log.info("Creating Job config!!!!")
                             // Creating the job config file
                             ws.createJobConfigYamlFile("${props.JOB_CONFIG_YAML_PATH}")
                             sh """
