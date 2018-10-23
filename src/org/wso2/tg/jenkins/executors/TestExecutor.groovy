@@ -64,7 +64,6 @@ def runPlan(tPlan, testPlanId) {
     awsHelper.uploadToS3(testPlanId)
 }
 
-//@NonCPS
 def getTestExecutionMap(parallel_executor_count) {
     def commonUtils = new Common()
     def props = Properties.instance
@@ -73,6 +72,7 @@ def getTestExecutionMap(parallel_executor_count) {
     def tests = [:]
     def files = findFiles(glob: '**/test-plans/*.yaml')
     echo "Found ${files.length} testplans"
+    echo "Parallel exec count "+ parallelExecCount
     for (int f = 1; f < parallelExecCount + 1 && f <= files.length; f++) {
         def executor = f
         name = commonUtils.getParameters("${props.WORKSPACE}/test-plans/" + files[f - 1].name)
