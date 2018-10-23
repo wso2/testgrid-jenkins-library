@@ -15,23 +15,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.wso2.tg.jenkins.util
 
 import org.wso2.tg.jenkins.Properties
 
 /**
- * Create the given directory.
+ * Create the jobConfig.yaml file
  *
  * @param filePath full qualified path Of directory
  * @throws IOException if file creation fails
  */
-def createJobConfigYamlFile(filePath) throws IOException {
+def createJobConfigYamlFile(def filePath) {
 
     def props = Properties.instance
-    // https://jenkins.io/doc/pipeline/steps/pipeline-utility-steps/#writeyaml-write-a-yaml-from-an-object
-//    File file = new File (filePath)
-//    file.createNewFile()
+    // TODO: this can be improved with inbuilt groovy support
+    // https://jenkins.io/doc/pipeline/steps/pipeline-utility-steps/#writeyaml-write-a-yaml
     echo "Creating Job-config.yaml at : {$filePath}"
     sh """
     echo 'keyFileLocation: workspace/testgrid-key.pem' > ${filePath}

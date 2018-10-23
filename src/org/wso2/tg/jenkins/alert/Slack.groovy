@@ -15,9 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.wso2.tg.jenkins.alert
-
 
 /**
  * Sends out a slack notification to a given channel.
@@ -54,5 +52,3 @@ def sendNotification(String buildStatus = 'STARTED', phase, channel) {
     slackSend(channel: channel, color: colorCode, message: summary)
 
 }
-
-

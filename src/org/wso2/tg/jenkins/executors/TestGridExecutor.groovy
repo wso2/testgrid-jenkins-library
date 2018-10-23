@@ -20,31 +20,73 @@ package org.wso2.tg.jenkins.executors
 
 import org.wso2.tg.jenkins.Properties
 
-
+/**
+ * Invokes generate-test-plan command of testgrid.
+ *
+ * @param product the product to be parsed
+ * @param configYaml testgrid yaml file location
+ */
 def generateTesPlans(def product, def configYaml) {
     def props = Properties.instance
     sh """
-    cd ${props.TESTGRID_HOME}/testgrid-dist/${props.TESTGRID_NAME}
-    export TESTGRID_HOME="${props.TESTGRID_HOME}"
-    ./testgrid generate-test-plan \
-        --product ${product} \
-        --file ${configYaml}
-    echo "Following Test plans were generated : "
-    ls -al ${props.WORKSPACE}/test-plans
+        cd ${props.TESTGRID_DIST_LOCATION}/${props.TESTGRID_NAME}
+        export TESTGRID_HOME="${props.TESTGRID_HOME}"
+        ./testgrid generate-test-plan \
+            --product ${product} \
+            --file ${configYaml}
+        echo "Following Test plans were generated : "
+        ls -al ${props.WORKSPACE}/test-plans
     """
 }
 
+/**
+ * Invokes run-testplan command of testgrid.
+ *
+ * @param product the product to be parsed
+ * @param testPlanFilePath test plan location
+ * @param workspace execution workspace
+ */
 def runTesPlans(def product, def testPlanFilePath, def workspace) {
     def props = Properties.instance
     sh """
-            echo Running Test-Plan: ${testPlanFilePath}
-            cd ${props.TESTGRID_HOME}/testgrid-dist/${props.TESTGRID_NAME}
-            export TESTGRID_HOME="${props.TESTGRID_HOME}"
-            ./testgrid run-testplan --product ${product} \
+        echo Running Test-Plan: ${testPlanFilePath}
+        cd ${props.TESTGRID_DIST_LOCATION}/${props.TESTGRID_NAME}
+        export TESTGRID_HOME="${props.TESTGRID_HOME}"
+        ./testgrid run-testplan --product ${product} \
             --file ${testPlanFilePath} --workspace ${workspace}        
     """
 }
 
-def finalizeTestPlans() {}
+/**
+ * Invokes finalize-testplan command of testgrid.
+ *
+ * @param product the product to be parsed
+ * @param workspace execution workspace
+ */
+def finalizeTestPlans(def product, def workspace) {
+    def props = Properties.instance
+    sh """
+        export TESTGRID_HOME="${props.TESTGRID_HOME}"
+        cd ${props.TESTGRID_DIST_LOCATION}/${props.TESTGRID_NAME}
+        ./testgrid finalize-run-testplan \
+            --product ${product} --workspace ${workspace}
+    """
+}
 
-def generateEmail() {}
+/**
+ * Invokes generate email command of testgrid.
+ *
+ * @param product the product to be parsed
+ * @param workspace execution workspace
+ */
+def generateEmail(def product, def workspace) {
+    def props = Properties.instance
+    sh """
+       export DISPLAY=:95.0
+       export TESTGRID_HOME="${props.TESTGRID_HOME}"
+       cd ${props.TESTGRID_DIST_LOCATION}/${props.TESTGRID_NAME}
+       ./testgrid generate-email \
+            --product ${product} \
+                --workspace ${workspace}
+    """
+}

@@ -21,8 +21,8 @@ package org.wso2.tg.jenkins
 class Properties {
 
     static def TESTGRID_NAME                = "WSO2-TestGrid"
-    static def TESTGRID_DIST_LOCATION       = "/testgrid/testgrid-home/testgrid-dist/"
-    static def TESTGRID_HOME                = "/testgrid/testgrid-home/"
+    static def TESTGRID_HOME                = "/testgrid/testgrid-home"
+    static def TESTGRID_DIST_LOCATION       = TESTGRID_HOME + "/testgrid-dist"
     static def JOB_CONFIG_YAML              = "job-config.yaml"
     static def SQL_DRIVERS_LOCATION_UNIX    ="/home/centos/sql-drivers/"
     static def SQL_DRIVERS_LOCATION_WINDOWS ="/testgrid/sql-drivers"

@@ -16,7 +16,6 @@
  * under the License.
  */
 
-
 import org.wso2.tg.jenkins.PipelineContext
 import org.wso2.tg.jenkins.alert.Slack
 import org.wso2.tg.jenkins.alert.Email
@@ -126,18 +125,8 @@ def call() {
             always {
                 script {
                     try {
-                        sh """
-                                export TESTGRID_HOME="${props.TESTGRID_HOME}" 
-                                cd ${props.TESTGRID_HOME}/testgrid-dist/${props.TESTGRID_NAME}
-                                ./testgrid finalize-run-testplan \
-                                --product ${props.PRODUCT} --workspace ${props.WORKSPACE}
-
-                                export DISPLAY=:95.0
-                                cd ${props.TESTGRID_HOME}/testgrid-dist/${props.TESTGRID_NAME}
-                                ./testgrid generate-email \
-                                --product ${props.PRODUCT} \
-                                --workspace ${props.WORKSPACE}
-                            """
+                        tgExecutor.finalizeTestPlans(props.PRODUCT, props.WORKSPACE)
+                        tgExecutor.generateEmail(props.PRODUCT, props.WORKSPACE)
                         awsHelper.uploadCharts()
                         //Send email for failed results.
                         if (fileExists("${props.WORKSPACE}/SummarizedEmailReport.html")) {

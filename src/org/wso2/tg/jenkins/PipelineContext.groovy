@@ -17,7 +17,9 @@
  */
 package org.wso2.tg.jenkins
 
-
+/**
+ * Stores the pipeline context.
+ */
 @Singleton
 class PipelineContext {
 
@@ -26,7 +28,6 @@ class PipelineContext {
     static def setContext(def context) {
         this.context = context
     }
-
     static def getContext() {
         return this.context
     }

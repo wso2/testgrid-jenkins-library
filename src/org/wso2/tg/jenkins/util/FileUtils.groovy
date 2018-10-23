@@ -31,5 +31,4 @@ def createDirectory(directoryPath) throws IOException{
     if (!created) {
         throw IOException("Error while creating the directory " +file.getAbsolutePath())
     }
-    echo "Finish creating the directory"
 }
