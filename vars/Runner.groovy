@@ -77,6 +77,7 @@ def call() {
                                     [configFile(fileId: "${props.PRODUCT}-testgrid-yaml", targetLocation:
                                             "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}")]) {
                             }
+                            echo "Just before the logger"
                             def log = new Logger()
                             log.info("Creating Job config!!!!")
                             // Creating the job config file
