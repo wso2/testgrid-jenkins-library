@@ -138,7 +138,7 @@ class Properties {
     }
 
     private def getExecutorCount(def key) {
-        def executorCount = getProperty(key, false)
+        def executorCount = getJobProperty(key, false)
         if (executorCount == null || executorCount.trim() == "") {
            executorCount = DEFAULT_EXECUTOR_COUNT
         }
