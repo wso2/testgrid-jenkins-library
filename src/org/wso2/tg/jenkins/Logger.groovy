@@ -21,25 +21,22 @@ package org.wso2.tg.jenkins
 /**
  * This class handles logging.
  */
-class Logger implements Serializable {
-    def ctx = PipelineContext.getContext()
-    void info(message) {
-        def time = getTimestamp()
-        ctx.echo "[INFO] : $time : $message"
-    }
+void info(def message) {
+    def time = getTimestamp()
+    echo "[INFO] : $time : $message"
+}
 
-    void error(message) {
-        def time = getTimestamp()
-        ctx.echo "[ERROR] : $time : $message"
-    }
+void error(def message) {
+    def time = getTimestamp()
+    echo "[ERROR] : $time : $message"
+}
 
-    void warn(message) {
-        def time = getTimestamp()
-        echo "[WARN] : $time : $message"
-    }
+void warn(def message) {
+    def time = getTimestamp()
+    echo "[WARN] : $time : $message"
+}
 
-    private def getTimestamp() {
-        Date date = new Date()
-        return date.format('yyyyMMddHHmmss', TimeZone.getTimeZone('GMT')) as String
-    }
+private def getTimestamp() {
+    Date date = new Date()
+    return date.format('yyyyMMddHHmmss', TimeZone.getTimeZone('GMT')) as String
 }
