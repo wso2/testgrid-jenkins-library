@@ -33,7 +33,7 @@ def runPlan(tPlan, testPlanId) {
     def fileUtil = new FileUtils()
     def props = Properties.instance
     def tgExecutor = new TestGridExecutor()
-    def runtime =  new RuntimeUtils()
+    def runtime = new RuntimeUtils()
     def log = new Logger()
 
     fileUtil.createDirectory("${props.WORKSPACE}/${testPlanId}")
@@ -70,7 +70,7 @@ def getTestExecutionMap(parallel_executor_count) {
     def tests = [:]
     def files = findFiles(glob: '**/test-plans/*.yaml')
     log.info("Found ${files.length} testplans")
-    log.info("Parallel exec count "+ parallelExecCount)
+    log.info("Parallel exec count " + parallelExecCount)
     for (int f = 1; f < parallelExecCount + 1 && f <= files.length; f++) {
         def executor = f
         name = commonUtils.getParameters("${props.WORKSPACE}/test-plans/" + files[f - 1].name)
@@ -87,16 +87,19 @@ def getTestExecutionMap(parallel_executor_count) {
                         if (executor == parallelExecCount) {
                             for (int i = processFileCount * (executor - 1); i < files.length; i++) {
                                 /*IMPORTANT: Instead of using 'i' directly in your logic below, 
-                                you should assign it to a new variable and use it. (To avoid same 'i-object' being refered)*/
+                                you should assign it to a new variable and use it.
+                                (To avoid same 'i-object' being refered)*/
                                 // Execution logic
                                 int fileNo = i
-                                testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/" + files[fileNo].name)
+                                testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/"
+                                                                                        + files[fileNo].name)
                                 runPlan(files[i], testplanId)
                             }
                         } else {
                             for (int i = 0; i < processFileCount; i++) {
                                 int fileNo = processFileCount * (executor - 1) + i
-                                testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/" + files[fileNo].name)
+                                testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/"
+                                                                                        + files[fileNo].name)
                                 runPlan(files[fileNo], testplanId)
                             }
                         }
@@ -108,7 +111,7 @@ def getTestExecutionMap(parallel_executor_count) {
     return tests
 }
 
-def prepareWorkspace(testPlanId){
+def prepareWorkspace(testPlanId) {
     def props = Properties.instance
     def log = new Logger()
     log.info(" Creating workspace and builds sub-directories")

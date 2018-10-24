@@ -104,8 +104,8 @@ def call() {
 
             stage('parallel-run') {
                 steps {
-                    log.info("Starting parallel execution stage.")
                     script {
+                        log.info("Starting parallel execution stage.")
                         def name = "unknown"
                         try {
                             def tests = testExecutor.getTestExecutionMap(props.EXECUTOR_COUNT)
