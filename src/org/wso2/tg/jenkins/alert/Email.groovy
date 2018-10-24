@@ -18,6 +18,9 @@
 
 package org.wso2.tg.jenkins.alert
 
+import org.wso2.tg.jenkins.Logger
+import org.wso2.tg.jenkins.Properties
+
 /**
  * Sends Email notifications
  *
@@ -25,7 +28,10 @@ package org.wso2.tg.jenkins.alert
  * @param content body of the Email
  */
 def send(subject,  content) {
-    emailext(to: "${EMAIL_TO_LIST}",
+    def log = new Logger()
+    def props = Properties.instance
+    log.info("Sending mail to " + props.EMAIL_TO_LIST + " with the subject " + subject)
+    emailext(to: "${props.EMAIL_TO_LIST}",
             subject: subject,
             body: content, mimeType: 'text/html')
 }

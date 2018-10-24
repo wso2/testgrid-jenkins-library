@@ -18,6 +18,7 @@
 
 package org.wso2.tg.jenkins.executors
 
+import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.Properties
 import org.wso2.tg.jenkins.util.Common
 import org.wso2.tg.jenkins.util.AWSUtils
@@ -33,18 +34,16 @@ def runPlan(tPlan, testPlanId) {
     def props = Properties.instance
     def tgExecutor = new TestGridExecutor()
     def runtime =  new RuntimeUtils()
+    def log = new Logger()
 
     fileUtil.createDirectory("${props.WORKSPACE}/${testPlanId}")
-    echo "Preparing workspace"
-    prepareWorkspace(tPlan, testPlanId)
+    log.info("Preparing workspace for testplan : " + testPlanId)
+    prepareWorkspace(testPlanId)
     //sleep(time:commonUtil.getRandomNumber(10),unit:"SECONDS")
-    echo "Unstashing test-plans and testgrid.yaml to ${props.WORKSPACE}/${testPlanId}"
+    log.info("Unstashing test-plans and testgrid.yaml to ${props.WORKSPACE}/${testPlanId}")
     runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
     writeFile file: "${props.WORKSPACE}/${testPlanId}/${props.INFRA_LOCATION}/deploy.sh", text: '#!/bin/sh'
 
-//    dir("${props.WORKSPACE}/${testPlanId}") {
-//        unstash name: "test-plans"
-//    }
 
     def name = commonUtil.getParameters("${props.WORKSPACE}/${tPlan}")
     notifier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
@@ -53,30 +52,28 @@ def runPlan(tPlan, testPlanId) {
                 "${props.WORKSPACE}/${tPlan}", "${props.WORKSPACE}/${testPlanId}")
         commonUtil.truncateTestRunLog(testPlanId)
     } catch (Exception err) {
-        echo "Error : ${err}"
+        log.error("Error : ${err}")
         currentBuild.result = 'UNSTABLE'
     } finally {
         notifier.sendNotification(currentBuild.result, "Parallel \n Infra : " + name, "#build_status_verbose")
     }
-
-    echo "RESULT: ${currentBuild.result}"
-
+    log.info("RESULT: ${currentBuild.result}")
     awsHelper.uploadToS3(testPlanId)
 }
 
 def getTestExecutionMap(parallel_executor_count) {
     def commonUtils = new Common()
+    def log = new Logger()
     def props = Properties.instance
     def parallelExecCount = parallel_executor_count as int
     def name = "unknown"
     def tests = [:]
     def files = findFiles(glob: '**/test-plans/*.yaml')
-    echo "Found ${files.length} testplans"
-    echo "Parallel exec count "+ parallelExecCount
+    log.info("Found ${files.length} testplans")
+    log.info("Parallel exec count "+ parallelExecCount)
     for (int f = 1; f < parallelExecCount + 1 && f <= files.length; f++) {
         def executor = f
         name = commonUtils.getParameters("${props.WORKSPACE}/test-plans/" + files[f - 1].name)
-        echo name
         tests["${name}"] = {
             node {
                 stage("Parallel Executor : ${executor}") {
@@ -111,13 +108,11 @@ def getTestExecutionMap(parallel_executor_count) {
     return tests
 }
 
-//@NonCPS
-def prepareWorkspace(tPlan, testPlanId){
+def prepareWorkspace(testPlanId){
     def props = Properties.instance
-
+    def log = new Logger()
+    log.info(" Creating workspace and builds sub-directories")
     sh """
-        echo Executing Test Plan : ${tPlan} On directory : ${testPlanId}
-        echo Creating workspace and builds sub-directories
         rm -r -f ${props.WORKSPACE}/${testPlanId}/
         mkdir -p ${props.WORKSPACE}/${testPlanId}
         mkdir -p ${props.WORKSPACE}/${testPlanId}/builds
@@ -134,7 +129,5 @@ def prepareWorkspace(tPlan, testPlanId){
         chmod 400 ${props.WORKSPACE}/${testPlanId}/workspace/testgrid-key.pem
         echo Workspace directory content:
         ls ${props.WORKSPACE}/${testPlanId}/
-        #echo Test-plans directory content:
-        #ls ${props.WORKSPACE}/${testPlanId}/test-plans/
     """
 }

@@ -15,8 +15,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.wso2.tg.jenkins.util
+
+import org.wso2.tg.jenkins.Logger
 
 /**
  * Create the given directory.
@@ -25,7 +26,8 @@ package org.wso2.tg.jenkins.util
  * @throws IOException if file creation fails
  */
 def createDirectory(directoryPath) throws IOException{
-    echo "Creating the directory " + directoryPath
+    def log = new Logger()
+    log.info("Creating the directory " + directoryPath)
     File file = new File (directoryPath)
     boolean created = file.mkdirs()
     if (!created) {

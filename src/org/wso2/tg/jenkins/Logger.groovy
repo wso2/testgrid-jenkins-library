@@ -38,5 +38,5 @@ void warn(def message) {
 
 private def getTimestamp() {
     Date date = new Date()
-    return date.format('yyyyMMddHHmmss', TimeZone.getTimeZone('GMT')) as String
+    return date.format('yyyy-MM-dd, HH:mm:ss', TimeZone.getTimeZone('GMT')) as String
 }

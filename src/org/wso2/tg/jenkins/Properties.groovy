@@ -30,6 +30,7 @@ class Properties {
     static def REMOTE_WORKSPACE_DIR_WINDOWS ="c:/testgrid/workspace"
     static def SCENARIOS_LOCATION           ="workspace/apim-test-integration"
     static def CONFIG_PROPERTY_FILE_PATH    = TESTGRID_HOME + "/config.properties"
+    static def DEFAULT_EXECUTOR_COUNT       = 12
 
     // Job Properties which are set when init is called
     static def PRODUCT
@@ -60,7 +61,11 @@ class Properties {
     static def WORKSPACE
     static def SCENARIOS_REPOSITORY
     static def INFRASTRUCTURE_REPOSITORY
+    static def EMAIL_TO_LIST
 
+    /**
+     * Initializing the properties
+     */
     def initProperties() {
 
         PRODUCT = getJobProperty("JOB_BASE_NAME")
@@ -77,7 +82,7 @@ class Properties {
         PRODUCT_CODE = getJobProperty("PRODUCT_CODE", false)
         WUM_PRODUCT_VERSION = getJobProperty("WUM_PRODUCT_VERSION", false)
         USE_CUSTOM_TESTNG = getJobProperty("USE_CUSTOM_TESTNG")
-        EXECUTOR_COUNT = getJobProperty("EXECUTOR_COUNT")
+        EXECUTOR_COUNT = getExecutorCount("EXECUTOR_COUNT")
         AWS_ACCESS_KEY_ID = getCredentials("AWS_ACCESS_KEY_ID")
         AWS_SECRET_ACCESS_KEY = getCredentials("AWS_SECRET_ACCESS_KEY")
         TOMCAT_USERNAME = getCredentials("TOMCAT_USERNAME")
@@ -91,6 +96,7 @@ class Properties {
         LATEST_PRODUCT_BUILD_ARTIFACTS_API = getJobProperty("LATEST_PRODUCT_BUILD_ARTIFACTS_API")
         SCENARIOS_REPOSITORY = getJobProperty("SCENARIOS_REPOSITORY")
         INFRASTRUCTURE_REPOSITORY = getJobProperty("INFRASTRUCTURE_REPOSITORY")
+        EMAIL_TO_LIST = getJobProperty("EMAIL_TO_LIST")
     }
 
     /**
@@ -112,6 +118,10 @@ class Properties {
         return prop
     }
 
+    /**
+     * Construct the product URL based on the test mode.
+     * @return the product git URL
+     */
     private def getProductGitUrl() {
         def ctx = PipelineContext.getContext()
         def propertyMap = ctx.currentBuild.getRawBuild().getEnvironment()
@@ -125,6 +135,14 @@ class Properties {
             productGitUrl = propertyMap.get("PRODUCT_GIT_URL")
         }
         return productGitUrl
+    }
+
+    private def getExecutorCount(def key) {
+        def executorCount = getProperty(key, false)
+        if (executorCount == null || executorCount.trim() == "") {
+           executorCount = DEFAULT_EXECUTOR_COUNT
+        }
+        return executorCount
     }
 
     private def getCredentials(def key, boolean isMandatory = true){

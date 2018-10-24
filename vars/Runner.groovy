@@ -45,6 +45,7 @@ def call() {
     def tgExecutor = new TestGridExecutor()
     def runtime = new RuntimeUtils()
     def ws = new WorkSpaceUtils()
+    def log = new Logger()
 
     pipeline {
         agent {
@@ -77,9 +78,7 @@ def call() {
                                     [configFile(fileId: "${props.PRODUCT}-testgrid-yaml", targetLocation:
                                             "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}")]) {
                             }
-                            echo "Just before the logger"
-                            def log = new Logger()
-                            log.info("Creating Job config!!!!")
+                            log.info("Creating Job config in " + props.JOB_CONFIG_YAML_PATH)
                             // Creating the job config file
                             ws.createJobConfigYamlFile("${props.JOB_CONFIG_YAML_PATH}")
                             sh """
@@ -87,10 +86,10 @@ def call() {
                                 cat ${props.JOB_CONFIG_YAML_PATH}
                             """
 
-                            echo "Generating test plans!!"
+                            log.info("Generating test plans for the product : " + props.PRODUCT)
                             tgExecutor.generateTesPlans(props.PRODUCT, props.JOB_CONFIG_YAML_PATH)
 
-                            echo "Stashing test plans to be used in different slave nodes"
+                            log.info("Stashing test plans to be used in different slave nodes")
                             dir("${props.WORKSPACE}") {
                                 stash name: "test-plans", includes: "test-plans/**"
                             }
@@ -105,15 +104,11 @@ def call() {
 
             stage('parallel-run') {
                 steps {
+                    log.info("Starting parallel execution stage.")
                     script {
                         def name = "unknown"
                         try {
-                            parallel_executor_count = 12
-                            if (props.EXECUTOR_COUNT != "null") {
-                                echo "executor count is" + props.EXECUTOR_COUNT
-                                parallel_executor_count = props.EXECUTOR_COUNT
-                            }
-                            def tests = testExecutor.getTestExecutionMap(parallel_executor_count)
+                            def tests = testExecutor.getTestExecutionMap(props.EXECUTOR_COUNT)
                             parallel tests
                         } catch (e) {
                             currentBuild.result = "FAILED"
@@ -137,7 +132,7 @@ def call() {
                             email.send("'${props.PRODUCT}' Integration Test Results! #(${env.BUILD_NUMBER})",
                                     "${emailBody}")
                         } else {
-                            echo "No SummarizedEmailReport.html file found!!"
+                            log.warn("No SummarizedEmailReport.html file found!!")
                             email.send("'${props.PRODUCT}'#(${env.BUILD_NUMBER}) - SummarizedEmailReport.html " +
                                     "file not found", "Could not find the summarized email report ${env.BUILD_URL}. This is an error in " +
                                     "testgrid.")

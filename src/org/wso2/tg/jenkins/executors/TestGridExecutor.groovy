@@ -18,6 +18,7 @@
 
 package org.wso2.tg.jenkins.executors
 
+import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.Properties
 
 /**
@@ -48,8 +49,9 @@ def generateTesPlans(def product, def configYaml) {
  */
 def runTesPlans(def product, def testPlanFilePath, def workspace) {
     def props = Properties.instance
+    def log = new Logger()
+    log.info("Running Test-Plan: " + testPlanFilePath + " of product " + product + " in the workspace " + workspace)
     sh """
-        echo Running Test-Plan: ${testPlanFilePath}
         cd ${props.TESTGRID_DIST_LOCATION}/${props.TESTGRID_NAME}
         export TESTGRID_HOME="${props.TESTGRID_HOME}"
         ./testgrid run-testplan --product ${product} \

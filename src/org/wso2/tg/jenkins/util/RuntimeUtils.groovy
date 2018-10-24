@@ -15,13 +15,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.wso2.tg.jenkins.util
 
+import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.Properties
 
 /**
  * Increases TG runtime memory.
+ *
+ * @param min minimum memory
+ * @param max maximum memory
  */
 def increaseTestGridRuntimeMemory(min, max) {
     def props = Properties.instance
@@ -33,10 +36,15 @@ def increaseTestGridRuntimeMemory(min, max) {
         """
 }
 
+/**
+ * Unstashing the stashed testplans if not available.
+ * @param testplanDirectory directory check whether testplans are available
+ */
 def unstashTestPlansIfNotAvailable(def testplanDirectory) {
     def props = Properties.instance
+    def log = new Logger()
     if (!fileExists(testplanDirectory)) {
-        echo "test-plans directory not found, unstashing the testplans to ${props.WORKSPACE}"
+        log.info("test-plans directory not found, unstashing the testplans to ${props.WORKSPACE}")
         dir("${props.WORKSPACE}") {
             unstash name: "test-plans"
         }
