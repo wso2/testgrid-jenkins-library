@@ -28,7 +28,6 @@ class Properties {
     static def SQL_DRIVERS_LOCATION_WINDOWS ="/testgrid/sql-drivers"
     static def REMOTE_WORKSPACE_DIR_UNIX    ="/opt/testgrid/workspace"
     static def REMOTE_WORKSPACE_DIR_WINDOWS ="c:/testgrid/workspace"
-    static def SCENARIOS_LOCATION           ="workspace/apim-test-integration"
     static def CONFIG_PROPERTY_FILE_PATH    = TESTGRID_HOME + "/config.properties"
     static def DEFAULT_EXECUTOR_COUNT       = 12
 
@@ -62,6 +61,8 @@ class Properties {
     static def SCENARIOS_REPOSITORY
     static def INFRASTRUCTURE_REPOSITORY
     static def EMAIL_TO_LIST
+    static def SCENARIOS_LOCATION
+
 
     /**
      * Initializing the properties
@@ -97,6 +98,7 @@ class Properties {
         SCENARIOS_REPOSITORY = getJobProperty("SCENARIOS_REPOSITORY")
         INFRASTRUCTURE_REPOSITORY = getJobProperty("INFRASTRUCTURE_REPOSITORY")
         EMAIL_TO_LIST = getJobProperty("EMAIL_TO_LIST")
+        SCENARIOS_LOCATION = getJobProperty("SCENARIOS_LOCATION")
     }
 
     /**
