@@ -110,8 +110,6 @@ class Properties {
         def ctx = PipelineContext.getContext()
         def propertyMap = ctx.currentBuild.getRawBuild().getEnvironment()
         def prop = propertyMap.get(property)
-        ctx.echo "prop : " + prop
-        ctx.echo "isMandatory : " + isMandatory
         if ((prop == null || prop.trim() == "") && isMandatory) {
             ctx.echo "A mandatory prop " + property + " is empty or null"
             throw new Exception("A mandatory property " + property + " is empty or null")
