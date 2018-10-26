@@ -16,22 +16,27 @@
  * under the License.
  */
 
-package org.wso2.tg.jenkins.alert
-
-import org.wso2.tg.jenkins.Logger
-import org.wso2.tg.jenkins.Properties
+package org.wso2.tg.jenkins
 
 /**
- * Sends Email notifications
- *
- * @param subject subject of the Email
- * @param content body of the Email
+ * This class handles logging.
  */
-def send(subject,  content) {
-    def log = new Logger()
-    def props = Properties.instance
-    log.info("Sending mail to " + props.EMAIL_TO_LIST + " with the subject " + subject)
-    emailext(to: "${props.EMAIL_TO_LIST}",
-            subject: subject,
-            body: content, mimeType: 'text/html')
+void info(def message) {
+    def time = getTimestamp()
+    echo "[INFO] : $time : $message"
+}
+
+void error(def message) {
+    def time = getTimestamp()
+    echo "[ERROR] : $time : $message"
+}
+
+void warn(def message) {
+    def time = getTimestamp()
+    echo "[WARN] : $time : $message"
+}
+
+private def getTimestamp() {
+    Date date = new Date()
+    return date.format('yyyy-MM-dd, HH:mm:ss', TimeZone.getTimeZone('GMT')) as String
 }

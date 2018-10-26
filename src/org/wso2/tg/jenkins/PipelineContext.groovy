@@ -15,23 +15,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-package org.wso2.tg.jenkins.alert
-
-import org.wso2.tg.jenkins.Logger
-import org.wso2.tg.jenkins.Properties
+package org.wso2.tg.jenkins
 
 /**
- * Sends Email notifications
- *
- * @param subject subject of the Email
- * @param content body of the Email
+ * Stores the pipeline context.
  */
-def send(subject,  content) {
-    def log = new Logger()
-    def props = Properties.instance
-    log.info("Sending mail to " + props.EMAIL_TO_LIST + " with the subject " + subject)
-    emailext(to: "${props.EMAIL_TO_LIST}",
-            subject: subject,
-            body: content, mimeType: 'text/html')
+@Singleton
+class PipelineContext {
+
+    static def context
+
+    static def setContext(def context) {
+        this.context = context
+    }
+    static def getContext() {
+        return this.context
+    }
 }

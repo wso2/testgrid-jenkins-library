@@ -15,8 +15,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.wso2.tg.jenkins.util
 
-def TETESTGRID_HOMESTGRID_HOME = "/testgrid/testgrid-home"
+import org.wso2.tg.jenkins.Logger
 
-// TODO: read the configuration file and create a constant map
-def getProperty(){}
+/**
+ * Create the given directory.
+ *
+ * @param directoryPath full qualified path Of directory
+ * @throws IOException if file creation fails
+ */
+def createDirectory(directoryPath) throws IOException{
+    def log = new Logger()
+    log.info("Creating the directory " + directoryPath)
+    File file = new File (directoryPath)
+    boolean created = file.mkdirs()
+    if (!created) {
+        throw IOException("Error while creating the directory " +file.getAbsolutePath())
+    }
+}
