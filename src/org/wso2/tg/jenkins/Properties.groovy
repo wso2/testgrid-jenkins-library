@@ -35,10 +35,6 @@ class Properties {
     // Job Properties which are set when init is called
     static def PRODUCT
     static def TESTGRID_YAML_LOCATION
-    static def AWS_ACCESS_KEY_ID
-    static def AWS_SECRET_ACCESS_KEY
-    static def TOMCAT_USERNAME
-    static def TOMCAT_PASSWORD
     static def TEST_MODE
     static def WUM_UAT_URL
     static def WUM_UAT_APP_KEY
@@ -85,10 +81,6 @@ class Properties {
         WUM_PRODUCT_VERSION = getJobProperty("WUM_PRODUCT_VERSION", false)
         USE_CUSTOM_TESTNG = getJobProperty("USE_CUSTOM_TESTNG")
         EXECUTOR_COUNT = getExecutorCount("EXECUTOR_COUNT")
-        AWS_ACCESS_KEY_ID = getCredentials("AWS_ACCESS_KEY_ID")
-        AWS_SECRET_ACCESS_KEY = getCredentials("AWS_SECRET_ACCESS_KEY")
-        TOMCAT_USERNAME = getCredentials("TOMCAT_USERNAME")
-        TOMCAT_PASSWORD = getCredentials("TOMCAT_PASSWORD")
         WUM_UAT_URL = getCredentials("WUM_UAT_URL")
         WUM_UAT_APP_KEY = getCredentials("WUM_UAT_APPKEY")
         USER_NAME = getCredentials("WUM_USERNAME")
