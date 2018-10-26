@@ -30,6 +30,7 @@ class Properties {
     static def REMOTE_WORKSPACE_DIR_WINDOWS ="c:/testgrid/workspace"
     static def CONFIG_PROPERTY_FILE_PATH    = TESTGRID_HOME + "/config.properties"
     static def DEFAULT_EXECUTOR_COUNT       = 12
+    static def SSH_KEY_FILE_PATH            = "workspace/testgrid-key.pem"
 
     // Job Properties which are set when init is called
     static def PRODUCT

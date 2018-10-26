@@ -128,9 +128,14 @@ def prepareWorkspace(testPlanId) {
 
         echo Cloning ${props.INFRASTRUCTURE_REPOSITORY} into ${props.WORKSPACE}/${testPlanId}/${props.INFRA_LOCATION}
         git clone ${props.INFRASTRUCTURE_REPOSITORY}
-        cp /testgrid/testgrid-prod-key.pem ${props.WORKSPACE}/${testPlanId}/workspace/testgrid-key.pem
         chmod 400 ${props.WORKSPACE}/${testPlanId}/workspace/testgrid-key.pem
         echo Workspace directory content:
         ls ${props.WORKSPACE}/${testPlanId}/
     """
+    log.info("Copying the ssh key file to workspace : ${props.WORKSPACE}/${testPlanId}/${props.SSH_KEY_FILE_PATH}")
+    withCredentials([file(credentialsId: 'DEPLOYMENT_KEY', variable: 'keyLocation')]) {
+        sh """
+            cp ${keyLocation} ${props.WORKSPACE}/${testPlanId}/${props.SSH_KEY_FILE_PATH}
+        """
+    }
 }

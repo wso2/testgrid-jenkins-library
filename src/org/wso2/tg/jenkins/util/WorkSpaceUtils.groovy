@@ -33,7 +33,7 @@ def createJobConfigYamlFile(def filePath) {
     // https://jenkins.io/doc/pipeline/steps/pipeline-utility-steps/#writeyaml-write-a-yaml
     log.info("Creating Job-config.yaml at : {$filePath}")
     sh """
-    echo 'keyFileLocation: workspace/testgrid-key.pem' > ${filePath}
+    echo 'keyFileLocation: {$props.SSH_KEY_FILE_PATH}' > ${filePath}
     echo 'infrastructureRepository: ${props.INFRA_LOCATION}/' >> ${filePath}
     echo 'deploymentRepository: ${props.INFRA_LOCATION}/' >> ${filePath}
     echo 'scenarioTestsRepository: ${props.SCENARIOS_LOCATION}' >> ${filePath}
