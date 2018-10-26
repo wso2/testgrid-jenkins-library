@@ -16,245 +16,132 @@
  * under the License.
  */
 
+
+import org.wso2.tg.jenkins.Logger
+import org.wso2.tg.jenkins.PipelineContext
 import org.wso2.tg.jenkins.alert.Slack
 import org.wso2.tg.jenkins.alert.Email
-import org.wso2.tg.jenkins.util.Common
+import org.wso2.tg.jenkins.executors.TestGridExecutor
 import org.wso2.tg.jenkins.util.AWSUtils
 import org.wso2.tg.jenkins.executors.TestExecutor
+import org.wso2.tg.jenkins.Properties
+import org.wso2.tg.jenkins.util.RuntimeUtils
+import org.wso2.tg.jenkins.util.WorkSpaceUtils
 
-// The pipeline should resite in a call block
+
+// The pipeline should reside in a call block
 def call() {
-    /*
-    uniqueId can be used when there is a requirement to run specific pipeline block for a certain job.
-    What you have to do is;
-        1. Pass an environment variable to Jenkins pipeline as 'uniqueId'.
-        2. Add the custom pipeline to an additional if-clause with referring the job name similar to 'dev'.
-    */
-    def uniqueId = env['uniqueId']
-    def jobName = "dev"
+    // Setting the current pipeline context, this should be done initially
+    PipelineContext.instance.setContext(this)
+    // Initializing environment properties
+    def props = Properties.instance
+    props.instance.initProperties()
 
-    echo uniqueId;
-    if (uniqueId != null) {
-        jobName = uniqueId
-    }
-    if (jobName == "test") {
-        pipeline {
-            agent any
-            stages {
-                stage('Testing') {
-                    steps {
-                        script {
-                            echo "This is a test"
+    // For scaling we need to create slave nodes before starting the pipeline and schedule it appropriately
+    def alert = new Slack()
+    def email = new Email()
+    def awsHelper = new AWSUtils()
+    def testExecutor = new TestExecutor()
+    def tgExecutor = new TestGridExecutor()
+    def runtime = new RuntimeUtils()
+    def ws = new WorkSpaceUtils()
+    def log = new Logger()
+
+    pipeline {
+        agent {
+            node {
+                label ""
+                customWorkspace "${props.WORKSPACE}"
+            }
+        }
+        tools {
+            jdk 'jdk8'
+        }
+        // These variables are needed by the shell scripts when setting up and running tests
+        environment {
+            TESTGRID_HOME = "${props.TESTGRID_HOME}"
+        }
+
+        stages {
+            stage('Preparation') {
+                steps {
+                    script {
+                        try {
+                            alert.sendNotification('STARTED', "Initiation", "#build_status_verbose")
+                            alert.sendNotification('STARTED', "Initiation", "#build_status")
+                            deleteDir()
+                            pwd()
+                            // Increasing the TG JVM memory params
+                            runtime.increaseTestGridRuntimeMemory("2G", "2G")
+                            // Get testgrid.yaml from jenkins managed files
+                            configFileProvider(
+                                    [configFile(fileId: "${props.PRODUCT}-testgrid-yaml", targetLocation:
+                                            "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}")]) {
+                            }
+                            log.info("Creating Job config in " + props.JOB_CONFIG_YAML_PATH)
+                            // Creating the job config file
+                            ws.createJobConfigYamlFile("${props.JOB_CONFIG_YAML_PATH}")
+                            sh """
+                                echo The job-config.yaml content :
+                                cat ${props.JOB_CONFIG_YAML_PATH}
+                            """
+
+                            log.info("Generating test plans for the product : " + props.PRODUCT)
+                            tgExecutor.generateTesPlans(props.PRODUCT, props.JOB_CONFIG_YAML_PATH)
+
+                            log.info("Stashing test plans to be used in different slave nodes")
+                            dir("${props.WORKSPACE}") {
+                                stash name: "test-plans", includes: "test-plans/**"
+                            }
+                        } catch (e) {
+                            currentBuild.result = "FAILED"
+                        } finally {
+                            alert.sendNotification(currentBuild.result, "preparation", "#build_status_verbose")
+                        }
+                    }
+                }
+            }
+
+            stage('parallel-run') {
+                steps {
+                    script {
+                        log.info("Starting parallel execution stage.")
+                        def name = "unknown"
+                        try {
+                            def tests = testExecutor.getTestExecutionMap(props.EXECUTOR_COUNT)
+                            parallel tests
+                        } catch (e) {
+                            currentBuild.result = "FAILED"
+                            alert.sendNotification(currentBuild.result, "Parallel", "#build_status_verbose")
                         }
                     }
                 }
             }
         }
-    }
-    else if (jobName == "dev") {  
-        def alert = new Slack()
-        def email = new Email()
-        def commonUtils = new Common()
-        def awsHelper = new AWSUtils()
-        def testExecutor = new TestExecutor()
-        properties = null
 
-        pipeline {
-            agent {
-                node {
-                    label ""
-                    customWorkspace "/testgrid/testgrid-home/jobs/${JOB_BASE_NAME}"
-                }
-            }
-
-            environment {
-                TESTGRID_NAME = 'WSO2-TestGrid'
-                TESTGRID_DIST_LOCATION = '/testgrid/testgrid-home/testgrid-dist/'
-                TESTGRID_HOME = '/testgrid/testgrid-home/'
-
-                PRODUCT = "${JOB_BASE_NAME}"
-
-                TESTGRID_YAML_LOCATION = "${INFRA_LOCATION}/jobs/${PRODUCT}/testgrid.yaml"
-
-                AWS_ACCESS_KEY_ID = credentials('AWS_ACCESS_KEY_ID')
-                AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
-                tomcatUsername = credentials('TOMCAT_USERNAME')
-                tomcatPassword = credentials('TOMCAT_PASSWORD')
-
-                WUM_UAT_URL=credentials('WUM_UAT_URL')
-                WUM_UAT_APPKEY=credentials('WUM_UAT_APPKEY')
-                USER_NAME=credentials('WUM_USERNAME')
-                PASSWORD=credentials('WUM_PASSWORD')
-                GIT_WUM_USERNAME=credentials('GIT_WUM_USERNAME')
-                GIT_WUM_PASSWORD=credentials('GIT_WUM_PASSWORD')
-
-                PWD = pwd()
-                JOB_CONFIG_YAML = "job-config.yaml"
-                JOB_CONFIG_YAML_PATH = "${PWD}/${JOB_CONFIG_YAML}"
-                PRODUCT_GIT_URL = "${PRODUCT_GIT_URL}"
-                PRODUCT_GIT_BRANCH = "${PRODUCT_GIT_BRANCH}"
-                PRODUCT_DIST_DOWNLOAD_API = "${PRODUCT_DIST_DOWNLOAD_API}"
-                WUM_CHANNEL = "${WUM_CHANNEL}"
-                PRODUCT_CODE = "${PRODUCT_CODE}"
-                WUM_PRODUCT_VERSION = "${WUM_PRODUCT_VERSION}"
-                USE_CUSTOM_TESTNG = "${USE_CUSTOM_TESTNG}"
-                EXECUTOR_COUNT = "${EXECUTOR_COUNT}"
-            }
-
-            tools {
-                jdk 'jdk8'
-            }
-
-            stages {
-                stage('Preparation') {
-                    steps {
-                        script {
-                            try {
-                                alert.sendNotification('STARTED', "Initiation", "#build_status_verbose")
-                                alert.sendNotification('STARTED', "Initiation", "#build_status")
-                                echo pwd()
-                                deleteDir()
-
-                                sh """
-                                  echo ${TESTGRID_NAME}
-                                  cd ${TESTGRID_DIST_LOCATION}
-                                  cd ${TESTGRID_NAME}
-                    
-                                  sed -i 's/-Xms256m -Xmx1024m/-Xmx2G -Xms2G/g' testgrid
-                                """
-                                // Get testgrid.yaml from jenkins managed files
-                                configFileProvider(
-                                        [configFile(fileId: "${PRODUCT}-testgrid-yaml", targetLocation:
-                                                "${TESTGRID_YAML_LOCATION}")]) {
-                                }
-
-                                //Constructing the product git url if test mode is wum. Adding the Git username and password into the product git url.
-                                if("${TEST_MODE}"=="WUM"){
-                                    def url = "${PRODUCT_GIT_URL}"
-                                    def values = url.split('//g')
-                                    def productGitUrl = "${values[0]}//${GIT_WUM_USERNAME}:${GIT_WUM_PASSWORD}@g${values[1]}"
-                                    PRODUCT_GIT_URL = "${productGitUrl}"
-
-                                }else {
-                                    PRODUCT_GIT_URL = "${PRODUCT_GIT_URL}"
-                                }
-
-                                sh """
-                                    echo 'keyFileLocation: workspace/testgrid-key.pem' > ${JOB_CONFIG_YAML_PATH}
-                                    echo 'infrastructureRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo 'deploymentRepository: ${INFRA_LOCATION}/' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo 'scenarioTestsRepository: ${SCENARIOS_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo 'testgridYamlLocation: ${TESTGRID_YAML_LOCATION}' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo 'properties:' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  PRODUCT_GIT_URL: ${PRODUCT_GIT_URL}' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  PRODUCT_GIT_BRANCH: ${PRODUCT_GIT_BRANCH}' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  PRODUCT_DIST_DOWNLOAD_API: ${PRODUCT_DIST_DOWNLOAD_API}' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  SQL_DRIVERS_LOCATION_UNIX: ${SQL_DRIVERS_LOCATION_UNIX}' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  SQL_DRIVERS_LOCATION_WINDOWS: ${SQL_DRIVERS_LOCATION_WINDOWS}' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  REMOTE_WORKSPACE_DIR_UNIX: ${REMOTE_WORKSPACE_DIR_UNIX}' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  REMOTE_WORKSPACE_DIR_WINDOWS: ${REMOTE_WORKSPACE_DIR_WINDOWS}' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  gitURL: ${PRODUCT_GIT_URL}' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  gitBranch: ${PRODUCT_GIT_BRANCH}' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  productDistDownloadApi: ${PRODUCT_DIST_DOWNLOAD_API}' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  sqlDriversLocationUnix: ${SQL_DRIVERS_LOCATION_UNIX}' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  sqlDriversLocationWindows: ${SQL_DRIVERS_LOCATION_WINDOWS}' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  RemoteWorkspaceDirPosix: ${REMOTE_WORKSPACE_DIR_UNIX}' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  LATEST_PRODUCT_RELEASE_API: ${LATEST_PRODUCT_RELEASE_API}' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  LATEST_PRODUCT_BUILD_ARTIFACTS_API: ${LATEST_PRODUCT_BUILD_ARTIFACTS_API}' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  TEST_MODE: ${TEST_MODE}' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  runOnBranch: "false"' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  WUM_CHANNEL: "${WUM_CHANNEL}"' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  PRODUCT_CODE: "${PRODUCT_CODE}"' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  WUM_PRODUCT_VERSION: "${WUM_PRODUCT_VERSION}"' >> ${JOB_CONFIG_YAML_PATH}
-                                    echo '  USE_CUSTOM_TESTNG: "${USE_CUSTOM_TESTNG}"' >> ${JOB_CONFIG_YAML_PATH}
-                                    
-                                    
-				                    echo The job-config.yaml :
-                                    cat ${JOB_CONFIG_YAML_PATH}
-                                    """
-
-                                stash name: "${JOB_CONFIG_YAML}", includes: "${JOB_CONFIG_YAML}"
-                                stash name: "TestGridYaml", includes: "${TESTGRID_YAML_LOCATION}"
-
-                                sh """
-                                    cd ${TESTGRID_HOME}/testgrid-dist/${TESTGRID_NAME}
-                                    ./testgrid generate-test-plan \
-                                        --product ${PRODUCT} \
-                                        --file ${JOB_CONFIG_YAML_PATH}
-                                """
-                                dir("${PWD}") {
-                                    stash name: "test-plans", includes: "test-plans/**"
-                                }
-                            } catch (e) {
-                                currentBuild.result = "FAILED"
-                            } finally {
-                                alert.sendNotification(currentBuild.result, "preparation", "#build_status_verbose")
-                            }
+        post {
+            always {
+                script {
+                    try {
+                        tgExecutor.finalizeTestPlans(props.PRODUCT, props.WORKSPACE)
+                        tgExecutor.generateEmail(props.PRODUCT, props.WORKSPACE)
+                        awsHelper.uploadCharts()
+                        //Send email for failed results.
+                        if (fileExists("${props.WORKSPACE}/SummarizedEmailReport.html")) {
+                            def emailBody = readFile "${props.WORKSPACE}/SummarizedEmailReport.html"
+                            email.send("'${props.PRODUCT}' Integration Test Results! #(${env.BUILD_NUMBER})",
+                                    "${emailBody}")
+                        } else {
+                            log.warn("No SummarizedEmailReport.html file found!!")
+                            email.send("'${props.PRODUCT}'#(${env.BUILD_NUMBER}) - SummarizedEmailReport.html " +
+                                    "file not found", "Could not find the summarized email report ${env.BUILD_URL}. This is an error in " +
+                                    "testgrid.")
                         }
-                    }
-                }
-
-                stage('parallel-run') {
-                    steps {
-                        script {
-                            def name = "unknown"
-                            try {
-                                parallel_executor_count = 12
-                                if(env.EXECUTOR_COUNT != "null"){
-                                    echo "executor count is"+ env.EXECUTOR_COUNT
-                                    parallel_executor_count = env.EXECUTOR_COUNT
-                                }
-                                def tests = testExecutor.getTestExecutionMap(parallel_executor_count)
-                                parallel tests
-                            } catch (e) {
-                                currentBuild.result = "FAILED"
-                                alert.sendNotification(currentBuild.result, "Parallel", "#build_status_verbose")
-                            }
-                        }
-                    }
-                }
-            }
-
-            post {
-                always {
-                    script {
-                        try {
-                            sh """
-                                cd ${TESTGRID_HOME}/testgrid-dist/${TESTGRID_NAME}
-                                ./testgrid finalize-run-testplan \
-                                --product ${PRODUCT} --workspace ${PWD}
-                            """
-
-                            sh """
-                                 cd ${TESTGRID_HOME}/testgrid-dist/${TESTGRID_NAME}
-                                ./testgrid generate-report \
-                                --product ${PRODUCT} \
-                                --groupBy scenario
-                            """
-                            sh """
-                                export DISPLAY=:95.0
-                                cd ${TESTGRID_HOME}/testgrid-dist/${TESTGRID_NAME}
-                                ./testgrid generate-email \
-                                --product ${PRODUCT} \
-                                --workspace ${PWD}
-                            """
-                            awsHelper.uploadCharts()
-                            //Send email for failed results.
-                            if (fileExists("${PWD}/SummarizedEmailReport.html")) {
-                                def emailBody = readFile "${PWD}/SummarizedEmailReport.html"
-                                email.send("'${env.JOB_NAME}' Integration Test Results! #(${env.BUILD_NUMBER})", "${emailBody}")
-                            } else {
-                                echo "No SummarizedEmailReport.html file found!!"
-                                email.send("'${env.JOB_NAME}'#(${env.BUILD_NUMBER}) - SummarizedEmailReport.html " +
-                                        "file not found", "Could not find the summarized email report ${env.BUILD_URL}. This is an error in " +
-                                        "testgrid.")
-                            }
-                        } catch (e) {
-                            currentBuild.result = "FAILED"
-                        } finally {
-                            alert.sendNotification(currentBuild.result, "completed", "#build_status")
-                            alert.sendNotification(currentBuild.result, "completed", "#build_status_verbose")
-                        }
+                    } catch (e) {
+                        currentBuild.result = "FAILED"
+                    } finally {
+                        alert.sendNotification(currentBuild.result, "completed", "#build_status")
+                        alert.sendNotification(currentBuild.result, "completed", "#build_status_verbose")
                     }
                 }
             }
