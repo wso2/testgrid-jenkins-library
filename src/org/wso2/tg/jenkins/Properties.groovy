@@ -20,17 +20,17 @@ package org.wso2.tg.jenkins
 @Singleton
 class Properties {
 
-    static def TESTGRID_NAME                = "WSO2-TestGrid"
-    static def TESTGRID_HOME                = "/testgrid/testgrid-home"
-    static def TESTGRID_DIST_LOCATION       = TESTGRID_HOME + "/testgrid-dist"
-    static def JOB_CONFIG_YAML              = "job-config.yaml"
-    static def SQL_DRIVERS_LOCATION_UNIX    ="/opt/testgrid/sql-drivers/"
-    static def SQL_DRIVERS_LOCATION_WINDOWS ="/testgrid/sql-drivers"
-    static def REMOTE_WORKSPACE_DIR_UNIX    ="/opt/testgrid/workspace"
-    static def REMOTE_WORKSPACE_DIR_WINDOWS ="c:/testgrid/workspace"
-    static def CONFIG_PROPERTY_FILE_PATH    = TESTGRID_HOME + "/config.properties"
-    static def DEFAULT_EXECUTOR_COUNT       = 12
-    static def SSH_KEY_FILE_PATH            = "workspace/testgrid-key.pem"
+    final static def TESTGRID_NAME                = "WSO2-TestGrid"
+    final static def TESTGRID_HOME                = "/testgrid/testgrid-home"
+    final static def TESTGRID_DIST_LOCATION       = TESTGRID_HOME + "/testgrid-dist"
+    final static def JOB_CONFIG_YAML              = "job-config.yaml"
+    final static def SQL_DRIVERS_LOCATION_UNIX    ="/opt/testgrid/sql-drivers/"
+    final static def SQL_DRIVERS_LOCATION_WINDOWS ="/testgrid/sql-drivers"
+    final static def REMOTE_WORKSPACE_DIR_UNIX    ="/opt/testgrid/workspace"
+    final static def REMOTE_WORKSPACE_DIR_WINDOWS ="c:/testgrid/workspace"
+    final static def CONFIG_PROPERTY_FILE_PATH    = TESTGRID_HOME + "/config.properties"
+    final static def DEFAULT_EXECUTOR_COUNT       = 12
+    final static def SSH_KEY_FILE_PATH            = "workspace/testgrid-key.pem"
 
     // Job Properties which are set when init is called
     static def PRODUCT
