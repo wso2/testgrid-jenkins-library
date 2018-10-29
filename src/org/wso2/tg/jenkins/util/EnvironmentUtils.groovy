@@ -16,24 +16,22 @@
  * under the License.
  */
 
-package org.wso2.tg.jenkins
+package org.wso2.tg.jenkins.util
 
-void info(message) {
-    def time = getTimestamp()
-    echo "[INFO] : $time : $message"
+import hudson.AbortException
+import org.wso2.tg.jenkins.PipelineContext
+
+
+class EnvironmentUtils implements Serializable {
+
+    static String getEnvironmentVariable(variable) {
+        try {
+            def ctx = PipelineContext.getContext()
+            def envVar = ctx.sh returnStdout: true, script: """#!/bin/bash --login
+                                                                echo \$$variable"""
+            return envVar.trim()
+        } catch (AbortException e) {
+            throw new AbortException("Error while retrieving the environment variable '$variable'. Reason: $e.message.")
+        }
+    }
 }
-
-void error(message) {
-    def time = getTimestamp()
-    echo "[ERROR] : $time : $message"
-}
-
-void warn(message) {
-    def time = getTimestamp()
-    echo "[WARN] : $time : $message"
-}
-
-private def getTimestamp(Date date = new Date()) {
-    return date.format('yyyyMMddHHmmss', TimeZone.getTimeZone('GMT')) as String
-}
-
