@@ -17,6 +17,8 @@
  */
 package org.wso2.tg.jenkins
 
+import org.wso2.tg.jenkins.util.Common
+
 @Singleton
 class Properties {
 
@@ -125,9 +127,7 @@ class Properties {
         if (TEST_MODE == "WUM") {
             def url = propertyMap.get("PRODUCT_GIT_URL")
             def values = url.split('//g')
-            ctx.withCredentials([secret(credentialsId: 'GIT_WUM_USERNAME', variable: 'wumUsername')]) {
-                productGitUrl = "${values[0]}//${wumUsername}:${wumPassword}@g${values[1]}"
-            }
+            productGitUrl = "${values[0]}//${GIT_WUM_USERNAME}:${GIT_WUM_PASSWORD}@g${values[1]}"
         } else {
             productGitUrl = propertyMap.get("PRODUCT_GIT_URL")
         }
@@ -144,7 +144,8 @@ class Properties {
 
     private def getCredentials(def key, boolean isMandatory = true){
         def ctx = PipelineContext.getContext()
-        def cred = ctx.credentials(key).toString()
+        def common = new Common()
+        def cred = common.getJenkinsCredentials(key)
         if (cred == null || cred.trim() == "" && isMandatory) {
             ctx.echo "A mandatory credential is empty or null " + key
             throw new Exception("A mandatory property " + key + " is empty or null")

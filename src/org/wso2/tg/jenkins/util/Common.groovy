@@ -74,6 +74,10 @@ def getCurrentWorkspace() {
     return pwd()
 }
 
-def getCredentials(def key) {
-    return credentials(key).toString()
+def getJenkinsCredentials(def key) {
+    def cred
+    withCredentials([string(credentialsId: key, variable: 'value')]) {
+        cred = value
+    }
+    return cred
 }
