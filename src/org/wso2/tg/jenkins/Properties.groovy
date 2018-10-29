@@ -17,6 +17,8 @@
  */
 package org.wso2.tg.jenkins
 
+import org.wso2.tg.jenkins.util.Common
+
 @Singleton
 class Properties {
 
@@ -142,7 +144,8 @@ class Properties {
 
     private def getCredentials(def key, boolean isMandatory = true){
         def ctx = PipelineContext.getContext()
-        def cred = ctx.credentials(key).toString()
+        def common = new Common()
+        def cred = common.getJenkinsCredentials(key)
         if (cred == null || cred.trim() == "" && isMandatory) {
             ctx.echo "A mandatory credential is empty or null " + key
             throw new Exception("A mandatory property " + key + " is empty or null")

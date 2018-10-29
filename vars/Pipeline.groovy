@@ -25,6 +25,7 @@ import org.wso2.tg.jenkins.executors.TestGridExecutor
 import org.wso2.tg.jenkins.util.AWSUtils
 import org.wso2.tg.jenkins.executors.TestExecutor
 import org.wso2.tg.jenkins.Properties
+import org.wso2.tg.jenkins.util.Common
 import org.wso2.tg.jenkins.util.RuntimeUtils
 import org.wso2.tg.jenkins.util.WorkSpaceUtils
 
@@ -45,6 +46,7 @@ def call() {
     def tgExecutor = new TestGridExecutor()
     def runtime = new RuntimeUtils()
     def ws = new WorkSpaceUtils()
+    def common = new Common()
     def log = new Logger()
 
     pipeline {
@@ -60,6 +62,10 @@ def call() {
         // These variables are needed by the shell scripts when setting up and running tests
         environment {
             TESTGRID_HOME = "${props.TESTGRID_HOME}"
+            WUM_UAT_URL = common.getJenkinsCredentials('WUM_UAT_URL')
+            WUM_UAT_APPKEY = common.getJenkinsCredentials('WUM_UAT_APPKEY')
+            USER_NAME = common.getJenkinsCredentials('WUM_USERNAME')
+            PASSWORD = common.getJenkinsCredentials('WUM_PASSWORD')
         }
 
         stages {
