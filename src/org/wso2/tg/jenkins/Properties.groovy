@@ -125,8 +125,7 @@ class Properties {
         if (TEST_MODE == "WUM") {
             def url = propertyMap.get("PRODUCT_GIT_URL")
             def values = url.split('//g')
-            ctx.withCredentials([secret(credentialsId: 'GIT_WUM_USERNAME', variable: 'wumUsername'),
-                                 secret(credentialsId: 'GIT_WUM_PASSWORD', variable: 'wumPassword')]) {
+            ctx.withCredentials([secret(credentialsId: 'GIT_WUM_USERNAME', variable: 'wumUsername')]) {
                 productGitUrl = "${values[0]}//${wumUsername}:${wumPassword}@g${values[1]}"
             }
         } else {
