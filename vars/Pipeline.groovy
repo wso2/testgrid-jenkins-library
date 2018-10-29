@@ -60,6 +60,12 @@ def call() {
         // These variables are needed by the shell scripts when setting up and running tests
         environment {
             TESTGRID_HOME = "${props.TESTGRID_HOME}"
+            WUM_UAT_URL = "${props.WUM_UAT_URL}"
+            WUM_UAT_APPKEY = "${props.WUM_UAT_APP_KEY}"
+            USER_NAME = "${props.USER_NAME}"
+            PASSWORD = "${props.PASSWORD}"
+            GIT_WUM_USERNAME = "${props.GIT_WUM_USERNAME}"
+            GIT_WUM_PASSWORD = "${props.GIT_WUM_PASSWORD}"
         }
 
         stages {
