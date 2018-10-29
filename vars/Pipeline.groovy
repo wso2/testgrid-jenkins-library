@@ -64,8 +64,6 @@ def call() {
             WUM_UAT_APPKEY = credentials('WUM_UAT_APPKEY')
             USER_NAME = credentials('WUM_USERNAME')
             PASSWORD = credentials('WUM_PASSWORD')
-            GIT_WUM_USERNAME = credentials('GIT_WUM_USERNAME')
-            GIT_WUM_PASSWORD = credentials('GIT_WUM_PASSWORD')
         }
 
         stages {
