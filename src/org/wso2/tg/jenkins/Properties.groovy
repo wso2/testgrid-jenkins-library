@@ -72,7 +72,7 @@ class Properties {
         WORKSPACE = TESTGRID_HOME + "/jobs/" + PRODUCT
         TESTGRID_YAML_LOCATION = "/testgrid" + ".yaml"
         JOB_CONFIG_YAML_PATH = WORKSPACE + "/" + JOB_CONFIG_YAML
-        TEST_MODE = getJobProperty("TEST_MODE")
+        TEST_MODE = getJobProperty("TEST_MODE", false)
         GIT_WUM_USERNAME = getCredentials("GIT_WUM_USERNAME")
         GIT_WUM_PASSWORD = getCredentials("GIT_WUM_PASSWORD")
         PRODUCT_GIT_URL = getProductGitUrl()
