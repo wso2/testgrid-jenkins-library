@@ -38,8 +38,8 @@ def runPlan(tPlan, parallelNumber) {
         cd ${PWD}/${parallelNumber}/workspace
         git clone ${SCENARIOS_REPOSITORY}
 
-        echo Cloning ${INFRASTRUCTURE_REPOSITORY} into ${PWD}/${parallelNumber}/${INFRA_LOCATION}
-        git clone ${INFRASTRUCTURE_REPOSITORY}
+        #echo Cloning ${INFRASTRUCTURE_REPOSITORY} into ${PWD}/${parallelNumber}/${INFRA_LOCATION}
+        #git clone ${INFRASTRUCTURE_REPOSITORY}
 
         echo Unstashing test-plans and testgrid.yaml to ${PWD}/${parallelNumber}
     """
