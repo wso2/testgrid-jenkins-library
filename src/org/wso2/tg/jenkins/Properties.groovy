@@ -83,7 +83,7 @@ class Properties {
         PRODUCT_CODE = getJobProperty("PRODUCT_CODE", false)
         WUM_PRODUCT_VERSION = getJobProperty("WUM_PRODUCT_VERSION", false)
         USE_CUSTOM_TESTNG = getJobProperty("USE_CUSTOM_TESTNG", false)
-        EXECUTOR_COUNT = getExecutorCount("EXECUTOR_COUNT", false)
+        EXECUTOR_COUNT = getExecutorCount("EXECUTOR_COUNT")
         WUM_UAT_URL = getCredentials("WUM_UAT_URL", false)
         WUM_UAT_APP_KEY = getCredentials("WUM_UAT_APPKEY", false)
         USER_NAME = getCredentials("WUM_USERNAME", false)
