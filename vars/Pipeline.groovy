@@ -80,10 +80,22 @@ def call() {
                             // Increasing the TG JVM memory params
                             runtime.increaseTestGridRuntimeMemory("2G", "2G")
                             // Get testgrid.yaml from jenkins managed files
-                            configFileProvider(
-                                    [configFile(fileId: "${props.PRODUCT}-testgrid-yaml", targetLocation:
-                                            "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}")]) {
+                            sh """
+                                git clone ${props.TESTGRID_JOB_CONFIG_REPOSITORY}
+                            """
+                            def file = new File("testgrid-job-configs/" + props.PRODUCT + "-testgrid.yaml")
+                            if (file.exists()) {
+                                log.info("The testgrid yaml is found in the remote location hence copying from ")
+                                sh """
+                                    cp "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml" ${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}
+                                """
+                            } else {
+                                configFileProvider(
+                                        [configFile(fileId: "${props.PRODUCT}-testgrid-yaml", targetLocation:
+                                                "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}")]) {
+                                }
                             }
+
                             log.info("Creating Job config in " + props.JOB_CONFIG_YAML_PATH)
                             // Creating the job config file
                             ws.createJobConfigYamlFile("${props.JOB_CONFIG_YAML_PATH}")
