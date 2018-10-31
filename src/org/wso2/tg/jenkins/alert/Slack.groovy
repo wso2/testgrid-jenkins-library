@@ -48,7 +48,7 @@ def sendNotification(String buildStatus = 'STARTED', phase, channel) {
         colorCode = '#FF0000'
     }
 
-    // Send notifications
-    slackSend(channel: channel, color: colorCode, message: summary)
+    // Send notifications Disabled due to possible issues
+//    slackSend(channel: channel, color: colorCode, message: summary)
 
 }
