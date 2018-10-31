@@ -135,7 +135,7 @@ def call() {
                         //Send email for failed results.
                         if (fileExists("${props.WORKSPACE}/SummarizedEmailReport.html")) {
                             def emailBody = readFile "${props.WORKSPACE}/SummarizedEmailReport.html"
-                            email.send("'${props.PRODUCT}' Integration Test Results! #(${env.BUILD_NUMBER})",
+                            email.send("'${props.PRODUCT}' Test Results! #(${env.BUILD_NUMBER})",
                                     "${emailBody}")
                         } else {
                             log.warn("No SummarizedEmailReport.html file found!!")
