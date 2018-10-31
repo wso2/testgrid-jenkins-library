@@ -85,11 +85,12 @@ def call() {
                             """
                             def file = new File("testgrid-job-configs/" + props.PRODUCT + "-testgrid.yaml")
                             if (file.exists()) {
-                                log.info("The testgrid yaml is found in the remote location hence copying from ")
+                                log.info("The testgrid yaml is found in the remote location.")
                                 sh """
                                     cp "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml" ${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}
                                 """
                             } else {
+                                log.info("The testgrid yaml is copied from the configFile provider.")
                                 configFileProvider(
                                         [configFile(fileId: "${props.PRODUCT}-testgrid-yaml", targetLocation:
                                                 "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}")]) {
