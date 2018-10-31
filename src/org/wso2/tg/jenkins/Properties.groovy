@@ -33,6 +33,7 @@ class Properties {
     final static def CONFIG_PROPERTY_FILE_PATH    = TESTGRID_HOME + "/config.properties"
     final static def DEFAULT_EXECUTOR_COUNT       = 12
     final static def SSH_KEY_FILE_PATH            = "workspace/testgrid-key.pem"
+    final static def TESTGRID_JOB_CONFIG_REPOSITORY = "https://github.com/wso2-incubator/testgrid-job-configs.git"
 
     // Job Properties which are set when init is called
     static def PRODUCT
@@ -73,7 +74,7 @@ class Properties {
         TESTGRID_YAML_LOCATION = "/testgrid" + ".yaml"
         JOB_CONFIG_YAML_PATH = WORKSPACE + "/" + JOB_CONFIG_YAML
         TEST_MODE = getJobProperty("TEST_MODE", false)
-        GIT_WUM_USERNAME = getCredentials("GIT_WUM_USERNAME", false)
+        GIT_WUM_USERNAME = getCredentials("GIT_WUM_USERNAME")
         GIT_WUM_PASSWORD = getCredentials("GIT_WUM_PASSWORD")
         PRODUCT_GIT_URL = getProductGitUrl()
         PRODUCT_GIT_BRANCH = getJobProperty("PRODUCT_GIT_BRANCH", false)
