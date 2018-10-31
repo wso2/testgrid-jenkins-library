@@ -50,7 +50,7 @@ def runPlan(tPlan, testPlanId) {
     try {
         tgExecutor.runTesPlans(props.PRODUCT,
                 "${props.WORKSPACE}/${tPlan}", "${props.WORKSPACE}/${testPlanId}")
-        commonUtil.truncateTestRunLog(testPlanId)
+        //commonUtil.truncateTestRunLog(testPlanId)
     } catch (Exception err) {
         log.error("Error : ${err}")
         currentBuild.result = 'UNSTABLE'
