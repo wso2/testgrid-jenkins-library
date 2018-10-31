@@ -84,8 +84,11 @@ def call() {
                                 git clone ${props.TESTGRID_JOB_CONFIG_REPOSITORY}
                             """
                             def file = new File("testgrid-job-configs/" + props.PRODUCT + "-testgrid.yaml")
+                            log.info("The file location is set as " +
+                                    "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml")
                             if (file.exists()) {
-                                log.info("The testgrid yaml is found in the remote location.")
+                                log.info("The testgrid yaml is found in remote repository " +
+                                        "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml")
                                 sh """
                                     cp "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml" ${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}
                                 """
