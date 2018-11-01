@@ -115,6 +115,7 @@ def prepareWorkspace(testPlanId) {
     def props = Properties.instance
     def log = new Logger()
     log.info(" Creating workspace and builds sub-directories")
+   
     sh """
         rm -r -f ${props.WORKSPACE}/${testPlanId}/
         mkdir -p ${props.WORKSPACE}/${testPlanId}
@@ -125,8 +126,12 @@ def prepareWorkspace(testPlanId) {
         echo Cloning ${props.SCENARIOS_REPOSITORY} into ${props.WORKSPACE}/${testPlanId}/${props.SCENARIOS_LOCATION}
         cd ${props.WORKSPACE}/${testPlanId}/workspace
         git clone ${props.SCENARIOS_REPOSITORY}
-        #echo Cloning ${props.INFRASTRUCTURE_REPOSITORY} into ${props.WORKSPACE}/${testPlanId}/${props.INFRA_LOCATION}
-        #git clone ${props.INFRASTRUCTURE_REPOSITORY}
+        if [ ${props.SCENARIOS_REPOSITORY} = ${props.INFRASTRUCTURE_REPOSITOR} ]; then
+            echo Cloning ${props.INFRASTRUCTURE_REPOSITORY} into ${props.WORKSPACE}/${testPlanId}/${props.INFRA_LOCATION}
+            git clone ${props.INFRASTRUCTURE_REPOSITORY}
+        else
+            echo "Cloning Infrastructure repository is skipped since its identical to Scenario repository."
+        fi
         echo Workspace directory content:
         ls ${props.WORKSPACE}/${testPlanId}/
     """
