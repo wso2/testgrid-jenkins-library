@@ -114,7 +114,7 @@ class Properties {
         }
         ctx.echo "Property : " + property + " value is set as " + prop
         if (prop == null) {
-            prop = ""
+            prop = "test"
         }
         return prop
     }
