@@ -62,6 +62,7 @@ class Properties {
     static def INFRASTRUCTURE_REPOSITORY
     static def EMAIL_TO_LIST
     static def SCENARIOS_LOCATION
+    static def DEPLOYMENT_LOCATION
 
 
     /**
@@ -95,6 +96,7 @@ class Properties {
         INFRASTRUCTURE_REPOSITORY = getJobProperty("INFRASTRUCTURE_REPOSITORY")
         EMAIL_TO_LIST = getJobProperty("EMAIL_TO_LIST")
         SCENARIOS_LOCATION = getJobProperty("SCENARIOS_LOCATION")
+        DEPLOYMENT_LOCATION = getJobProperty("DEPLOYMENT_LOCATION")
     }
 
     /**

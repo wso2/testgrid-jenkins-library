@@ -35,7 +35,7 @@ def createJobConfigYamlFile(def filePath) {
     sh """
     echo 'keyFileLocation: "${props.SSH_KEY_FILE_PATH}"' > ${filePath}
     echo 'infrastructureRepository: "${props.INFRA_LOCATION}/"' >> ${filePath}
-    echo 'deploymentRepository: "${props.INFRA_LOCATION}/"' >> ${filePath}
+    echo 'deploymentRepository: "${props.DEPLOYMENT_LOCATION}/"' >> ${filePath}
     echo 'scenarioTestsRepository: "${props.SCENARIOS_LOCATION}"' >> ${filePath}
     echo 'testgridYamlLocation: "${props.TESTGRID_YAML_LOCATION}"' >> ${filePath}
     echo 'properties:' >> ${filePath}
