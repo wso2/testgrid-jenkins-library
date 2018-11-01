@@ -113,6 +113,9 @@ class Properties {
             throw new Exception("A mandatory property " + property + " is empty or null")
         }
         ctx.echo "Property : " + property + " value is set as " + prop
+        if (prop == null) {
+            prop = ""
+        }
         return prop
     }
 
