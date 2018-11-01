@@ -126,7 +126,7 @@ def prepareWorkspace(testPlanId) {
         echo Cloning ${props.SCENARIOS_REPOSITORY} into ${props.WORKSPACE}/${testPlanId}/${props.SCENARIOS_LOCATION}
         cd ${props.WORKSPACE}/${testPlanId}/workspace
         git clone ${props.SCENARIOS_REPOSITORY}
-        if [ ${props.SCENARIOS_REPOSITORY} = ${props.INFRASTRUCTURE_REPOSITOR} ]; then
+        if [ ${props.SCENARIOS_REPOSITORY} = ${props.INFRASTRUCTURE_REPOSITORY} ]; then
             echo Cloning ${props.INFRASTRUCTURE_REPOSITORY} into ${props.WORKSPACE}/${testPlanId}/${props.INFRA_LOCATION}
             git clone ${props.INFRASTRUCTURE_REPOSITORY}
         else
