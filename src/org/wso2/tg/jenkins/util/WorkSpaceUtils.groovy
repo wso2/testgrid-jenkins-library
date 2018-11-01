@@ -33,28 +33,28 @@ def createJobConfigYamlFile(def filePath) {
     // https://jenkins.io/doc/pipeline/steps/pipeline-utility-steps/#writeyaml-write-a-yaml
     log.info("Creating Job-config.yaml at : {$filePath}")
     sh """
-    echo 'keyFileLocation: ${props.SSH_KEY_FILE_PATH}' > ${filePath}
-    echo 'infrastructureRepository: ${props.INFRA_LOCATION}/' >> ${filePath}
-    echo 'deploymentRepository: ${props.INFRA_LOCATION}/' >> ${filePath}
-    echo 'scenarioTestsRepository: ${props.SCENARIOS_LOCATION}' >> ${filePath}
-    echo 'testgridYamlLocation: ${props.TESTGRID_YAML_LOCATION}' >> ${filePath}
+    echo 'keyFileLocation: "${props.SSH_KEY_FILE_PATH}"' > ${filePath}
+    echo 'infrastructureRepository: "${props.INFRA_LOCATION}/"' >> ${filePath}
+    echo 'deploymentRepository: "${props.INFRA_LOCATION}/"' >> ${filePath}
+    echo 'scenarioTestsRepository: "${props.SCENARIOS_LOCATION}"' >> ${filePath}
+    echo 'testgridYamlLocation: "${props.TESTGRID_YAML_LOCATION}"' >> ${filePath}
     echo 'properties:' >> ${filePath}
-    echo '  PRODUCT_GIT_URL: ${props.PRODUCT_GIT_URL}' >> ${filePath}
-    echo '  PRODUCT_GIT_BRANCH: ${props.PRODUCT_GIT_BRANCH}' >> ${filePath}
-    echo '  PRODUCT_DIST_DOWNLOAD_API: ${props.PRODUCT_DIST_DOWNLOAD_API}' >> ${filePath}
-    echo '  SQL_DRIVERS_LOCATION_UNIX: ${props.SQL_DRIVERS_LOCATION_UNIX}' >> ${filePath}
-    echo '  SQL_DRIVERS_LOCATION_WINDOWS: ${props.SQL_DRIVERS_LOCATION_WINDOWS}' >> ${filePath}
-    echo '  REMOTE_WORKSPACE_DIR_UNIX: ${props.REMOTE_WORKSPACE_DIR_UNIX}' >> ${filePath}
-    echo '  REMOTE_WORKSPACE_DIR_WINDOWS: ${props.REMOTE_WORKSPACE_DIR_WINDOWS}' >> ${filePath}
-    echo '  gitURL: ${props.PRODUCT_GIT_URL}' >> ${filePath}
-    echo '  gitBranch: ${props.PRODUCT_GIT_BRANCH}' >> ${filePath}
-    echo '  productDistDownloadApi: ${props.PRODUCT_DIST_DOWNLOAD_API}' >> ${filePath}
-    echo '  sqlDriversLocationUnix: ${props.SQL_DRIVERS_LOCATION_UNIX}' >> ${filePath}
-    echo '  sqlDriversLocationWindows: ${props.SQL_DRIVERS_LOCATION_WINDOWS}' >> ${filePath}
-    echo '  RemoteWorkspaceDirPosix: ${props.REMOTE_WORKSPACE_DIR_UNIX}' >> ${filePath}
-    echo '  LATEST_PRODUCT_RELEASE_API: ${props.LATEST_PRODUCT_RELEASE_API}' >> ${filePath}
-    echo '  LATEST_PRODUCT_BUILD_ARTIFACTS_API: ${props.LATEST_PRODUCT_BUILD_ARTIFACTS_API}' >> ${filePath}
-    echo '  TEST_MODE: ${props.TEST_MODE}' >> ${filePath}
+    echo '  PRODUCT_GIT_URL: "${props.PRODUCT_GIT_URL}"' >> ${filePath}
+    echo '  PRODUCT_GIT_BRANCH: "${props.PRODUCT_GIT_BRANCH}"' >> ${filePath}
+    echo '  PRODUCT_DIST_DOWNLOAD_API: "${props.PRODUCT_DIST_DOWNLOAD_API}"' >> ${filePath}
+    echo '  SQL_DRIVERS_LOCATION_UNIX: "${props.SQL_DRIVERS_LOCATION_UNIX}"' >> ${filePath}
+    echo '  SQL_DRIVERS_LOCATION_WINDOWS: "${props.SQL_DRIVERS_LOCATION_WINDOWS}"' >> ${filePath}
+    echo '  REMOTE_WORKSPACE_DIR_UNIX: "${props.REMOTE_WORKSPACE_DIR_UNIX}"' >> ${filePath}
+    echo '  REMOTE_WORKSPACE_DIR_WINDOWS: "${props.REMOTE_WORKSPACE_DIR_WINDOWS}"' >> ${filePath}
+    echo '  gitURL: "${props.PRODUCT_GIT_URL}"' >> ${filePath}
+    echo '  gitBranch: "${props.PRODUCT_GIT_BRANCH}"' >> ${filePath}
+    echo '  productDistDownloadApi: "${props.PRODUCT_DIST_DOWNLOAD_API}"' >> ${filePath}
+    echo '  sqlDriversLocationUnix: "${props.SQL_DRIVERS_LOCATION_UNIX}"' >> ${filePath}
+    echo '  sqlDriversLocationWindows: "${props.SQL_DRIVERS_LOCATION_WINDOWS}"' >> ${filePath}
+    echo '  RemoteWorkspaceDirPosix: "${props.REMOTE_WORKSPACE_DIR_UNIX}"' >> ${filePath}
+    echo '  LATEST_PRODUCT_RELEASE_API: "${props.LATEST_PRODUCT_RELEASE_API}"' >> ${filePath}
+    echo '  LATEST_PRODUCT_BUILD_ARTIFACTS_API: "${props.LATEST_PRODUCT_BUILD_ARTIFACTS_API}"' >> ${filePath}
+    echo '  TEST_MODE: "${props.TEST_MODE}"' >> ${filePath}
     echo '  runOnBranch: "false"' >> ${filePath}
     echo '  WUM_CHANNEL: "${props.WUM_CHANNEL}"' >> ${filePath}
     echo '  PRODUCT_CODE: "${props.PRODUCT_CODE}"' >> ${filePath}
