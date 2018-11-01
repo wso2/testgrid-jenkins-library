@@ -127,10 +127,10 @@ def prepareWorkspace(testPlanId) {
         cd ${props.WORKSPACE}/${testPlanId}/workspace
         git clone ${props.SCENARIOS_REPOSITORY}
         if [ ${props.SCENARIOS_REPOSITORY} = ${props.INFRASTRUCTURE_REPOSITORY} ]; then
+            echo "Cloning Infrastructure repository is skipped since its identical to Scenario repository."
+        else
             echo Cloning ${props.INFRASTRUCTURE_REPOSITORY} into ${props.WORKSPACE}/${testPlanId}/${props.INFRA_LOCATION}
             git clone ${props.INFRASTRUCTURE_REPOSITORY}
-        else
-            echo "Cloning Infrastructure repository is skipped since its identical to Scenario repository."
         fi
         echo Workspace directory content:
         ls ${props.WORKSPACE}/${testPlanId}/
