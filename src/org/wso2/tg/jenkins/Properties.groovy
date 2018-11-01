@@ -113,9 +113,6 @@ class Properties {
             throw new Exception("A mandatory property " + property + " is empty or null")
         }
         ctx.echo "Property : " + property + " value is set as " + prop
-        if (prop == null) {
-            prop = ""
-        }
         return prop
     }
 
@@ -134,9 +131,6 @@ class Properties {
             productGitUrl = "${values[0]}//${GIT_WUM_USERNAME}:${GIT_WUM_PASSWORD}@g${values[1]}"
         } else {
             productGitUrl = propertyMap.get("PRODUCT_GIT_URL")
-        }
-        if (productGitUrl == null) {
-            productGitUrl = ""
         }
         return productGitUrl
     }
