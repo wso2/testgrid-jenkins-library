@@ -34,6 +34,9 @@ class Properties {
     final static def DEFAULT_EXECUTOR_COUNT       = 12
     final static def SSH_KEY_FILE_PATH            = "workspace/testgrid-key.pem"
     final static def TESTGRID_JOB_CONFIG_REPOSITORY = "https://github.com/wso2-incubator/testgrid-job-configs.git"
+    final static def INFRA_LOCATION               = "InfraRepository"
+    final static def DEPLOYMENT_LOCATION          = "DeploymentRepository"
+    final static def SCENARIOS_LOCATION           = "ScenariosRepository"
 
     // Job Properties which are set when init is called
     static def PRODUCT
@@ -54,15 +57,12 @@ class Properties {
     static def WUM_PRODUCT_VERSION
     static def USE_CUSTOM_TESTNG
     static def EXECUTOR_COUNT
-    static def INFRA_LOCATION
     static def LATEST_PRODUCT_RELEASE_API
     static def LATEST_PRODUCT_BUILD_ARTIFACTS_API
     static def WORKSPACE
     static def SCENARIOS_REPOSITORY
     static def INFRASTRUCTURE_REPOSITORY
     static def EMAIL_TO_LIST
-    static def SCENARIOS_LOCATION
-    static def DEPLOYMENT_LOCATION
 
 
     /**
@@ -89,14 +89,11 @@ class Properties {
         WUM_UAT_APP_KEY = getCredentials("WUM_UAT_APPKEY", false)
         USER_NAME = getCredentials("WUM_USERNAME", false)
         PASSWORD = getCredentials("WUM_PASSWORD", false)
-        INFRA_LOCATION = getJobProperty("INFRA_LOCATION")
         LATEST_PRODUCT_RELEASE_API = getJobProperty("LATEST_PRODUCT_RELEASE_API", false)
         LATEST_PRODUCT_BUILD_ARTIFACTS_API = getJobProperty("LATEST_PRODUCT_BUILD_ARTIFACTS_API", false)
         SCENARIOS_REPOSITORY = getJobProperty("SCENARIOS_REPOSITORY")
         INFRASTRUCTURE_REPOSITORY = getJobProperty("INFRASTRUCTURE_REPOSITORY")
         EMAIL_TO_LIST = getJobProperty("EMAIL_TO_LIST")
-        SCENARIOS_LOCATION = getJobProperty("SCENARIOS_LOCATION")
-        DEPLOYMENT_LOCATION = getJobProperty("DEPLOYMENT_LOCATION")
     }
 
     /**
