@@ -123,15 +123,16 @@ def prepareWorkspace(testPlanId) {
         mkdir -p ${props.WORKSPACE}/${testPlanId}/workspace
         #Cloning should be done before unstashing TestGridYaml since its going to be injected
         #inside the cloned repository
-        echo Cloning ${props.SCENARIOS_REPOSITORY} into ${props.WORKSPACE}/${testPlanId}/${props.SCENARIOS_LOCATION}
         cd ${props.WORKSPACE}/${testPlanId}/workspace
-        git clone ${props.SCENARIOS_REPOSITORY}
-        if [ ${props.SCENARIOS_REPOSITORY} = ${props.INFRASTRUCTURE_REPOSITORY} ]; then
-            echo "Cloning Infrastructure repository is skipped since its identical to Scenario repository."
-        else
-            echo Cloning ${props.INFRASTRUCTURE_REPOSITORY} into ${props.WORKSPACE}/${testPlanId}/${props.INFRA_LOCATION}
-            git clone ${props.INFRASTRUCTURE_REPOSITORY}
-        fi
+        echo cloning infrastructure repository: ${props.INFRASTRUCTURE_REPOSITORY} into ${props.WORKSPACE}/${testPlanId}/${props.INFRA_LOCATION}
+        git clone ${props.INFRASTRUCTURE_REPOSITORY} ${props.INFRA_LOCATION}
+
+        echo cloning deployment repository: ${props.DEPLOYMENT_REPOSITORY} into ${props.WORKSPACE}/${testPlanId}/${props.DEPLOYMENT_LOCATION}
+        git clone ${props.DEPLOYMENT_REPOSITORY} ${props.DEPLOYMENT_LOCATION}      
+        
+        echo cloning scenarios repository: ${props.SCENARIOS_REPOSITORY} into ${props.WORKSPACE}/${testPlanId}/${props.SCENARIOS_LOCATION}
+        git clone ${props.SCENARIOS_REPOSITORY} ${props.SCENARIOS_LOCATION}     
+
         echo Workspace directory content:
         ls ${props.WORKSPACE}/${testPlanId}/
     """
