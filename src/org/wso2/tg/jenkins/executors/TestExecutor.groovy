@@ -42,7 +42,8 @@ def runPlan(tPlan, testPlanId) {
     //sleep(time:commonUtil.getRandomNumber(10),unit:"SECONDS")
     log.info("Unstashing test-plans and testgrid.yaml to ${props.WORKSPACE}/${testPlanId}")
     runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
-    writeFile file: "${props.WORKSPACE}/${testPlanId}/${props.DEPLOYMENT_LOCATION}/deploy.sh", text: '#!/bin/sh'
+    writeFile file: "${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}/deploy.sh", text:
+            '#!/bin/sh'
 
 
     def name = commonUtil.getParameters("${props.WORKSPACE}/${tPlan}")
