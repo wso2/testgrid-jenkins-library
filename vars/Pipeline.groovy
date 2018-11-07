@@ -102,8 +102,13 @@ def call() {
                             }
 
                             def tgYamlContent = readYaml file: "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}"
+                            if (tgYamlContent.isEmpty()) {
+                                throw new Exception("Testgrid Yaml content is Empty")
+                            }
+                            // We need to set the repository properties
+                            props.EMAIL_TO_LIST = tgYamlContent.emailToList
                             echo "XXXXXX"
-                            echo "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}"
+                            echo "${props.EMAIL_TO_LIST}"
                             echo "${tgYamlContent}"
                             echo "YYYYYY"
 
