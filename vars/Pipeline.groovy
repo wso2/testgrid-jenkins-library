@@ -101,6 +101,11 @@ def call() {
                                 }
                             }
 
+                            def tgYamlContent = readYaml file: "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}"
+                            echo "XXXXXX"
+                            echo tgYamlContent
+                            echo "YYYYYY"
+
                             log.info("Creating Job config in " + props.JOB_CONFIG_YAML_PATH)
                             // Creating the job config file
                             ws.createJobConfigYamlFile("${props.JOB_CONFIG_YAML_PATH}")
