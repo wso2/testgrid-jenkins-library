@@ -101,6 +101,23 @@ def call() {
                                 }
                             }
 
+                            def tgYamlContent = readYaml file: "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}"
+                            if (tgYamlContent.isEmpty()) {
+                                throw new Exception("Testgrid Yaml content is Empty")
+                            }
+                            // We need to set the repository properties
+                            props.EMAIL_TO_LIST = tgYamlContent.emailToList
+                            props.INFRASTRUCTURE_REPOSITORY_URL = tgYamlContent.infrastructureConfig.provisioners[0]
+                                                                                                            .repository
+                            props.DEPLOYMENT_REPOSITORY_URL = tgYamlContent.scenarioConfig.repository
+                            props.SCENARIOS_REPOSITORY_URL = tgYamlContent.deploymentConfig.repository
+                            echo "XXXXXX"
+                            echo "${props.INFRASTRUCTURE_REPOSITORY_URL}"
+                            echo "${props.DEPLOYMENT_REPOSITORY_URL}"
+                            echo "${props.SCENARIOS_REPOSITORY_URL}"
+                            echo "${tgYamlContent}"
+                            echo "YYYYYY"
+
                             log.info("Creating Job config in " + props.JOB_CONFIG_YAML_PATH)
                             // Creating the job config file
                             ws.createJobConfigYamlFile("${props.JOB_CONFIG_YAML_PATH}")
