@@ -101,6 +101,16 @@ def call() {
                                 }
                             }
 
+                            def tgYamlContent = readYaml file: "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}"
+                            if (tgYamlContent.isEmpty()) {
+                                throw new Exception("Testgrid Yaml content is Empty")
+                            }
+                            // We need to set the repository properties
+                            props.EMAIL_TO_LIST = tgYamlContent.emailToList
+                            if(props.EMAIL_TO_LIST == null) {
+                                throw new Exception("emailToList property is not found in testgrid.yaml file")
+                            }
+
                             log.info("Creating Job config in " + props.JOB_CONFIG_YAML_PATH)
                             // Creating the job config file
                             ws.createJobConfigYamlFile("${props.JOB_CONFIG_YAML_PATH}")

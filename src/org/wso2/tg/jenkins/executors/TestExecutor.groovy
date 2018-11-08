@@ -152,7 +152,6 @@ def prepareWorkspace(testPlanId) {
 
 def readRepositoryUrlsfromYaml(def testplan) {
 
-    echo "started Reading"
     def props = Properties.instance
     def tgYamlContent = readYaml file: testplan
     if (tgYamlContent.isEmpty()) {
@@ -160,7 +159,6 @@ def readRepositoryUrlsfromYaml(def testplan) {
     }
     echo "Finish Reading : ${tgYamlContent}"
     // We need to set the repository properties
-    props.EMAIL_TO_LIST = tgYamlContent.emailToList
     props.INFRASTRUCTURE_REPOSITORY_URL = tgYamlContent.infrastructureConfig.provisioners[0].remoteRepository
     props.DEPLOYMENT_REPOSITORY_URL = tgYamlContent.deploymentConfig.deploymentPatterns[0].remoteRepository
     props.SCENARIOS_REPOSITORY_URL = tgYamlContent.scenarioConfig.remoteRepository
