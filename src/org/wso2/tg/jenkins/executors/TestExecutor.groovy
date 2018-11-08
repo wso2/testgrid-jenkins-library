@@ -158,7 +158,7 @@ def readRepositoryUrlsfromYaml(def testplan) {
     if (tgYamlContent.isEmpty()) {
         throw new Exception("Testgrid Yaml content is Empty")
     }
-    echo "Finish Reading"
+    echo "Finish Reading : ${tgYamlContent}"
     // We need to set the repository properties
     props.EMAIL_TO_LIST = tgYamlContent.emailToList
     props.INFRASTRUCTURE_REPOSITORY_URL = tgYamlContent.infrastructureConfig.provisioners[0].remoteRepository
