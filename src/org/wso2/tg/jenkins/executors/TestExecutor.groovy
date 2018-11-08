@@ -154,8 +154,13 @@ def readRepositoryUrlsfromYaml(def testplan) {
 
     echo "test plan is -----==== ${testplan}"
     def props = Properties.instance
+    def yamlContentAsString = readFile "${testplan}"
+    yamlContentAsString.replace("!!", "#")
+    echo "DDDDD"
+    echo "${yamlContentAsString}"
     def tgYamlContent = readYaml file: "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}"
-//    def tgYamlContent = "xxxxxxxxxxxx"
+
+//  def tgYamlContent = "xxxxxxxxxxxx"
     echo "test plan is -----==== ${tgYamlContent}"
     if (tgYamlContent.isEmpty()) {
         throw new Exception("Testgrid Yaml content is Empty")
