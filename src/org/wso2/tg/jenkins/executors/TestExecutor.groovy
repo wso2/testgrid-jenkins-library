@@ -151,6 +151,7 @@ def prepareWorkspace(testPlanId) {
 
 def readRepositoryUrlsfromYaml(def testplan) {
 
+    echo "test plan is -----==== ${testplan}"
     def props = Properties.instance
     def tgYamlContent = readYaml file: testplan
     if (tgYamlContent.isEmpty()) {
