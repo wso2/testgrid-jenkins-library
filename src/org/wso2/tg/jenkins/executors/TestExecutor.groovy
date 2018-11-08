@@ -36,6 +36,7 @@ def runPlan(tPlan, testPlanId) {
     def runtime = new RuntimeUtils()
     def log = new Logger()
 
+    log.info("WWWWWWWWWWW ========== before")
     readRepositoryUrlsfromYaml("${props.WORKSPACE}/${tPlan}")
 
     fileUtil.createDirectory("${props.WORKSPACE}/${testPlanId}")
