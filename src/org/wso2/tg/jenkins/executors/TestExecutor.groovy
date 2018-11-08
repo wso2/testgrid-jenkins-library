@@ -154,6 +154,7 @@ def readRepositoryUrlsfromYaml(def testplan) {
     echo "test plan is -----==== ${testplan}"
     def props = Properties.instance
     def tgYamlContent = readYaml file: testplan
+    echo "test plan is -----==== ${tgYamlContent}"
     if (tgYamlContent.isEmpty()) {
         throw new Exception("Testgrid Yaml content is Empty")
     }
