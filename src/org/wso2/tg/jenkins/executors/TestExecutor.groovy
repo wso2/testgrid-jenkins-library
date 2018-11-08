@@ -36,6 +36,8 @@ def runPlan(tPlan, testPlanId) {
     def runtime = new RuntimeUtils()
     def log = new Logger()
 
+    readRepositoryUrlsfromYaml("${props.WORKSPACE}/${tPlan}")
+
     fileUtil.createDirectory("${props.WORKSPACE}/${testPlanId}")
     log.info("Preparing workspace for testplan : " + testPlanId)
     prepareWorkspace(testPlanId)
@@ -144,4 +146,25 @@ def prepareWorkspace(testPlanId) {
             chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.SSH_KEY_FILE_PATH}
         """
     }
+}
+
+def readRepositoryUrlsfromYaml(def testplan) {
+
+    def props = Properties.instance
+    def tgYamlContent = readYaml file: testplan
+    if (tgYamlContent.isEmpty()) {
+        throw new Exception("Testgrid Yaml content is Empty")
+    }
+    // We need to set the repository properties
+    props.EMAIL_TO_LIST = tgYamlContent.emailToList
+    props.INFRASTRUCTURE_REPOSITORY_URL = tgYamlContent.infrastructureConfig.provisioners[0]
+            .repository
+    props.DEPLOYMENT_REPOSITORY_URL = tgYamlContent.scenarioConfig.repository
+    props.SCENARIOS_REPOSITORY_URL = tgYamlContent.deploymentConfig.repository
+    echo "XXXXXX"
+    echo "${props.INFRASTRUCTURE_REPOSITORY_URL}"
+    echo "${props.DEPLOYMENT_REPOSITORY_URL}"
+    echo "${props.SCENARIOS_REPOSITORY_URL}"
+    echo "${tgYamlContent}"
+    echo "YYYYYY"
 }
