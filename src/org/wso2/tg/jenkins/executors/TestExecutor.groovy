@@ -152,23 +152,17 @@ def prepareWorkspace(testPlanId) {
 
 def readRepositoryUrlsfromYaml(def testplan) {
 
-    echo "test plan is -----==== ${testplan}"
     def props = Properties.instance
-    def tgYamlContent = readYaml file: "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}"
-    echo "test plan is -----==== ${tgYamlContent}"
+    def tgYamlContent = readYaml file: testplan
     if (tgYamlContent.isEmpty()) {
         throw new Exception("Testgrid Yaml content is Empty")
     }
     // We need to set the repository properties
     props.EMAIL_TO_LIST = tgYamlContent.emailToList
-    props.INFRASTRUCTURE_REPOSITORY_URL = tgYamlContent.infrastructureConfig.provisioners[0]
-            .remoteRepository
+    props.INFRASTRUCTURE_REPOSITORY_URL = tgYamlContent.infrastructureConfig.provisioners[0].remoteRepository
     props.DEPLOYMENT_REPOSITORY_URL = tgYamlContent.scenarioConfig.remoteRepository
     props.SCENARIOS_REPOSITORY_URL = tgYamlContent.deploymentConfig.remoteRepository
-    echo "XXXXXX"
     echo "${props.INFRASTRUCTURE_REPOSITORY_URL}"
     echo "${props.DEPLOYMENT_REPOSITORY_URL}"
     echo "${props.SCENARIOS_REPOSITORY_URL}"
-    echo "${tgYamlContent}"
-    echo "YYYYYY"
 }
