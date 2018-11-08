@@ -19,6 +19,7 @@
 package org.wso2.tg.jenkins.executors
 
 import org.wso2.tg.jenkins.Logger
+import org.wso2.tg.jenkins.PipelineContext
 import org.wso2.tg.jenkins.Properties
 import org.wso2.tg.jenkins.util.Common
 import org.wso2.tg.jenkins.util.AWSUtils
@@ -151,10 +152,11 @@ def prepareWorkspace(testPlanId) {
 
 def readRepositoryUrlsfromYaml(def testplan) {
 
+    def ctx = PipelineContext.instance
     echo "test plan is -----==== ${testplan}"
     def props = Properties.instance
-//    def tgYamlContent = readYaml file: "${testplan}"
-    def tgYamlContent = "xxxxxxxxxxxx"
+    def tgYamlContent = ctx.readYaml file: "${testplan}"
+//    def tgYamlContent = "xxxxxxxxxxxx"
     echo "test plan is -----==== ${tgYamlContent}"
     if (tgYamlContent.isEmpty()) {
         throw new Exception("Testgrid Yaml content is Empty")
