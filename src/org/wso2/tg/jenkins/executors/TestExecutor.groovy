@@ -37,9 +37,7 @@ def runPlan(tPlan, testPlanId) {
     def runtime = new RuntimeUtils()
     def log = new Logger()
 
-    log.info("WWWWWWWWWWW ========== before")
     readRepositoryUrlsfromYaml("${props.WORKSPACE}/${tPlan}")
-
     fileUtil.createDirectory("${props.WORKSPACE}/${testPlanId}")
     log.info("Preparing workspace for testplan : " + testPlanId)
     prepareWorkspace(testPlanId)
@@ -157,7 +155,6 @@ def readRepositoryUrlsfromYaml(def testplan) {
     if (tgYamlContent.isEmpty()) {
         throw new Exception("Testgrid Yaml content is Empty")
     }
-    echo "Finish Reading : ${tgYamlContent}"
     // We need to set the repository properties
     props.INFRASTRUCTURE_REPOSITORY_URL = tgYamlContent.infrastructureConfig.provisioners[0].remoteRepository
     props.DEPLOYMENT_REPOSITORY_URL = tgYamlContent.deploymentConfig.deploymentPatterns[0].remoteRepository
