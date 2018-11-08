@@ -154,14 +154,7 @@ def readRepositoryUrlsfromYaml(def testplan) {
 
     echo "test plan is -----==== ${testplan}"
     def props = Properties.instance
-    String yamlContentAsString = readFile "${testplan}"
-    echo "${yamlContentAsString}"
-    yamlContentAsString.replaceAll(~/!!org.wso2.testgrid.common.TestPlan/, "abcdefgh")
-    echo "DDDDD"
-    echo "${yamlContentAsString}"
     def tgYamlContent = readYaml file: "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}"
-
-//  def tgYamlContent = "xxxxxxxxxxxx"
     echo "test plan is -----==== ${tgYamlContent}"
     if (tgYamlContent.isEmpty()) {
         throw new Exception("Testgrid Yaml content is Empty")
