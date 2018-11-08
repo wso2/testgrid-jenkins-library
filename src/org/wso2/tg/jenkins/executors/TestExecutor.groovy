@@ -162,9 +162,9 @@ def readRepositoryUrlsfromYaml(def testplan) {
     // We need to set the repository properties
     props.EMAIL_TO_LIST = tgYamlContent.emailToList
     props.INFRASTRUCTURE_REPOSITORY_URL = tgYamlContent.infrastructureConfig.provisioners[0]
-            .repository
-    props.DEPLOYMENT_REPOSITORY_URL = tgYamlContent.scenarioConfig.repository
-    props.SCENARIOS_REPOSITORY_URL = tgYamlContent.deploymentConfig.repository
+            .remoteRepository
+    props.DEPLOYMENT_REPOSITORY_URL = tgYamlContent.scenarioConfig.remoteRepository
+    props.SCENARIOS_REPOSITORY_URL = tgYamlContent.deploymentConfig.remoteRepository
     echo "XXXXXX"
     echo "${props.INFRASTRUCTURE_REPOSITORY_URL}"
     echo "${props.DEPLOYMENT_REPOSITORY_URL}"
