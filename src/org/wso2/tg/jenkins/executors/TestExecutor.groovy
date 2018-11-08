@@ -156,7 +156,7 @@ def readRepositoryUrlsfromYaml(def testplan) {
     def props = Properties.instance
     def yamlContentAsString = readFile "${testplan}"
     echo "${yamlContentAsString}"
-    yamlContentAsString.replaceAll("!!", "#")
+    yamlContentAsString.replaceAll("!!org.wso2.testgrid.common.TestPlan", "#")
     echo "DDDDD"
     echo "${yamlContentAsString}"
     def tgYamlContent = readYaml file: "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}"
