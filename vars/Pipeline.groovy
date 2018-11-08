@@ -108,7 +108,7 @@ def call() {
                             // We need to set the repository properties
                             props.EMAIL_TO_LIST = tgYamlContent.emailToList
                             props.INFRASTRUCTURE_REPOSITORY_URL = tgYamlContent.infrastructureConfig.provisioners[0]
-                                    .repository
+                                    //.repository
                             props.DEPLOYMENT_REPOSITORY_URL = tgYamlContent.scenarioConfig.repository
                             props.SCENARIOS_REPOSITORY_URL = tgYamlContent.deploymentConfig.repository
                             echo "XXXXXX"
