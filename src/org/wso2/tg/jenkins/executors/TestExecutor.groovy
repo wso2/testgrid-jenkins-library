@@ -154,9 +154,9 @@ def readRepositoryUrlsfromYaml(def testplan) {
 
     echo "test plan is -----==== ${testplan}"
     def props = Properties.instance
-    String yamlContentAsString = readFile "${testplan}"
+    String yamlContentAsString = readFile "${testplan}".replace("!!", "#")
     echo "${yamlContentAsString}"
-    yamlContentAsString.replaceAll(~'!!', "abcdefgh")
+    yamlContentAsString.replace("!!", "abcdefgh")
     echo "DDDDD"
     echo "${yamlContentAsString}"
     def tgYamlContent = readYaml file: "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}"
