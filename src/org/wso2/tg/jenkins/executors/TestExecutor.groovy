@@ -152,10 +152,9 @@ def prepareWorkspace(testPlanId) {
 
 def readRepositoryUrlsfromYaml(def testplan) {
 
-    def ctx = PipelineContext.instance
     echo "test plan is -----==== ${testplan}"
     def props = Properties.instance
-    def tgYamlContent = ctx.readYaml file: "${testplan}"
+    def tgYamlContent = readYaml file: "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}"
 //    def tgYamlContent = "xxxxxxxxxxxx"
     echo "test plan is -----==== ${tgYamlContent}"
     if (tgYamlContent.isEmpty()) {
