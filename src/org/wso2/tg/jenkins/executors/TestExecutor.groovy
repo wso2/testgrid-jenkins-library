@@ -132,9 +132,12 @@ def prepareWorkspace(testPlanId) {
     """
 
     tryAddKnownHost("github.com")
-    cloneRepo(props.INFRASTRUCTURE_REPOSITORY_URL, props.WORKSPACE + '/' + testPlanId + '/workspace', props.INFRA_LOCATION)
-    cloneRepo(props.DEPLOYMENT_REPOSITORY_URL, props.WORKSPACE + '/' + testPlanId + '/workspace', props.DEPLOYMENT_LOCATION );
-    cloneRepo(props.SCENARIOS_REPOSITORY_URL, props.WORKSPACE + '/' + testPlanId + '/workspace', props.SCENARIOS_LOCATION );
+    cloneRepo(props.INFRASTRUCTURE_REPOSITORY_URL, props.INFRASTRUCTURE_REPOSITORY_BRANCH, props.WORKSPACE + '/' +
+            testPlanId + '/workspace/' + props.INFRA_LOCATION)
+    cloneRepo(props.DEPLOYMENT_REPOSITORY_URL, props.DEPLOYMENT_REPOSITORY_BRANCH, props.WORKSPACE + '/' + testPlanId +
+            '/workspace/' + props.DEPLOYMENT_LOCATION );
+    cloneRepo(props.SCENARIOS_REPOSITORY_URL, props.SCENARIOS_REPOSITORY_BRANCH, props.WORKSPACE + '/' + testPlanId +
+            '/workspace/' + props.SCENARIOS_LOCATION );
 
     log.info("Copying the ssh key file to workspace : ${props.WORKSPACE}/${testPlanId}/${props.SSH_KEY_FILE_PATH}")
     withCredentials([file(credentialsId: 'DEPLOYMENT_KEY', variable: 'keyLocation')]) {
@@ -148,23 +151,39 @@ def prepareWorkspace(testPlanId) {
 def readRepositoryUrlsfromYaml(def testplan) {
 
     def props = Properties.instance
-    def tgYamlContent = readYaml file: testplan
-    if (tgYamlContent.isEmpty()) {
+    def tgYaml = readYaml file: testplan
+    if (tgYaml.isEmpty()) {
         throw new Exception("Testgrid Yaml content is Empty")
     }
     // We need to set the repository properties
-    props.INFRASTRUCTURE_REPOSITORY_URL = tgYamlContent.infrastructureConfig.provisioners[0].remoteRepository
-    props.DEPLOYMENT_REPOSITORY_URL = tgYamlContent.deploymentConfig.deploymentPatterns[0].remoteRepository
-    props.SCENARIOS_REPOSITORY_URL = tgYamlContent.scenarioConfig.remoteRepository
+    props.INFRASTRUCTURE_REPOSITORY_URL = tgYaml.infrastructureConfig.provisioners[0].remoteRepository
+    props.INFRASTRUCTURE_REPOSITORY_BRANCH = getRepositoryBranch(tgYaml.infrastructureConfig.provisioners[0].remoteBranch)
+
+    props.DEPLOYMENT_REPOSITORY_URL = tgYaml.deploymentConfig.deploymentPatterns[0].remoteRepository
+    props.DEPLOYMENT_REPOSITORY_BRANCH = getRepositoryBranch(tgYaml.deploymentConfig.deploymentPatterns[0].remoteBranch)
+
+    props.SCENARIOS_REPOSITORY_URL = tgYaml.scenarioConfig.remoteRepository
+    props.SCENARIOS_REPOSITORY_BRANCH = getRepositoryBranch(tgYaml.scenarioConfig.remoteBranch)
+    echo ""
+    echo "------------------------------------------------------------------------"
     echo "INFRASTRUCTURE_REPOSITORY_URL : ${props.INFRASTRUCTURE_REPOSITORY_URL}"
+    echo "INFRASTRUCTURE_REPOSITORY_BRANCH : ${props.INFRASTRUCTURE_REPOSITORY_BRANCH}"
+
     echo "DEPLOYMENT_REPOSITORY_URL : ${props.DEPLOYMENT_REPOSITORY_URL}"
+    echo "DEPLOYMENT_REPOSITORY_BRANCH : ${props.DEPLOYMENT_REPOSITORY_BRANCH}"
+
     echo "SCENARIOS_REPOSITORY_URL : ${props.SCENARIOS_REPOSITORY_URL}"
+    echo "SCENARIOS_REPOSITORY_BRANCH: ${props.SCENARIOS_REPOSITORY_BRANCH}"
+    echo "------------------------------------------------------------------------"
+    echo ""
 }
 
-def cloneRepo(def gitURL, def workspace, def dir) {
+void cloneRepo(def gitURL, gitBranch, dir) {
     sshagent (credentials: ['github_bot']) {
-        echo "Cloning repository: ${gitURL} into ${workspace}/${dir}"
-        sh script: "git clone ${gitURL} ${workspace}/${dir}"
+        sh """
+            echo Cloning repository: ${gitURL} into ${dir}
+            git clone -b ${gitBranch} ${gitURL} ${dir}
+        """
     }
 }
 
@@ -179,5 +198,13 @@ void tryAddKnownHost(String hostUrl){
     if(statusCode != 0){
         sh "mkdir -p ~/.ssh"
         sh "ssh-keyscan ${hostUrl} >> ~/.ssh/known_hosts"
+    }
+}
+
+static def getRepositoryBranch(def branch) {
+    if (branch != null) {
+        branch
+    } else {
+        "master"
     }
 }
