@@ -19,11 +19,10 @@
 package org.wso2.tg.jenkins.executors
 
 import org.wso2.tg.jenkins.Logger
-import org.wso2.tg.jenkins.PipelineContext
 import org.wso2.tg.jenkins.Properties
-import org.wso2.tg.jenkins.util.Common
-import org.wso2.tg.jenkins.util.AWSUtils
 import org.wso2.tg.jenkins.alert.Slack
+import org.wso2.tg.jenkins.util.AWSUtils
+import org.wso2.tg.jenkins.util.Common
 import org.wso2.tg.jenkins.util.FileUtils
 import org.wso2.tg.jenkins.util.RuntimeUtils
 
@@ -127,18 +126,16 @@ def prepareWorkspace(testPlanId) {
         #Cloning should be done before unstashing TestGridYaml since its going to be injected
         #inside the cloned repository
         cd ${props.WORKSPACE}/${testPlanId}/workspace
-        echo cloning infrastructure repository: ${props.INFRASTRUCTURE_REPOSITORY_URL} into ${props.WORKSPACE}/${testPlanId}/${props.INFRA_LOCATION}
-        git clone ${props.INFRASTRUCTURE_REPOSITORY_URL} ${props.INFRA_LOCATION}
-
-        echo cloning deployment repository: ${props.DEPLOYMENT_REPOSITORY_URL} into ${props.WORKSPACE}/${testPlanId}/${props.DEPLOYMENT_LOCATION}
-        git clone ${props.DEPLOYMENT_REPOSITORY_URL} ${props.DEPLOYMENT_LOCATION}      
-        
-        echo cloning scenarios repository: ${props.SCENARIOS_REPOSITORY_URL} into ${props.WORKSPACE}/${testPlanId}/${props.SCENARIOS_LOCATION}
-        git clone ${props.SCENARIOS_REPOSITORY_URL} ${props.SCENARIOS_LOCATION}     
 
         echo Workspace directory content:
         ls ${props.WORKSPACE}/${testPlanId}/
     """
+
+    tryAddKnownHost("github.com")
+    cloneRepo(props.INFRASTRUCTURE_REPOSITORY_URL, props.WORKSPACE + '/' + testPlanId + '/workspace', props.INFRA_LOCATION)
+    cloneRepo(props.DEPLOYMENT_REPOSITORY_URL, props.WORKSPACE + '/' + testPlanId + '/workspace', props.DEPLOYMENT_LOCATION );
+    cloneRepo(props.SCENARIOS_REPOSITORY_URL, props.WORKSPACE + '/' + testPlanId + '/workspace', props.SCENARIOS_LOCATION );
+
     log.info("Copying the ssh key file to workspace : ${props.WORKSPACE}/${testPlanId}/${props.SSH_KEY_FILE_PATH}")
     withCredentials([file(credentialsId: 'DEPLOYMENT_KEY', variable: 'keyLocation')]) {
         sh """
@@ -162,4 +159,25 @@ def readRepositoryUrlsfromYaml(def testplan) {
     echo "INFRASTRUCTURE_REPOSITORY_URL : ${props.INFRASTRUCTURE_REPOSITORY_URL}"
     echo "DEPLOYMENT_REPOSITORY_URL : ${props.DEPLOYMENT_REPOSITORY_URL}"
     echo "SCENARIOS_REPOSITORY_URL : ${props.SCENARIOS_REPOSITORY_URL}"
+}
+
+def cloneRepo(def gitURL, def workspace, def dir) {
+    sshagent (credentials: ['github_bot']) {
+        echo "Cloning repository: ${gitURL} into ${workspace}/${dir}"
+        sh script: "git clone ${gitURL} ${workspace}/${dir}"
+    }
+}
+
+/**
+ * Add hostUrl to knownhosts on the system (or container) if necessary so that ssh commands will go
+ * through even if the certificate was not previously seen.
+ * @param hostUrl
+ */
+void tryAddKnownHost(String hostUrl){
+    // ssh-keygen -F ${hostUrl} will fail (in bash that means status code != 0) if ${hostUrl} is not yet a known host
+    def statusCode = sh script:"ssh-keygen -F ${hostUrl}", returnStatus:true
+    if(statusCode != 0){
+        sh "mkdir -p ~/.ssh"
+        sh "ssh-keyscan ${hostUrl} >> ~/.ssh/known_hosts"
+    }
 }
