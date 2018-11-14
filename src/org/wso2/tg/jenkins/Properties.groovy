@@ -60,11 +60,17 @@ class Properties {
     static def LATEST_PRODUCT_RELEASE_API
     static def LATEST_PRODUCT_BUILD_ARTIFACTS_API
     static def WORKSPACE
-    static def SCENARIOS_REPOSITORY_URL
-    static def INFRASTRUCTURE_REPOSITORY_URL
-    static def DEPLOYMENT_REPOSITORY_URL
-    static def EMAIL_TO_LIST
 
+    static def SCENARIOS_REPOSITORY_URL
+    static def SCENARIOS_REPOSITORY_BRANCH
+
+    static def INFRASTRUCTURE_REPOSITORY_URL
+    static def INFRASTRUCTURE_REPOSITORY_BRANCH
+
+    static def DEPLOYMENT_REPOSITORY_URL
+    static def DEPLOYMENT_REPOSITORY_BRANCH
+
+    static def EMAIL_TO_LIST
 
     /**
      * Initializing the properties
