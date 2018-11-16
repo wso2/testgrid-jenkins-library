@@ -19,16 +19,15 @@
 
 import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.PipelineContext
-import org.wso2.tg.jenkins.alert.Slack
+import org.wso2.tg.jenkins.Properties
 import org.wso2.tg.jenkins.alert.Email
+import org.wso2.tg.jenkins.alert.Slack
+import org.wso2.tg.jenkins.executors.TestExecutor
 import org.wso2.tg.jenkins.executors.TestGridExecutor
 import org.wso2.tg.jenkins.util.AWSUtils
-import org.wso2.tg.jenkins.executors.TestExecutor
-import org.wso2.tg.jenkins.Properties
 import org.wso2.tg.jenkins.util.Common
 import org.wso2.tg.jenkins.util.RuntimeUtils
 import org.wso2.tg.jenkins.util.WorkSpaceUtils
-
 
 // The pipeline should reside in a call block
 def call() {
@@ -80,35 +79,50 @@ def call() {
                             // Increasing the TG JVM memory params
                             runtime.increaseTestGridRuntimeMemory("2G", "2G")
                             // Get testgrid.yaml from jenkins managed files
-                            sh """
+
+                            //The priority is given to the Jenkins UI plugin configurations and if it is unconfigured we fallback to
+                            //testgrid-job-configs repository and managed files approaches.
+                            def tgYamlPath = props.WORKSPACE + props.TESTGRID_YAML_LOCATION
+                            if (testgrid.yaml == null || testgrid.yaml == "UNDEFINED") {
+                                sh """
                                 git clone ${props.TESTGRID_JOB_CONFIG_REPOSITORY}
                             """
-                            def jobConfigExists = fileExists "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml"
-                            log.info("The file location is set as " +
-                                    "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml and the exist flag is set to "
-                                                                                                        + jobConfigExists)
-                            if (jobConfigExists) {
-                                log.info("The testgrid yaml is found in remote repository " +
-                                        "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml")
-                                sh """
-                                    cp "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml" ${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}
+                                def jobConfigExists = fileExists "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml"
+                                log.info("The file location is set as " +
+                                        "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml and the exist flag is set to "
+                                        + jobConfigExists)
+                                if (jobConfigExists) {
+                                    log.info("The testgrid yaml is found in remote repository " +
+                                            "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml")
+                                    sh """
+                                    cp "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml" ${
+                                        props.WORKSPACE
+                                    }/${props.TESTGRID_YAML_LOCATION}
                                 """
-                            } else {
-                                log.info("The testgrid yaml is copied from the configFile provider.")
-                                configFileProvider(
-                                        [configFile(fileId: "${props.PRODUCT}-testgrid-yaml", targetLocation:
-                                                "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}")]) {
+                                } else {
+                                    log.info("The testgrid yaml is copied from the configFile provider.")
+                                    configFileProvider(
+                                            [configFile(fileId: "${props.PRODUCT}-testgrid-yaml", targetLocation:
+                                                    "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}")]) {
+                                    }
                                 }
+                            } else {
+                                //write the Jenkins UI config values to the filesystem
+                                log.info("Testgrid yaml configured via Jenkins UI " + testgrid.yaml.toString())
+                                log.info("Yaml path " + tgYamlPath)
+                                writeFile file: tgYamlPath, text: testgrid.yaml.toString()
                             }
 
-                            def tgYamlContent = readYaml file: "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}"
+                            def tgYamlContent = readYaml file: tgYamlPath
+                            log.info("TG yaml content read " + tgYamlContent)
                             if (tgYamlContent.isEmpty()) {
                                 throw new Exception("Testgrid Yaml content is Empty")
                             }
+
                             // We need to set the repository properties
                             props.EMAIL_TO_LIST = tgYamlContent.emailToList
-                            if(props.EMAIL_TO_LIST == null) {
-                                throw new Exception("emailToList property is not found in testgrid.yaml file")
+                            if (props.EMAIL_TO_LIST == null) {
+                                log.warn("Email to list is empty!")
                             }
 
                             log.info("Creating Job config in " + props.JOB_CONFIG_YAML_PATH)
@@ -128,6 +142,7 @@ def call() {
                             }
                         } catch (e) {
                             currentBuild.result = "FAILED"
+                            echo e
                         } finally {
                             alert.sendNotification(currentBuild.result, "preparation", "#build_status_verbose")
                         }
