@@ -43,9 +43,12 @@ def runPlan(tPlan, testPlanId) {
     //sleep(time:commonUtil.getRandomNumber(10),unit:"SECONDS")
     log.info("Unstashing test-plans and testgrid.yaml to ${props.WORKSPACE}/${testPlanId}")
     runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
-    writeFile file: "${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}/deploy.sh", text:
-            '#!/bin/sh'
 
+    log.info("Downloading default deploy.sh...")
+    sh """
+    mkdir -p ${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}
+    curl --max-time 6 --retry 6 -o ${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}/deploy.sh https://raw.githubusercontent.com/azinneera/testgrid/info-hiding/jobs/test-resources/deploy.sh
+    """
 
     def name = commonUtil.getParameters("${props.WORKSPACE}/${tPlan}")
     notifier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
@@ -134,8 +137,14 @@ def prepareWorkspace(testPlanId) {
     tryAddKnownHost("github.com")
     cloneRepo(props.INFRASTRUCTURE_REPOSITORY_URL, props.INFRASTRUCTURE_REPOSITORY_BRANCH, props.WORKSPACE + '/' +
             testPlanId + '/workspace/' + props.INFRA_LOCATION)
-    cloneRepo(props.DEPLOYMENT_REPOSITORY_URL, props.DEPLOYMENT_REPOSITORY_BRANCH, props.WORKSPACE + '/' + testPlanId +
-            '/workspace/' + props.DEPLOYMENT_LOCATION );
+
+    if (props.DEPLOYMENT_REPOSITORY_URL != null) {
+        cloneRepo(props.DEPLOYMENT_REPOSITORY_URL, props.DEPLOYMENT_REPOSITORY_BRANCH, props.WORKSPACE + '/' + testPlanId +
+                '/workspace/' + props.DEPLOYMENT_LOCATION );
+    } else {
+        log.info("Deployment repository not specified")
+    }
+    
     cloneRepo(props.SCENARIOS_REPOSITORY_URL, props.SCENARIOS_REPOSITORY_BRANCH, props.WORKSPACE + '/' + testPlanId +
             '/workspace/' + props.SCENARIOS_LOCATION );
 
