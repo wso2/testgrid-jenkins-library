@@ -152,7 +152,9 @@ def prepareWorkspace(testPlanId) {
     withCredentials([file(credentialsId: 'DEPLOYMENT_KEY', variable: 'keyLocation')]) {
         sh """
             cp ${keyLocation} ${props.WORKSPACE}/${testPlanId}/${props.SSH_KEY_FILE_PATH}
+            cp -n ${keyLocation} ${props.TESTGRID_HOME}/${props.SSH_KEY_FILE_PATH_INTG}
             chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.SSH_KEY_FILE_PATH}
+            chmod 400 ${props.TESTGRID_HOME}/${props.SSH_KEY_FILE_PATH_INTG}
         """
     }
 }
