@@ -60,6 +60,7 @@ class Properties {
     static def LATEST_PRODUCT_RELEASE_API
     static def LATEST_PRODUCT_BUILD_ARTIFACTS_API
     static def WORKSPACE
+    static def TESTGRID_YAML_URL
 
     static def SCENARIOS_REPOSITORY_URL
     static def SCENARIOS_REPOSITORY_BRANCH
@@ -102,6 +103,7 @@ class Properties {
         INFRASTRUCTURE_REPOSITORY_URL = getJobProperty("INFRASTRUCTURE_REPOSITORY", false)
         DEPLOYMENT_REPOSITORY_URL = getJobProperty("DEPLOYMENT_REPOSITORY", false)
         EMAIL_TO_LIST = getJobProperty("EMAIL_TO_LIST", false)
+        TESTGRID_YAML_URL = getJobProperty("TESTGRID_YAML_URL", false)
     }
 
     /**
