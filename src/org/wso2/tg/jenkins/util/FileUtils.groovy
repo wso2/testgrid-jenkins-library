@@ -31,6 +31,6 @@ def createDirectory(directoryPath) throws IOException{
     File file = new File (directoryPath)
     boolean created = file.mkdirs()
     if (!created) {
-        throw IOException("Error while creating the directory " +file.getAbsolutePath())
+        throw new IOException("Error while creating the directory " +file.getAbsolutePath())
     }
 }
