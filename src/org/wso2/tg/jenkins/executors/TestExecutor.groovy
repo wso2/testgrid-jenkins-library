@@ -47,7 +47,7 @@ def runPlan(tPlan, testPlanId) {
     log.info("Downloading default deploy.sh...")
     sh """
     mkdir -p ${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}
-    curl --max-time 6 --retry 6 -o ${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}/deploy.sh https://raw.githubusercontent.com/azinneera/testgrid/info-hiding/jobs/test-resources/deploy.sh
+    curl --max-time 6 --retry 6 -o ${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}/deploy.sh https://raw.githubusercontent.com/wso2/testgrid/master/jobs/test-resources/deploy.sh
     """
 
     def name = commonUtil.getParameters("${props.WORKSPACE}/${tPlan}")
