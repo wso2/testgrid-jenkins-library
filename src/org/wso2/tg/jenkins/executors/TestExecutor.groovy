@@ -173,7 +173,7 @@ def readRepositoryUrlsfromYaml(def testplan) {
     props.DEPLOYMENT_REPOSITORY_URL = tgYaml.deploymentConfig.deploymentPatterns[0].remoteRepository
     props.DEPLOYMENT_REPOSITORY_BRANCH = getRepositoryBranch(tgYaml.deploymentConfig.deploymentPatterns[0].remoteBranch)
 
-    props.SCENARIOS_REPOSITORY_URL = tgYaml.scenarioConfigs.remoteRepository
+    props.SCENARIOS_REPOSITORY_URL = tgYaml.scenarioConfigs[0].remoteRepository
     props.SCENARIOS_REPOSITORY_BRANCH = getRepositoryBranch(tgYaml.scenarioConfigs[0].remoteBranch)
     echo ""
     echo "------------------------------------------------------------------------"
