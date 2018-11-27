@@ -23,14 +23,24 @@ import org.wso2.tg.jenkins.Properties
 def uploadToS3(testPlanId) {
     def props = Properties.instance
     sh """
-      aws s3 sync ${props.TESTGRID_HOME}/jobs/${props.PRODUCT}/${testPlanId}/ ${getS3WorkspaceURL()}/artifacts/jobs/${props.PRODUCT}/builds/${testPlanId} --include "*" --exclude 'workspace/*'
+      aws s3 sync ${props.TESTGRID_HOME}/jobs/${props.PRODUCT}/${testPlanId}/ \
+        ${getS3WorkspaceURL()}/artifacts/jobs/${props.PRODUCT}/builds/${testPlanId} \
+        --include "*" \
+        --exclude 'workspace/*' \
+        --only-show-errors
       """
 }
 
 def uploadCharts() {
     def props = Properties.instance
     sh """
-      aws s3 sync ${props.TESTGRID_HOME}/jobs/${props.PRODUCT}/ ${getS3WorkspaceURL()}/charts/${props.PRODUCT}/ --exclude "*" --include "*.png" --acl public-read
+      aws s3 sync ${props.TESTGRID_HOME}/jobs/${props.PRODUCT}/ \
+        ${getS3WorkspaceURL()}/charts/${props.PRODUCT}/ \
+        --exclude "*" \
+        --include "*.png" \
+        --exclude 'workspace/*' \
+        --acl public-read \
+        --only-show-errors
       """
 }
 
