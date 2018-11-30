@@ -33,7 +33,6 @@ class Properties {
     final static def CONFIG_PROPERTY_FILE_PATH    = TESTGRID_HOME + "/config.properties"
     final static def DEFAULT_EXECUTOR_COUNT       = 12
     final static def SSH_KEY_FILE_PATH            = "workspace/testgrid-key.pem"
-    final static def SSH_KEY_FILE_PATH_INTG       = "testgrid-key.pem"
     final static def TESTGRID_JOB_CONFIG_REPOSITORY = "https://github.com/wso2-incubator/testgrid-job-configs.git"
     final static def INFRA_LOCATION               = "InfraRepository"
     final static def DEPLOYMENT_LOCATION          = "DeploymentRepository"

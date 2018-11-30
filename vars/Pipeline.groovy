@@ -117,7 +117,6 @@ def call() {
                             if(props.EMAIL_TO_LIST == null) {
                                 throw new Exception("emailToList property is not found in testgrid.yaml file")
                             }
-
                             log.info("Creating Job config in " + props.JOB_CONFIG_YAML_PATH)
                             // Creating the job config file
                             ws.createJobConfigYamlFile("${props.JOB_CONFIG_YAML_PATH}")

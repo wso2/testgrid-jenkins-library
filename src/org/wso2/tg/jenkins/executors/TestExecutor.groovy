@@ -129,7 +129,6 @@ def prepareWorkspace(testPlanId) {
         #Cloning should be done before unstashing TestGridYaml since its going to be injected
         #inside the cloned repository
         cd ${props.WORKSPACE}/${testPlanId}/workspace
-
         echo Workspace directory content:
         ls ${props.WORKSPACE}/${testPlanId}/
     """
