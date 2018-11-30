@@ -20,9 +20,9 @@ package org.wso2.tg.jenkins.executors
 
 import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.Properties
-import org.wso2.tg.jenkins.util.Common
-import org.wso2.tg.jenkins.util.AWSUtils
 import org.wso2.tg.jenkins.alert.Slack
+import org.wso2.tg.jenkins.util.AWSUtils
+import org.wso2.tg.jenkins.util.Common
 import org.wso2.tg.jenkins.util.FileUtils
 import org.wso2.tg.jenkins.util.RuntimeUtils
 
@@ -36,15 +36,19 @@ def runPlan(tPlan, testPlanId) {
     def runtime = new RuntimeUtils()
     def log = new Logger()
 
+    readRepositoryUrlsfromYaml("${props.WORKSPACE}/${tPlan}")
     fileUtil.createDirectory("${props.WORKSPACE}/${testPlanId}")
     log.info("Preparing workspace for testplan : " + testPlanId)
     prepareWorkspace(testPlanId)
     //sleep(time:commonUtil.getRandomNumber(10),unit:"SECONDS")
     log.info("Unstashing test-plans and testgrid.yaml to ${props.WORKSPACE}/${testPlanId}")
     runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
-    writeFile file: "${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}/deploy.sh", text:
-            '#!/bin/sh'
 
+    log.info("Downloading default deploy.sh...")
+    sh """
+    mkdir -p ${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}
+    curl --max-time 6 --retry 6 -o ${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}/deploy.sh https://raw.githubusercontent.com/wso2/testgrid/master/jobs/test-resources/deploy.sh
+    """
 
     def name = commonUtil.getParameters("${props.WORKSPACE}/${tPlan}")
     notifier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
@@ -125,23 +129,92 @@ def prepareWorkspace(testPlanId) {
         #Cloning should be done before unstashing TestGridYaml since its going to be injected
         #inside the cloned repository
         cd ${props.WORKSPACE}/${testPlanId}/workspace
-        echo cloning infrastructure repository: ${props.INFRASTRUCTURE_REPOSITORY_URL} into ${props.WORKSPACE}/${testPlanId}/${props.INFRA_LOCATION}
-        git clone ${props.INFRASTRUCTURE_REPOSITORY_URL} ${props.INFRA_LOCATION}
-
-        echo cloning deployment repository: ${props.DEPLOYMENT_REPOSITORY_URL} into ${props.WORKSPACE}/${testPlanId}/${props.DEPLOYMENT_LOCATION}
-        git clone ${props.DEPLOYMENT_REPOSITORY_URL} ${props.DEPLOYMENT_LOCATION}      
-        
-        echo cloning scenarios repository: ${props.SCENARIOS_REPOSITORY_URL} into ${props.WORKSPACE}/${testPlanId}/${props.SCENARIOS_LOCATION}
-        git clone ${props.SCENARIOS_REPOSITORY_URL} ${props.SCENARIOS_LOCATION}     
-
         echo Workspace directory content:
         ls ${props.WORKSPACE}/${testPlanId}/
     """
+
+    tryAddKnownHost("github.com")
+    cloneRepo(props.INFRASTRUCTURE_REPOSITORY_URL, props.INFRASTRUCTURE_REPOSITORY_BRANCH, props.WORKSPACE + '/' +
+            testPlanId + '/workspace/' + props.INFRA_LOCATION)
+
+    if (props.DEPLOYMENT_REPOSITORY_URL != null) {
+        cloneRepo(props.DEPLOYMENT_REPOSITORY_URL, props.DEPLOYMENT_REPOSITORY_BRANCH, props.WORKSPACE + '/' + testPlanId +
+                '/workspace/' + props.DEPLOYMENT_LOCATION );
+    } else {
+        log.info("Deployment repository not specified")
+    }
+    
+    cloneRepo(props.SCENARIOS_REPOSITORY_URL, props.SCENARIOS_REPOSITORY_BRANCH, props.WORKSPACE + '/' + testPlanId +
+            '/workspace/' + props.SCENARIOS_LOCATION );
+
     log.info("Copying the ssh key file to workspace : ${props.WORKSPACE}/${testPlanId}/${props.SSH_KEY_FILE_PATH}")
     withCredentials([file(credentialsId: 'DEPLOYMENT_KEY', variable: 'keyLocation')]) {
         sh """
             cp ${keyLocation} ${props.WORKSPACE}/${testPlanId}/${props.SSH_KEY_FILE_PATH}
+            cp -n ${keyLocation} ${props.TESTGRID_HOME}/${props.SSH_KEY_FILE_PATH_INTG}
             chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.SSH_KEY_FILE_PATH}
+            chmod 400 ${props.TESTGRID_HOME}/${props.SSH_KEY_FILE_PATH_INTG}
         """
+    }
+}
+
+def readRepositoryUrlsfromYaml(def testplan) {
+
+    def props = Properties.instance
+    def tgYaml = readYaml file: testplan
+    if (tgYaml.isEmpty()) {
+        throw new Exception("Testgrid Yaml content is Empty")
+    }
+    // We need to set the repository properties
+    props.INFRASTRUCTURE_REPOSITORY_URL = tgYaml.infrastructureConfig.provisioners[0].remoteRepository
+    props.INFRASTRUCTURE_REPOSITORY_BRANCH = getRepositoryBranch(tgYaml.infrastructureConfig.provisioners[0].remoteBranch)
+
+    props.DEPLOYMENT_REPOSITORY_URL = tgYaml.deploymentConfig.deploymentPatterns[0].remoteRepository
+    props.DEPLOYMENT_REPOSITORY_BRANCH = getRepositoryBranch(tgYaml.deploymentConfig.deploymentPatterns[0].remoteBranch)
+
+    props.SCENARIOS_REPOSITORY_URL = tgYaml.scenarioConfig.remoteRepository
+    props.SCENARIOS_REPOSITORY_BRANCH = getRepositoryBranch(tgYaml.scenarioConfig.remoteBranch)
+    echo ""
+    echo "------------------------------------------------------------------------"
+    echo "INFRASTRUCTURE_REPOSITORY_URL : ${props.INFRASTRUCTURE_REPOSITORY_URL}"
+    echo "INFRASTRUCTURE_REPOSITORY_BRANCH : ${props.INFRASTRUCTURE_REPOSITORY_BRANCH}"
+
+    echo "DEPLOYMENT_REPOSITORY_URL : ${props.DEPLOYMENT_REPOSITORY_URL}"
+    echo "DEPLOYMENT_REPOSITORY_BRANCH : ${props.DEPLOYMENT_REPOSITORY_BRANCH}"
+
+    echo "SCENARIOS_REPOSITORY_URL : ${props.SCENARIOS_REPOSITORY_URL}"
+    echo "SCENARIOS_REPOSITORY_BRANCH: ${props.SCENARIOS_REPOSITORY_BRANCH}"
+    echo "------------------------------------------------------------------------"
+    echo ""
+}
+
+void cloneRepo(def gitURL, gitBranch, dir) {
+    sshagent (credentials: ['github_bot']) {
+        sh """
+            echo Cloning repository: ${gitURL} into ${dir}
+            git clone -b ${gitBranch} ${gitURL} ${dir}
+        """
+    }
+}
+
+/**
+ * Add hostUrl to knownhosts on the system (or container) if necessary so that ssh commands will go
+ * through even if the certificate was not previously seen.
+ * @param hostUrl
+ */
+void tryAddKnownHost(String hostUrl){
+    // ssh-keygen -F ${hostUrl} will fail (in bash that means status code != 0) if ${hostUrl} is not yet a known host
+    def statusCode = sh script:"ssh-keygen -F ${hostUrl}", returnStatus:true
+    if(statusCode != 0){
+        sh "mkdir -p ~/.ssh"
+        sh "ssh-keyscan ${hostUrl} >> ~/.ssh/known_hosts"
+    }
+}
+
+static def getRepositoryBranch(def branch) {
+    if (branch != null) {
+        branch
+    } else {
+        "master"
     }
 }

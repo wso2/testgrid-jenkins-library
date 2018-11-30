@@ -33,6 +33,7 @@ class Properties {
     final static def CONFIG_PROPERTY_FILE_PATH    = TESTGRID_HOME + "/config.properties"
     final static def DEFAULT_EXECUTOR_COUNT       = 12
     final static def SSH_KEY_FILE_PATH            = "workspace/testgrid-key.pem"
+    final static def SSH_KEY_FILE_PATH_INTG       = "testgrid-key.pem"
     final static def TESTGRID_JOB_CONFIG_REPOSITORY = "https://github.com/wso2-incubator/testgrid-job-configs.git"
     final static def INFRA_LOCATION               = "InfraRepository"
     final static def DEPLOYMENT_LOCATION          = "DeploymentRepository"
@@ -60,11 +61,18 @@ class Properties {
     static def LATEST_PRODUCT_RELEASE_API
     static def LATEST_PRODUCT_BUILD_ARTIFACTS_API
     static def WORKSPACE
-    static def SCENARIOS_REPOSITORY_URL
-    static def INFRASTRUCTURE_REPOSITORY_URL
-    static def DEPLOYMENT_REPOSITORY_URL
-    static def EMAIL_TO_LIST
+    static def TESTGRID_YAML_URL
 
+    static def SCENARIOS_REPOSITORY_URL
+    static def SCENARIOS_REPOSITORY_BRANCH
+
+    static def INFRASTRUCTURE_REPOSITORY_URL
+    static def INFRASTRUCTURE_REPOSITORY_BRANCH
+
+    static def DEPLOYMENT_REPOSITORY_URL
+    static def DEPLOYMENT_REPOSITORY_BRANCH
+
+    static def EMAIL_TO_LIST
 
     /**
      * Initializing the properties
@@ -92,10 +100,11 @@ class Properties {
         PASSWORD = getCredentials("WUM_PASSWORD", false)
         LATEST_PRODUCT_RELEASE_API = getJobProperty("LATEST_PRODUCT_RELEASE_API", false)
         LATEST_PRODUCT_BUILD_ARTIFACTS_API = getJobProperty("LATEST_PRODUCT_BUILD_ARTIFACTS_API", false)
-        SCENARIOS_REPOSITORY_URL = getJobProperty("SCENARIOS_REPOSITORY")
-        INFRASTRUCTURE_REPOSITORY_URL = getJobProperty("INFRASTRUCTURE_REPOSITORY")
-        DEPLOYMENT_REPOSITORY_URL = getJobProperty("DEPLOYMENT_REPOSITORY")
-        EMAIL_TO_LIST = getJobProperty("EMAIL_TO_LIST")
+        SCENARIOS_REPOSITORY_URL = getJobProperty("SCENARIOS_REPOSITORY", false)
+        INFRASTRUCTURE_REPOSITORY_URL = getJobProperty("INFRASTRUCTURE_REPOSITORY", false)
+        DEPLOYMENT_REPOSITORY_URL = getJobProperty("DEPLOYMENT_REPOSITORY", false)
+        EMAIL_TO_LIST = getJobProperty("EMAIL_TO_LIST", false)
+        TESTGRID_YAML_URL = getJobProperty("TESTGRID_YAML_URL", false)
     }
 
     /**

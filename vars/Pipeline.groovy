@@ -80,27 +80,43 @@ def call() {
                             // Increasing the TG JVM memory params
                             runtime.increaseTestGridRuntimeMemory("2G", "2G")
                             // Get testgrid.yaml from jenkins managed files
-                            sh """
-                                git clone ${props.TESTGRID_JOB_CONFIG_REPOSITORY}
-                            """
-                            def jobConfigExists = fileExists "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml"
-                            log.info("The file location is set as " +
-                                    "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml and the exist flag is set to "
-                                                                                                        + jobConfigExists)
-                            if (jobConfigExists) {
-                                log.info("The testgrid yaml is found in remote repository " +
-                                        "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml")
+                            if (props.TESTGRID_YAML_URL != null) {
+                                log.info("testgrid.yaml is retrieved from ${props.TESTGRID_YAML_URL}")
                                 sh """
-                                    cp "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml" ${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}
+                                    curl -k -o ${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION} ${props.TESTGRID_YAML_URL}
                                 """
                             } else {
-                                log.info("The testgrid yaml is copied from the configFile provider.")
-                                configFileProvider(
-                                        [configFile(fileId: "${props.PRODUCT}-testgrid-yaml", targetLocation:
-                                                "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}")]) {
+                                sh """
+                                git clone ${props.TESTGRID_JOB_CONFIG_REPOSITORY}
+                                """
+                                def jobConfigExists = fileExists "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml"
+                                log.info("The file location is set as " +
+                                        "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml and the exist flag is set to "
+                                        + jobConfigExists)
+                                if (jobConfigExists) {
+                                    log.info("The testgrid yaml is found in remote repository " +
+                                            "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml")
+                                    sh """
+                                    cp "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml" ${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}
+                                """
+                                } else {
+                                    log.info("The testgrid yaml is copied from the configFile provider.")
+                                    configFileProvider(
+                                            [configFile(fileId: "${props.PRODUCT}-testgrid-yaml", targetLocation:
+                                                    "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}")]) {
+                                    }
                                 }
                             }
 
+                            def tgYamlContent = readYaml file: "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}"
+                            if (tgYamlContent.isEmpty()) {
+                                throw new Exception("Testgrid Yaml content is Empty")
+                            }
+                            // We need to set the repository properties
+                            props.EMAIL_TO_LIST = tgYamlContent.emailToList
+                            if(props.EMAIL_TO_LIST == null) {
+                                throw new Exception("emailToList property is not found in testgrid.yaml file")
+                            }
                             log.info("Creating Job config in " + props.JOB_CONFIG_YAML_PATH)
                             // Creating the job config file
                             ws.createJobConfigYamlFile("${props.JOB_CONFIG_YAML_PATH}")
