@@ -38,7 +38,8 @@ def call() {
                     genericVariables: [
                             [expressionType: 'JSONPath', key: 'sshUrl', value: '$.ssh_url'],
                             [expressionType: 'JSONPath', key: 'repoName', value: '$.repository.name'],
-                            [expressionType: 'JSONPath', key: 'branch', value: '$.ref', regexpFilter: 'refs/heads/']
+                            [expressionType: 'JSONPath', key: 'branch', value: '$.ref', regexpFilter: '']
+//                            [expressionType: 'JSONPath', key: 'branch', value: '$.ref', regexpFilter: 'refs/heads/']
                     ],
                     regexpFilterText: '',
                     regexpFilterExpression: ''
