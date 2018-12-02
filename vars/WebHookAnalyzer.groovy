@@ -38,8 +38,7 @@ def call() {
                     genericVariables: [
                             [expressionType: 'JSONPath', key: 'sshUrl', value: '$.ssh_url'],
                             [expressionType: 'JSONPath', key: 'repoName', value: '$.repository.name'],
-                            [expressionType: 'JSONPath', key: 'branch', value: '$.ref', regexpFilter: '']
-//                            [expressionType: 'JSONPath', key: 'branch', value: '$.ref', regexpFilter: 'refs/heads/']
+                            [expressionType: 'JSONPath', key: 'branch', value: '$.ref', regexpFilter: 'refs/heads/']
                     ],
                     regexpFilterText: '',
                     regexpFilterExpression: ''
@@ -52,19 +51,20 @@ def call() {
         stages {
             stage('Receive web Hooks') {
                 steps {
-                    echo "${sshUrl}"
+                    script {
                         script {
                             echo "Recieved the web hook request!"
                             // Cloning the git repository
-//                            log.info("The git branch is : ${branch}")
-//                            log.info("The git repo name is : ${repoName}")
-//                            log.info("Git SSH URL is : ${sshUrl}")
+                            log.info("The git branch is : ${branch}")
+                            log.info("The git repo name is : ${repoName}")
+                            log.info("Git SSH URL is : ${sshUrl}")
                             cloneRepo(${sshUrl}, ${branch})
 
                             // We need to get a list of Jobs that are configured
                             printAllJobs()
                         }
                     }
+                }
             }
         }
     }
