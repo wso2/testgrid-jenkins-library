@@ -30,12 +30,19 @@ def call() {
     props.instance.initProperties()
     def log = new Logger()
 
+
     pipeline {
-        agent {
-            node {
-                label ""
-                customWorkspace "${props.WORKSPACE}"
-            }
+        agent any
+        triggers {
+            GenericTrigger(
+                    genericVariables: [
+                            [expressionType: 'JSONPath', key: 'sshUrl', value: '$.ssh_url'],
+                            [expressionType: 'JSONPath', key: 'repoName', value: '$.repository.name'],
+                            [expressionType: 'JSONPath', key: 'branch', value: '$.ref', regexpFilter: 'refs/heads/']
+                    ],
+                    regexpFilterText: '',
+                    regexpFilterExpression: ''
+            )
         }
         tools {
             jdk 'jdk8'
@@ -45,15 +52,17 @@ def call() {
             stage('Receive web Hooks') {
                 steps {
                     script {
-                        echo "Recieved the web hook request!"
-                        // Cloning the git repository
-                        log.info("The git branch is : ${branch}")
-                        log.info("The git repo name is : ${repoName}")
-                        log.info("Git SSH URL is : ${gitSshUrl}")
-                        cloneRepo(${gitSshUrl}, ${branch})
+                        script {
+                            echo "Recieved the web hook request!"
+                            // Cloning the git repository
+                            log.info("The git branch is : ${branch}")
+                            log.info("The git repo name is : ${repoName}")
+                            log.info("Git SSH URL is : ${sshUrl}")
+                            cloneRepo(${sshUrl}, ${branch})
 
-                        // We need to get a list of Jobs that are configured
-                        printAllJobs()
+                            // We need to get a list of Jobs that are configured
+                            printAllJobs()
+                        }
                     }
                 }
             }
