@@ -44,15 +44,17 @@ def call() {
         stages {
             stage('Receive web Hooks') {
                 steps {
-                    echo "Recieved the web hook request!"
-                    // Cloning the git repository
-                    log.info("The git branch is : ${branch}")
-                    log.info("The git repo name is : ${repoName}")
-                    log.info("Git SSH URL is : ${gitSshUrl}")
-                    cloneRepo(${gitSshUrl}, ${branch})
+                    script {
+                        echo "Recieved the web hook request!"
+                        // Cloning the git repository
+                        log.info("The git branch is : ${branch}")
+                        log.info("The git repo name is : ${repoName}")
+                        log.info("Git SSH URL is : ${gitSshUrl}")
+                        cloneRepo(${gitSshUrl}, ${branch})
 
-                    // We need to get a list of Jobs that are configured
-                    printAllJobs()
+                        // We need to get a list of Jobs that are configured
+                        printAllJobs()
+                    }
                 }
             }
         }
