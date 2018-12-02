@@ -52,7 +52,7 @@ def call() {
         stages {
             stage('Receive web Hooks') {
                 steps {
-                    script {
+                    echo "${sshUrl}"
                         script {
                             echo "Recieved the web hook request!"
                             // Cloning the git repository
@@ -65,7 +65,6 @@ def call() {
                             printAllJobs()
                         }
                     }
-                }
             }
         }
     }
