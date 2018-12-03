@@ -66,7 +66,7 @@ def call() {
 
                         //cloneRepo("${sshUrl}", "${branch}")
                         // We need to get a list of Jobs that are configured
-                        printAllJobs()
+//                        printAllJobs()
                     }
                 }
             }
