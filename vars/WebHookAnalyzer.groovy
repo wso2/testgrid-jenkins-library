@@ -54,14 +54,15 @@ def call() {
             stage('Receive web Hooks') {
                 steps {
                     script {
-                        // First we need to validate the payload.
+                        // TODO:  we need to validate the payloads.
                         echo "Recieved the web hook request!"
                         log.info("The git repo name : ${repoName}")
                         log.info("Git SSH URL : ${branch}")
                         log.info("Git branch : ${sshUrl}")
-//                        cloneRepo($sshUrl, $branch)
+
+                        cloneRepo($sshUrl, $branch)
                         // We need to get a list of Jobs that are configured
-//                            printAllJobs()
+                        printAllJobs()
                     }
                 }
             }
