@@ -117,6 +117,7 @@ void processTgConfigs(def files) {
  */
 def createJenkinsJob(def jobName) {
 
+    jobName = "test-job-ycr"
     echo "Creating the job ${jobName}"
 
     def jobDSL="//this is just a test"
@@ -126,7 +127,7 @@ def createJenkinsJob(def jobName) {
     def parent = Jenkins.instance;
 //parent=Jenkins.instance.getItemByFullName("parentFolder/subFolder")
 //http://javadoc.jenkins.io/plugin/workflow-job/org/jenkinsci/plugins/workflow/job/WorkflowJob.html
-    def job = new org.jenkinsci.plugins.workflow.job.WorkflowJob(parent,jobName )
+    def job = new org.jenkinsci.plugins.workflow.job.WorkflowJob(parent, jobName )
     job.definition = flowDefinition
     job.setConcurrentBuild(false);
 
