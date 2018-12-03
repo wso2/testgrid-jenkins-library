@@ -85,7 +85,7 @@ void cloneRepo(def gitURL, gitBranch) {
 }
 
 void printAllJobs() {
-    PipelineContext.instance.getAllItems(AbstractItem.class).each {
+    Jenkins.instance.getAllItems(AbstractItem.class).each {
         echo "${it.fullName}"
     }
 }
