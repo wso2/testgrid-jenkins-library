@@ -116,7 +116,7 @@ void findTestGridYamls(def searchPath) {
 //        file -> println file.getAbsolutePath()
 //    }
     dir(searchPath) {
-        def dir = new File(".")
+        def dir = new File(searchPath)
         def files = []
         dir.traverse(type: FILES, maxDepth: 100) {
             files.add(it)
