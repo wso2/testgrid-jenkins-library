@@ -113,7 +113,7 @@ void tryAddKnownHost(String hostUrl){
 
 def findTestGridYamls(def searchPath) {
     dir (searchPath) {
-        def files = findFiles(glob: '*.*')
+        def files = findFiles(glob: '**/testgrid.yaml')
         echo "${files}"
     }
 }
