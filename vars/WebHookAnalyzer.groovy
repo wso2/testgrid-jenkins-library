@@ -110,7 +110,7 @@ void processTgConfigs(def files) {
           log.error("Error while reading the yaml content " + e.getMessage())
           // TODO: We need to generate a Email here
         }
-        createJenkinsJob(jobName)
+        createJenkinsJob(jobName, "")
     }
 }
 
