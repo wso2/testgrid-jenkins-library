@@ -83,15 +83,15 @@ def call() {
 }
 
 void cloneRepo(def gitURL, gitBranch) {
-//    sshagent (credentials: ['github_bot']) {
-        def props = Properties.instance
-        tryAddKnownHost("github.com")
+    def props = Properties.instance
+    tryAddKnownHost("github.com")
+    sshagent (credentials: ['github_bot']) {
         sh """
             echo Cloning repository: ${gitURL}
             cd ${props.WORKSPACE}
             git clone -b ${gitBranch} ${gitURL}
         """
-//    }
+    }
 }
 
 /**
