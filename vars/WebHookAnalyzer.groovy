@@ -85,13 +85,27 @@ def call() {
 void cloneRepo(def gitURL, gitBranch) {
 //    sshagent (credentials: ['github_bot']) {
         def props = Properties.instance
-        pwd()
+        tryAddKnownHost("github.com")
         sh """
             echo Cloning repository: ${gitURL}
             cd ${props.WORKSPACE}
             git clone -b ${gitBranch} ${gitURL}
         """
 //    }
+}
+
+/**
+ * Add hostUrl to knownhosts on the system (or container) if necessary so that ssh commands will go
+ * through even if the certificate was not previously seen.
+ * @param hostUrl
+ */
+void tryAddKnownHost(String hostUrl){
+    // ssh-keygen -F ${hostUrl} will fail (in bash that means status code != 0) if ${hostUrl} is not yet a known host
+    def statusCode = sh script:"ssh-keygen -F ${hostUrl}", returnStatus:true
+    if(statusCode != 0){
+        sh "mkdir -p ~/.ssh"
+        sh "ssh-keyscan ${hostUrl} >> ~/.ssh/known_hosts"
+    }
 }
 
 void findTestGridYamls(def searchPath) {
