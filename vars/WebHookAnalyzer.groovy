@@ -115,7 +115,8 @@ void findTestGridYamls(def searchPath) {
 //    new File(searchPath + "/test.txt").eachFileRecurse() {
 //        file -> println file.getAbsolutePath()
 //    }
-    def dir = new File(searchPath)
+    pwd()
+    def dir = new File("./web-hook-test")
     def files = []
     dir.traverse(type: FILES, maxDepth: 0) { files.add(it) }
     echo "Files : "
