@@ -115,21 +115,20 @@ void processTgConfigs(def files) {
 /**
  * This method is responsible for creating the Jenkins job.
  */
-def createJenkinsJob(def jobName) {
+def createJenkinsJob(def jobName, def timerConfig) {
 
-    jobName = "test-job-ycr"
+    jobName = "test-job-ycr-2"
     echo "Creating the job ${jobName}"
 
-    def jobDSL="//this is just a test"
-//http://javadoc.jenkins.io/plugin/workflow-cps/index.html?org/jenkinsci/plugins/workflow/cps/CpsFlowDefinition.html
-    def flowDefinition = new org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition(jobDSL, true);
-//http://javadoc.jenkins.io/jenkins/model/Jenkins.html
-    def parent = Jenkins.instance;
-//parent=Jenkins.instance.getItemByFullName("parentFolder/subFolder")
-//http://javadoc.jenkins.io/plugin/workflow-job/org/jenkinsci/plugins/workflow/job/WorkflowJob.html
-    def job = new org.jenkinsci.plugins.workflow.job.WorkflowJob(parent, jobName )
+    //TODO: depending on the environment we need to select the correct pipeline branch, we can get this as a job
+    // property
+    def jobDSL="@Library('intg_test_template@dev') _\n" +
+                "Pipeline()"
+    def flowDefinition = new org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition(jobDSL, true)
+    def instance = Jenkins.instance
+    def job = new org.jenkinsci.plugins.workflow.job.WorkflowJob(instance, jobName )
     job.definition = flowDefinition
-    job.setConcurrentBuild(false);
+    job.setConcurrentBuild(false)
 
 //http://javadoc.jenkins.io/plugin/branch-api/jenkins/branch/RateLimitBranchProperty.html
 //    job.addProperty( new jenkins.branch.RateLimitBranchProperty.JobPropertyImpl
@@ -138,6 +137,8 @@ def createJenkinsJob(def jobName) {
 //    hudson.triggers.TimerTrigger newCron = new hudson.triggers.TimerTrigger(spec);
 //    newCron.start(job, true);
 //    job.addTrigger(newCron);
+    def prop = new EnvInjectJobPropertyInfo("", "ABCD=\"CDE\"", "", "", "", false)
+    job.addProperty(new org.jenkinsci.plugins.envinject.EnvInjectJobProperty(prop))
     job.save()
 
 
