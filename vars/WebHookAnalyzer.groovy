@@ -66,7 +66,7 @@ def call() {
 
                         cloneRepo(GIT_SSH_URL, GIT_BRANCH)
                         // We need to get a list of Jobs that are configured
-//                        printAllJobs()
+                        printAllJobs()
                     }
                 }
             }
@@ -83,9 +83,9 @@ void cloneRepo(def gitURL, gitBranch) {
     }
 }
 
-printAllJobs() {
-    Jenkins.instance.getAllItems(AbstractItem.class).each {
-        println(it.fullName)
+void printAllJobs() {
+    PipelineContext.instance.getAllItems(AbstractItem.class).each {
+        echo "${it.fullName}
     }
 }
 
