@@ -33,19 +33,17 @@ def call() {
 
     pipeline {
         agent any
-        // This trigger is removed from the pipeline itself to due to few issues in the plugin when using
-        // shared libraries
-//        triggers {
-//            GenericTrigger(
-//                    genericVariables: [
-//                            [expressionType: 'JSONPath', key: 'sshUrl', value: '$.ssh_url'],
-//                            [expressionType: 'JSONPath', key: 'repoName', value: '$.repository.name'],
-//                            [expressionType: 'JSONPath', key: 'branch', value: '$.ref', regexpFilter: 'refs/heads/']
-//                    ],
-//                    regexpFilterText: '',
-//                    regexpFilterExpression: ''
-//            )
-//        }
+        triggers {
+            GenericTrigger(
+                    genericVariables: [
+                            [expressionType: 'JSONPath', key: 'sshUrl', value: '$.repository.ssh_url'],
+                            [expressionType: 'JSONPath', key: 'repoName', value: '$.repository.name'],
+                            [expressionType: 'JSONPath', key: 'branch', value: '$.ref', regexpFilter: 'refs/heads/']
+                    ],
+                    regexpFilterText: '',
+                    regexpFilterExpression: ''
+            )
+        }
         tools {
             jdk 'jdk8'
         }
@@ -57,7 +55,7 @@ def call() {
                         // First we need to validate the payload.
                         echo "Recieved the web hook request!"
                         log.info("The git repo name : ${repoName}")
-                        log.info("Git SSH URL : ${sshUrl}")
+                        log.info("Git SSH URL : ${branch}")
                         log.info("Git branch : ${sshUrl}")
 //                        cloneRepo($sshUrl, $branch)
                         // We need to get a list of Jobs that are configured
