@@ -20,6 +20,7 @@
 import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.PipelineContext
 import org.wso2.tg.jenkins.Properties
+import static groovy.io.FileType.FILES
 
 // The pipeline should reside in a call block
 def call() {
@@ -110,10 +111,14 @@ void tryAddKnownHost(String hostUrl){
 
 void findTestGridYamls(def searchPath) {
     echo "Searching for TG yamls at : ${searchPath}"
-    sh "echo \"test\" > ${searchPath}/test.txt"
-    new File(searchPath + "/test.txt").eachFileRecurse() {
-        file -> println file.getAbsolutePath()
-    }
+//    sh "echo \"test\" > ${searchPath}/test.txt"
+//    new File(searchPath + "/test.txt").eachFileRecurse() {
+//        file -> println file.getAbsolutePath()
+//    }
+    def dir = new File(".")
+    def files = []
+    dir.traverse(type: FILES, maxDepth: 0) { files.add(it) }
+    echo "${files}"
 }
 
 void printAllJobs() {
