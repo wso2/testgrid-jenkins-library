@@ -30,6 +30,10 @@ def call() {
     props.instance.initProperties()
     def log = new Logger()
 
+    final def GIT_REPOSITORY = ${repoName}
+    final def GIT_SSH_URL = ${sshUrl}
+    final def GIT_BRANCH = ${branch}
+
 
     pipeline {
         agent any
@@ -56,11 +60,11 @@ def call() {
                     script {
                         // TODO:  we need to validate the payloads.
                         echo "Recieved the web hook request!"
-                        log.info("The git repo name : ${repoName}")
-                        log.info("Git SSH URL : ${branch}")
-                        log.info("Git branch : ${sshUrl}")
+                        log.info("The git repo name : " + GIT_REPOSITORY)
+                        log.info("Git SSH URL : " + GIT_BRANCH)
+                        log.info("Git branch : " + GIT_SSH_URL)
 
-                        cloneRepo(${sshUrl}, ${branch})
+                        //cloneRepo("${sshUrl}", "${branch}")
                         // We need to get a list of Jobs that are configured
                         printAllJobs()
                     }
