@@ -60,7 +60,7 @@ def call() {
                         log.info("Git SSH URL : ${branch}")
                         log.info("Git branch : ${sshUrl}")
 
-                        cloneRepo($sshUrl, $branch)
+                        cloneRepo(${sshUrl}, ${branch})
                         // We need to get a list of Jobs that are configured
                         printAllJobs()
                     }
