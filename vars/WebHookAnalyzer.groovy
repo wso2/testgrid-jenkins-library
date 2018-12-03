@@ -19,6 +19,8 @@
 import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.PipelineContext
 import org.wso2.tg.jenkins.Properties
+import org.jenkinsci.plugins.envinject.EnvInjectJobPropertyInfo
+import org.jenkinsci.plugins.envinject.EnvInjectJobProperty
 
 // The pipeline should reside in a call block
 def call() {
