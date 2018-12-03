@@ -116,13 +116,12 @@ void findTestGridYamls(def searchPath) {
 //        file -> println file.getAbsolutePath()
 //    }
     dir(searchPath) {
-
+        def dir = new File(".")
+        def files = []
+        dir.traverse(type: FILES, maxDepth: 0) { files.add(it) }
+        echo "Files : "
+        echo "${files}"
     }
-    def dir = new File(".")
-    def files = []
-    dir.traverse(type: FILES, maxDepth: 0) { files.add(it) }
-    echo "Files : "
-    echo "${files}"
 }
 
 void printAllJobs() {
