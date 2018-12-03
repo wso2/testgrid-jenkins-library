@@ -67,7 +67,7 @@ def call() {
 
                         deleteDir()
                         cloneRepo(GIT_SSH_URL, GIT_BRANCH)
-                        findTestGridYamls(pwd() + "/" + GIT_REPOSITORY)
+                        //findTestGridYamls(pwd() + "/" + GIT_REPOSITORY)
                         // We need to get a list of Jobs that are configured
                         printAllJobs()
                     }
