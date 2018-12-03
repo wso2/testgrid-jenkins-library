@@ -120,7 +120,7 @@ void processTgConfigs(def files) {
  */
 def createJenkinsJob(def jobName, def timerConfig) {
 
-    jobName = "test-job-ycr-3"
+    jobName = "test-job-ycr-4"
     echo "Creating the job ${jobName}"
 
     //TODO: depending on the environment we need to select the correct pipeline branch, we can get this as a job
@@ -140,10 +140,10 @@ def createJenkinsJob(def jobName, def timerConfig) {
 //    hudson.triggers.TimerTrigger newCron = new hudson.triggers.TimerTrigger(spec);
 //    newCron.start(job, true);
 //    job.addTrigger(newCron);
-    //def prop = new EnvInjectJobPropertyInfo("", "ABCD=\"CDE\"", "", "", "", false)
-    def prop2 = new EnvInjectInfo("", "EFG=\"123456\"")
-    job.addProperty(prop2)
-//    job.addProperty(new org.jenkinsci.plugins.envinject.EnvInjectJobProperty(prop2))
+    def prop = new EnvInjectJobPropertyInfo("", "ABCD=\"CDE\"", "", "", "", true)
+//    def prop2 = new EnvInjectInfo("", "EFG=\"123456\"")
+//    job.addProperty(prop2)
+    job.addProperty(new org.jenkinsci.plugins.envinject.EnvInjectJobProperty(prop2))
     job.save()
 
     Jenkins.instance.reload()
