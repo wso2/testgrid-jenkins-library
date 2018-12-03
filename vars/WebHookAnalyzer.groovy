@@ -33,17 +33,19 @@ def call() {
 
     pipeline {
         agent any
-        triggers {
-            GenericTrigger(
-                    genericVariables: [
-                            [expressionType: 'JSONPath', key: 'sshUrl', value: '$.repository.ssh_url'],
-                            [expressionType: 'JSONPath', key: 'repoName', value: '$.repository.name'],
-                            [expressionType: 'JSONPath', key: 'branch', value: '$.ref', regexpFilter: 'refs/heads/']
-                    ],
-                    regexpFilterText: '',
-                    regexpFilterExpression: ''
-            )
-        }
+        // This trigger is removed from the pipeline itself to due to few issues in the plugin when using
+        // shared libraries
+//        triggers {
+//            GenericTrigger(
+//                    genericVariables: [
+//                            [expressionType: 'JSONPath', key: 'sshUrl', value: '$.repository.ssh_url'],
+//                            [expressionType: 'JSONPath', key: 'repoName', value: '$.repository.name'],
+//                            [expressionType: 'JSONPath', key: 'branch', value: '$.ref', regexpFilter: 'refs/heads/']
+//                    ],
+//                    regexpFilterText: '',
+//                    regexpFilterExpression: ''
+//            )
+//        }
         tools {
             jdk 'jdk8'
         }
