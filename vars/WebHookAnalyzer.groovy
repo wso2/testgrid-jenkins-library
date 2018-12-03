@@ -33,7 +33,6 @@ def call() {
     final def GIT_SSH_URL = "${sshUrl}"
     final def GIT_BRANCH = "${branch}"
     final def TG_YAML_SEARCH_REGEX = "*.testgrid.yaml"
-    final def DEV_JENKINS_URL;
 
     pipeline {
         agent {
@@ -89,21 +88,32 @@ void processTgConfigs(def files) {
         def tgYamlContent
         try {
             tgYamlContent = readYaml file: files[i]
+            log.info("YAML Content : ${tgYamlContent}")
             def addToJenkins = tgYamlContent.onboardJob
-            log.info("The onborading flag is " + addToJenkins)
+            log.info("The onboarding flag is " + addToJenkins)
             if (!addToJenkins) {
                 log.warn("Skipping on-boarding the testgrid yaml for " + files[i])
                 continue
             }
             def jobName = tgYamlContent.jobName
             def emailToList = tgYamlContent.emailToList
+
+            //check whether a job exist with the same name
+            // We will anyway update the job with the latest configs
+            if (isJobExists(jobName)) {
+                log.warn("Found a job with the name " + jobName + " will be updating the job.")
+            }
         } catch (Exception e) {
           log.error("Error while reading the yaml content " + e.getMessage())
         }
-
-//        echo "YAML Content : ${tgYamlContent}"
-
     }
+}
+
+/**
+ * This method is responsible for creating the Jenkins job.
+ */
+def createJenkinsJob() {
+
 }
 
 /**
@@ -156,13 +166,11 @@ boolean isJobExists(def jobName) {
         if (it.fullName.equals(jobName)) {
             return true
         }
-//        echo "${it.fullName}"
     }
     return false
 }
 
 def readConfigProperties(def prop) {
-    //JENKINS_HOST
     def props = Properties.instance
     def properties = readProperties file: "${props.CONFIG_PROPERTY_FILE_PATH}"
     return properties[prop]
