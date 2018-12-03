@@ -21,6 +21,8 @@ import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.PipelineContext
 import org.wso2.tg.jenkins.Properties
 import static groovy.io.FileType.FILES
+import static groovy.io.FileType.*
+import static groovy.io.FileVisitResult.*
 
 // The pipeline should reside in a call block
 def call() {
@@ -115,15 +117,21 @@ void findTestGridYamls(def searchPath) {
 //    new File(searchPath + "/test.txt").eachFileRecurse() {
 //        file -> println file.getAbsolutePath()
 //    }
-    dir(searchPath) {
-        def dir = new File(searchPath)
-        def files = []
-        dir.traverse(type: FILES, maxDepth: 100) {
-            files.add(it)
-        }
-        echo "Files : "
-        echo "${files}"
+//    dir(searchPath) {
+//        def dir = new File(searchPath)
+//        def files = []
+//        dir.traverse(type: FILES, maxDepth: 100) {
+//            files.add(it)
+//        }
+//        echo "Files : "
+//        echo "${files}"
+//    }
+    def groovySrcDir = new File(searchPath)
+    def countFilesAndDirs = 0
+    groovySrcDir.traverse {
+        countFilesAndDirs++
     }
+    println "Total files and directories in ${groovySrcDir.name}: $countFilesAndDirs"
 }
 
 void printAllJobs() {
