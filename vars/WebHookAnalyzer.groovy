@@ -33,17 +33,17 @@ def call() {
 
     pipeline {
         agent any
-        triggers {
-            GenericTrigger(
-                    genericVariables: [
-                            [expressionType: 'JSONPath', key: 'sshUrl', value: '$.ssh_url'],
-                            [expressionType: 'JSONPath', key: 'repoName', value: '$.repository.name'],
-                            [expressionType: 'JSONPath', key: 'branch', value: '$.ref', regexpFilter: 'refs/heads/']
-                    ],
-                    regexpFilterText: '',
-                    regexpFilterExpression: ''
-            )
-        }
+//        triggers {
+//            GenericTrigger(
+//                    genericVariables: [
+//                            [expressionType: 'JSONPath', key: 'sshUrl', value: '$.ssh_url'],
+//                            [expressionType: 'JSONPath', key: 'repoName', value: '$.repository.name'],
+//                            [expressionType: 'JSONPath', key: 'branch', value: '$.ref', regexpFilter: 'refs/heads/']
+//                    ],
+//                    regexpFilterText: '',
+//                    regexpFilterExpression: ''
+//            )
+//        }
         tools {
             jdk 'jdk8'
         }
