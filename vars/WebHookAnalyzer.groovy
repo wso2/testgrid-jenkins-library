@@ -118,7 +118,7 @@ void findTestGridYamls(def searchPath) {
     dir(searchPath) {
         def dir = new File(".")
         def files = []
-        dir.traverse(type: FILES, maxDepth: 0) { files.add(it) }
+        dir.traverse(type: FILES, maxDepth: 100) { files.add(it) }
         echo "Files : "
         echo "${files}"
     }
