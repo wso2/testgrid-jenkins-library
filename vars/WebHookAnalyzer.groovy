@@ -86,7 +86,12 @@ void processTgConfigs(def files) {
     // First lets read the yaml and get the properties
     for (int i = 0; i < files.length; i++) {
         log.info("Processing the TG Yaml at : " + files[i])
-        def tgYamlContent = readYaml file: files[i]
+        def tgYamlContent
+        try {
+            tgYamlContent = readYaml file: files[i]
+        } catch (Exception e) {
+          log.error("Error while reading the yaml" + e.getMessage())
+        }
         def addToJenkins = tgYamlContent.onboardJob
         log.info("The onborading flag is " + addToJenkins)
         if (!addToJenkins) {
