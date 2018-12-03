@@ -33,7 +33,7 @@ def call() {
     final def GIT_SSH_URL = "${sshUrl}"
     final def GIT_BRANCH = "${branch}"
     final def TG_YAML_SEARCH_REGEX = "*.testgrid.yaml"
-    final def DEV_JENKINS_URL = readConfigProperties("JENKINS_HOST")
+    final def DEV_JENKINS_URL;
 
     pipeline {
         agent {
