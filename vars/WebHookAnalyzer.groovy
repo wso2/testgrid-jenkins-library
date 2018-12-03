@@ -16,13 +16,9 @@
  * under the License.
  */
 
-
 import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.PipelineContext
 import org.wso2.tg.jenkins.Properties
-import static groovy.io.FileType.FILES
-import static groovy.io.FileType.*
-import static groovy.io.FileVisitResult.*
 
 // The pipeline should reside in a call block
 def call() {
@@ -36,8 +32,8 @@ def call() {
     final def GIT_REPOSITORY = "${repoName}"
     final def GIT_SSH_URL = "${sshUrl}"
     final def GIT_BRANCH = "${branch}"
-    final def TG_YAML_SEARCH_REGEX = "*.-testgrid.yaml"
-
+    final def TG_YAML_SEARCH_REGEX = "*.testgrid.yaml"
+    final def TG_DEV_URL = "*.testgrid.yaml"
 
     pipeline {
         agent {
@@ -68,16 +64,16 @@ def call() {
                 steps {
                     script {
                         // TODO:  we need to validate the payloads.
-                        echo "Recieved the web hook request!"
+                        echo "Received the web hook request!"
                         log.info("The git repo name : " + GIT_REPOSITORY)
                         log.info("Git SSH URL : " + GIT_BRANCH)
                         log.info("Git branch : " + GIT_SSH_URL)
 
                         deleteDir()
                         cloneRepo(GIT_SSH_URL, GIT_BRANCH)
-                        findTestGridYamls(props.WORKSPACE + "/" + GIT_REPOSITORY)
+                        def tgYamls = findTestGridYamls(props.WORKSPACE + "/" + GIT_REPOSITORY)
+                        processTgConfigs(tgYamls)
                         // We need to get a list of Jobs that are configured
-                        printAllJobs()
                     }
                 }
             }
@@ -85,6 +81,19 @@ def call() {
     }
 }
 
+void processTgConfigs(def files) {
+    // First lets read the yaml and get the properties
+    for (int i = 0; i < files.length; i++) {
+        def tgYamlContent = readYaml file: files[i]
+        echo "YAML Content : ${tgYamlContent}"
+    }
+}
+
+/**
+ * Clones a given git repo
+ * @param gitURL
+ * @param gitBranch
+ */
 void cloneRepo(def gitURL, gitBranch) {
     def props = Properties.instance
     tryAddKnownHost("github.com")
@@ -113,22 +122,31 @@ void tryAddKnownHost(String hostUrl){
 
 def findTestGridYamls(def searchPath) {
     def files
-
     dir (searchPath) {
         files = findFiles(glob: '**/testgrid.yaml')
-        echo "${files}"
     }
     // Generate the absolute paths of TG yaml files
     def absoluteFileList = new String [files.length]
     for (int i = 0; i < files.length; i++) {
         absoluteFileList[i] = searchPath + "/" + files[i]
     }
-    echo "After absolute path"
     echo "${absoluteFileList}"
+    return absoluteFileList
 }
 
-void printAllJobs() {
+boolean isJobExists(def jobName) {
     Jenkins.instance.getAllItems(AbstractItem.class).each {
-        echo "${it.fullName}"
+        if (it.fullName.equals(jobName)) {
+            return true
+        }
+//        echo "${it.fullName}"
     }
+    return false
+}
+
+def readConfigProperties(def prop) {
+    //JENKINS_HOST
+    def props = Properties.instance
+    def properties = readProperties file: "${props.CONFIG_PROPERTY_FILE_PATH}"
+    return properties[prop]
 }
