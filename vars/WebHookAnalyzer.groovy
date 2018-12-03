@@ -78,12 +78,12 @@ def call() {
 }
 
 void cloneRepo(def gitURL, gitBranch) {
-    sshagent (credentials: ['github_bot']) {
+//    sshagent (credentials: ['github_bot']) {
         sh """
             echo Cloning repository: ${gitURL}
             git clone -b ${gitBranch} ${gitURL}
         """
-    }
+//    }
 }
 
 void findTestGridYamls(def searchPath) {
