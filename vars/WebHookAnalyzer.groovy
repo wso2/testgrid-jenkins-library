@@ -37,7 +37,12 @@ def call() {
 
 
     pipeline {
-        agent any
+        agent {
+            node {
+                label ""
+                customWorkspace "${props.WORKSPACE}"
+            }
+        }
         // This trigger is removed from the pipeline itself to due to few issues in the plugin when using
         // shared libraries
 //        triggers {
@@ -67,7 +72,7 @@ def call() {
 
                         deleteDir()
                         cloneRepo(GIT_SSH_URL, GIT_BRANCH)
-                        //findTestGridYamls(pwd() + "/" + GIT_REPOSITORY)
+                        findTestGridYamls(pwd() + "/" + GIT_REPOSITORY)
                         // We need to get a list of Jobs that are configured
                         printAllJobs()
                     }
@@ -78,12 +83,12 @@ def call() {
 }
 
 void cloneRepo(def gitURL, gitBranch) {
-//    sshagent (credentials: ['github_bot']) {
+    sshagent (credentials: ['github_bot']) {
         sh """
             echo Cloning repository: ${gitURL}
             git clone -b ${gitBranch} ${gitURL}
         """
-//    }
+    }
 }
 
 void findTestGridYamls(def searchPath) {
