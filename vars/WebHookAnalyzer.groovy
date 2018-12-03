@@ -116,6 +116,12 @@ def findTestGridYamls(def searchPath) {
         def files = findFiles(glob: '**/testgrid.yaml')
         echo "${files}"
     }
+    // Generate the absolute paths of TG yaml files
+    for (int i = 0; i < files.length; i++) {
+        files[i] = searchPath + "/" + files[i]
+    }
+    echo "After absolute path"
+    echo "${files}"
 }
 
 void printAllJobs() {
