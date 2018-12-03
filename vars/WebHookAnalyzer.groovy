@@ -41,8 +41,8 @@ def call() {
                 customWorkspace "${props.WORKSPACE}"
             }
         }
-        // This trigger is removed from the pipeline itself to due to few issues in the plugin when using
-        // shared libraries
+        // This trigger is removed from the pipeline itself due to few issues in the plugin when using
+        // shared libraries this configurations are in the job configurations
 //        triggers {
 //            GenericTrigger(
 //                    genericVariables: [
@@ -86,6 +86,7 @@ void processTgConfigs(def files) {
     for (int i = 0; i < files.length; i++) {
         log.info("Processing the TG Yaml at : " + files[i])
         def tgYamlContent
+        def jobName
         try {
             tgYamlContent = readYaml file: files[i]
             log.info("YAML Content : ${tgYamlContent}")
@@ -95,7 +96,7 @@ void processTgConfigs(def files) {
                 log.warn("Skipping on-boarding the testgrid yaml for " + files[i])
                 continue
             }
-            def jobName = tgYamlContent.jobName
+            jobName = tgYamlContent.jobName
             def emailToList = tgYamlContent.emailToList
 
             //check whether a job exist with the same name
@@ -105,14 +106,41 @@ void processTgConfigs(def files) {
             }
         } catch (Exception e) {
           log.error("Error while reading the yaml content " + e.getMessage())
+          // TODO: We need to generate a Email here
         }
+        createJenkinsJob(jobName)
     }
 }
 
 /**
  * This method is responsible for creating the Jenkins job.
  */
-def createJenkinsJob() {
+def createJenkinsJob(def jobName) {
+
+    echo "Creating the job ${jobName}"
+
+    def jobDSL="//this is just a test"
+//http://javadoc.jenkins.io/plugin/workflow-cps/index.html?org/jenkinsci/plugins/workflow/cps/CpsFlowDefinition.html
+    def flowDefinition = new org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition(jobDSL, true);
+//http://javadoc.jenkins.io/jenkins/model/Jenkins.html
+    def parent = Jenkins.instance;
+//parent=Jenkins.instance.getItemByFullName("parentFolder/subFolder")
+//http://javadoc.jenkins.io/plugin/workflow-job/org/jenkinsci/plugins/workflow/job/WorkflowJob.html
+    def job = new org.jenkinsci.plugins.workflow.job.WorkflowJob(parent,jobName )
+    job.definition = flowDefinition
+    job.setConcurrentBuild(false);
+
+//http://javadoc.jenkins.io/plugin/branch-api/jenkins/branch/RateLimitBranchProperty.html
+//    job.addProperty( new jenkins.branch.RateLimitBranchProperty.JobPropertyImpl
+//            (new jenkins.branch.RateLimitBranchProperty.Throttle (60,"hours")));
+//    def spec = "H 0 1 * *";
+//    hudson.triggers.TimerTrigger newCron = new hudson.triggers.TimerTrigger(spec);
+//    newCron.start(job, true);
+//    job.addTrigger(newCron);
+    job.save()
+
+
+    Jenkins.instance.reload()
 
 }
 
