@@ -140,10 +140,12 @@ def createJenkinsJob(def jobName, def timerConfig) {
 //    hudson.triggers.TimerTrigger newCron = new hudson.triggers.TimerTrigger(spec);
 //    newCron.start(job, true);
 //    job.addTrigger(newCron);
-    def prop = new EnvInjectJobPropertyInfo("", "ABCD=\"CDE\"", "", "", "", true)
-//    def prop2 = new EnvInjectInfo("", "EFG=\"123456\"")
-//    job.addProperty(prop2)
-    job.addProperty(new org.jenkinsci.plugins.envinject.EnvInjectJobProperty(prop))
+    def prop = new EnvInjectJobPropertyInfo("", "ABCD=\"CDE\"", "", "", "", false)
+    def prop2 = new org.jenkinsci.plugins.envinject.EnvInjectJobProperty(prop)
+    prop2.setOn(true)
+    prop2.setKeepBuildVariables(true)
+    prop2.setKeepJenkinsSystemVariables(true)
+    job.addProperty(prop2)
     job.save()
 
     Jenkins.instance.reload()
