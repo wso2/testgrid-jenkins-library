@@ -143,7 +143,7 @@ def createJenkinsJob(def jobName, def timerConfig) {
     def prop = new EnvInjectJobPropertyInfo("", "ABCD=\"CDE\"", "", "", "", true)
 //    def prop2 = new EnvInjectInfo("", "EFG=\"123456\"")
 //    job.addProperty(prop2)
-    job.addProperty(new org.jenkinsci.plugins.envinject.EnvInjectJobProperty(prop2))
+    job.addProperty(new org.jenkinsci.plugins.envinject.EnvInjectJobProperty(prop))
     job.save()
 
     Jenkins.instance.reload()
