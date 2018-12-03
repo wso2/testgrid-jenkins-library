@@ -112,8 +112,9 @@ void tryAddKnownHost(String hostUrl){
 }
 
 def findTestGridYamls(def searchPath) {
+    def files
     dir (searchPath) {
-        def files = findFiles(glob: '**/testgrid.yaml')
+        files = findFiles(glob: '**/testgrid.yaml')
         echo "${files}"
     }
     // Generate the absolute paths of TG yaml files
