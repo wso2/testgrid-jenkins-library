@@ -64,7 +64,7 @@ def call() {
                         log.info("Git SSH URL : " + GIT_BRANCH)
                         log.info("Git branch : " + GIT_SSH_URL)
 
-                        //cloneRepo("${sshUrl}", "${branch}")
+                        cloneRepo(GIT_SSH_URL, GIT_BRANCH)
                         // We need to get a list of Jobs that are configured
 //                        printAllJobs()
                     }
