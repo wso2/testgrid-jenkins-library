@@ -113,16 +113,18 @@ void tryAddKnownHost(String hostUrl){
 
 def findTestGridYamls(def searchPath) {
     def files
+
     dir (searchPath) {
         files = findFiles(glob: '**/testgrid.yaml')
         echo "${files}"
     }
     // Generate the absolute paths of TG yaml files
+    def absoluteFileList = new String [files.length]
     for (int i = 0; i < files.length; i++) {
-        files[i] = searchPath + "/" + files[i]
+        absoluteFileList[i] = searchPath + "/" + files[i]
     }
     echo "After absolute path"
-    echo "${files}"
+    echo "${absoluteFileList}"
 }
 
 void printAllJobs() {
@@ -130,5 +132,3 @@ void printAllJobs() {
         echo "${it.fullName}"
     }
 }
-
-
