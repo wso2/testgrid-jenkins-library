@@ -133,9 +133,6 @@ def createJenkinsJob(def jobName, def timerConfig) {
     job.definition = flowDefinition
     job.setConcurrentBuild(false)
 
-//http://javadoc.jenkins.io/plugin/branch-api/jenkins/branch/RateLimitBranchProperty.html
-    job.addProperty( new jenkins.branch.RateLimitBranchProperty.JobPropertyImpl
-            (new jenkins.branch.RateLimitBranchProperty.Throttle (60,"hours")));
     def spec = "H 0 1 * *";
     hudson.triggers.TimerTrigger newCron = new hudson.triggers.TimerTrigger(spec);
     newCron.start(job, true);
