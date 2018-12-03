@@ -33,7 +33,7 @@ def call() {
     final def GIT_SSH_URL = "${sshUrl}"
     final def GIT_BRANCH = "${branch}"
     final def TG_YAML_SEARCH_REGEX = "*.testgrid.yaml"
-    final def TG_DEV_URL = "*.testgrid.yaml"
+    final def DEV_JENKINS_URL = readConfigProperties("JENKINS_HOST")
 
     pipeline {
         agent {
@@ -82,10 +82,22 @@ def call() {
 }
 
 void processTgConfigs(def files) {
+    def log = new Logger()
     // First lets read the yaml and get the properties
     for (int i = 0; i < files.length; i++) {
+        log.info("Processing the TG Yaml at : " + files[i])
+        def addToJenkins = tgYamlContent.onboardJob
+        log.info("The onborading flag is " + addToJenkins)
+        if (!addToJenkins) {
+            log.warn("Skipping on-boarding the testgrid yaml for " + files[i])
+            continue
+        }
         def tgYamlContent = readYaml file: files[i]
-        echo "YAML Content : ${tgYamlContent}"
+        def jobName = tgYamlContent.jobName
+        def emailToList = tgYamlContent.emailToList
+
+//        echo "YAML Content : ${tgYamlContent}"
+
     }
 }
 
@@ -97,7 +109,7 @@ void processTgConfigs(def files) {
 void cloneRepo(def gitURL, gitBranch) {
     def props = Properties.instance
     tryAddKnownHost("github.com")
-    sshagent (credentials: ['github_bot']) {
+    sshagent(credentials: ['github_bot']) {
         sh """
             echo Cloning repository: ${gitURL}
             cd ${props.WORKSPACE}
@@ -111,10 +123,10 @@ void cloneRepo(def gitURL, gitBranch) {
  * through even if the certificate was not previously seen.
  * @param hostUrl
  */
-void tryAddKnownHost(String hostUrl){
+void tryAddKnownHost(String hostUrl) {
     // ssh-keygen -F ${hostUrl} will fail (in bash that means status code != 0) if ${hostUrl} is not yet a known host
-    def statusCode = sh script:"ssh-keygen -F ${hostUrl}", returnStatus:true
-    if(statusCode != 0){
+    def statusCode = sh script: "ssh-keygen -F ${hostUrl}", returnStatus: true
+    if (statusCode != 0) {
         sh "mkdir -p ~/.ssh"
         sh "ssh-keyscan ${hostUrl} >> ~/.ssh/known_hosts"
     }
@@ -122,11 +134,11 @@ void tryAddKnownHost(String hostUrl){
 
 def findTestGridYamls(def searchPath) {
     def files
-    dir (searchPath) {
+    dir(searchPath) {
         files = findFiles(glob: '**/testgrid.yaml')
     }
     // Generate the absolute paths of TG yaml files
-    def absoluteFileList = new String [files.length]
+    def absoluteFileList = new String[files.length]
     for (int i = 0; i < files.length; i++) {
         absoluteFileList[i] = searchPath + "/" + files[i]
     }
