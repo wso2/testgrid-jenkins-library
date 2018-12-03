@@ -86,13 +86,13 @@ void processTgConfigs(def files) {
     // First lets read the yaml and get the properties
     for (int i = 0; i < files.length; i++) {
         log.info("Processing the TG Yaml at : " + files[i])
+        def tgYamlContent = readYaml file: files[i]
         def addToJenkins = tgYamlContent.onboardJob
         log.info("The onborading flag is " + addToJenkins)
         if (!addToJenkins) {
             log.warn("Skipping on-boarding the testgrid yaml for " + files[i])
             continue
         }
-        def tgYamlContent = readYaml file: files[i]
         def jobName = tgYamlContent.jobName
         def emailToList = tgYamlContent.emailToList
 
