@@ -33,6 +33,8 @@ def call() {
 
     pipeline {
         agent any
+        // This trigger is removed from the pipeline itself to due to few issues in the plugin when using
+        // shared libraries
 //        triggers {
 //            GenericTrigger(
 //                    genericVariables: [
@@ -52,15 +54,12 @@ def call() {
             stage('Receive web Hooks') {
                 steps {
                     script {
+                        // First we need to validate the payload.
                         echo "Recieved the web hook request!"
-                        // Cloning the git repository
-                        echo "The git branch is : ${branch}"
-//                        echo "The git branch is : ${repoName}"
-//                        echo "The git branch is : ${sshUrl}"
-                        // log.info("The git repo name is : ${repoName}")
-                        // log.info("Git SSH URL is : ${sshUrl}")
-//                            cloneRepo($sshUrl, $branch)
-
+                        log.info("The git repo name : ${repoName}")
+                        log.info("Git SSH URL : ${sshUrl}")
+                        log.info("Git branch : ${sshUrl}")
+//                        cloneRepo($sshUrl, $branch)
                         // We need to get a list of Jobs that are configured
 //                            printAllJobs()
                     }
