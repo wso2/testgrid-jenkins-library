@@ -55,8 +55,8 @@ def call() {
                         echo "Recieved the web hook request!"
                         // Cloning the git repository
                         echo "The git branch is : ${branch}"
-                        echo "The git branch is : ${repoName}"
-                        echo "The git branch is : ${sshUrl}"
+//                        echo "The git branch is : ${repoName}"
+//                        echo "The git branch is : ${sshUrl}"
                         // log.info("The git repo name is : ${repoName}")
                         // log.info("Git SSH URL is : ${sshUrl}")
 //                            cloneRepo($sshUrl, $branch)
