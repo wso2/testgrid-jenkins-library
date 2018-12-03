@@ -111,30 +111,11 @@ void tryAddKnownHost(String hostUrl){
     }
 }
 
-void findTestGridYamls(def searchPath) {
-    echo "Searching for TG yamls at : ${searchPath}"
-//    sh "echo \"test\" > ${searchPath}/test.txt"
-//    new File(searchPath + "/test.txt").eachFileRecurse() {
-//        file -> println file.getAbsolutePath()
-//    }
-//    dir(searchPath) {
-//        def dir = new File(searchPath)
-//        def files = []
-//        dir.traverse(type: FILES, maxDepth: 100) {
-//            files.add(it)
-//        }
-//        echo "Files : "
-//        echo "${files}"
-//    }
-    echo "LSSS"
-    sh "ls ${searchPath}"
-    echo "ALSS"
-    def groovySrcDir = new File(searchPath)
-    def countFilesAndDirs = 0
-    groovySrcDir.traverse {
-        countFilesAndDirs++
+def findTestGridYamls(def searchPath) {
+    dir (searchPath) {
+        def files = findFiles(glob: '*.*')
+        echo "${files}"
     }
-    println "Total files and directories in ${groovySrcDir.name}: $countFilesAndDirs"
 }
 
 void printAllJobs() {
