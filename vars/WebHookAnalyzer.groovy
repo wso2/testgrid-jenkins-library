@@ -89,17 +89,17 @@ void processTgConfigs(def files) {
         def tgYamlContent
         try {
             tgYamlContent = readYaml file: files[i]
+            def addToJenkins = tgYamlContent.onboardJob
+            log.info("The onborading flag is " + addToJenkins)
+            if (!addToJenkins) {
+                log.warn("Skipping on-boarding the testgrid yaml for " + files[i])
+                continue
+            }
+            def jobName = tgYamlContent.jobName
+            def emailToList = tgYamlContent.emailToList
         } catch (Exception e) {
-          log.error("Error while reading the yaml" + e.getMessage())
+          log.error("Error while reading the yaml content " + e.getMessage())
         }
-        def addToJenkins = tgYamlContent.onboardJob
-        log.info("The onborading flag is " + addToJenkins)
-        if (!addToJenkins) {
-            log.warn("Skipping on-boarding the testgrid yaml for " + files[i])
-            continue
-        }
-        def jobName = tgYamlContent.jobName
-        def emailToList = tgYamlContent.emailToList
 
 //        echo "YAML Content : ${tgYamlContent}"
 
