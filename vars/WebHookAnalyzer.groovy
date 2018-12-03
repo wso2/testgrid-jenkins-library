@@ -30,9 +30,9 @@ def call() {
     props.instance.initProperties()
     def log = new Logger()
 
-    final def GIT_REPOSITORY = ${repoName}
-    final def GIT_SSH_URL = ${sshUrl}
-    final def GIT_BRANCH = ${branch}
+    final def GIT_REPOSITORY = "${repoName}"
+    final def GIT_SSH_URL = "${sshUrl}"
+    final def GIT_BRANCH = "${branch}"
 
 
     pipeline {
