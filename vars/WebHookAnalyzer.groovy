@@ -33,6 +33,7 @@ def call() {
     final def GIT_REPOSITORY = "${repoName}"
     final def GIT_SSH_URL = "${sshUrl}"
     final def GIT_BRANCH = "${branch}"
+    final def TG_YAML_SEARCH_REGEX = "*.-testgrid.yaml"
 
 
     pipeline {
@@ -66,6 +67,7 @@ def call() {
 
                         deleteDir()
                         cloneRepo(GIT_SSH_URL, GIT_BRANCH)
+                        findTestGridYamls(pwd() + "/" + GIT_REPOSITORY)
                         // We need to get a list of Jobs that are configured
                         printAllJobs()
                     }
@@ -81,6 +83,13 @@ void cloneRepo(def gitURL, gitBranch) {
             echo Cloning repository: ${gitURL}
             git clone -b ${gitBranch} ${gitURL}
         """
+    }
+}
+
+void findTestGridYamls(def searchPath) {
+    echo "Searching for TG yamls at : ${searchPath}"
+    new File(searchPath).eachFileRecurse() {
+        file -> println file.getAbsolutePath()
     }
 }
 
