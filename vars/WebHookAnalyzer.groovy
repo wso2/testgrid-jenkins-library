@@ -126,6 +126,9 @@ void findTestGridYamls(def searchPath) {
 //        echo "Files : "
 //        echo "${files}"
 //    }
+    echo "LSSS"
+    sh "ls ${searchPath}"
+    echo "ALSS"
     def groovySrcDir = new File(searchPath)
     def countFilesAndDirs = 0
     groovySrcDir.traverse {
