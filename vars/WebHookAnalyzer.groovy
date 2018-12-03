@@ -110,7 +110,9 @@ void tryAddKnownHost(String hostUrl){
 
 void findTestGridYamls(def searchPath) {
     echo "Searching for TG yamls at : ${searchPath}"
-    new File(searchPath).eachFileRecurse() {
+    def newFile = new File(searchPath + "/test.txt")
+    newFile.createNewFile()
+    new File(searchPath + "/test.txt").eachFileRecurse() {
         file -> println file.getAbsolutePath()
     }
 }
