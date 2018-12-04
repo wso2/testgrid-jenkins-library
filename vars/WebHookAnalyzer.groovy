@@ -20,8 +20,9 @@ import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.PipelineContext
 import org.wso2.tg.jenkins.Properties
 import org.jenkinsci.plugins.envinject.EnvInjectJobPropertyInfo
-import org.jenkinsci.plugins.envinject.EnvInjectJobProperty
-import org.jenkinsci.plugins.envinject.EnvInjectInfo
+
+// This is used to generate the Email content that will be sent to the user
+def emailContent;
 
 // The pipeline should reside in a call block
 def call() {
@@ -32,10 +33,13 @@ def call() {
     props.instance.initProperties()
     def log = new Logger()
 
-    final def GIT_REPOSITORY = "${repoName}"
+    // The full name will be something like <ORG_NAME>/<REPO>
+    final def GIT_REPOSITORY = "${repoName}".split("/")[1]
+    final def GIT_ORG_NAME = "${repoName}".split("/")[0]
     final def GIT_SSH_URL = "${sshUrl}"
     final def GIT_BRANCH = "${branch}"
     final def TG_YAML_SEARCH_REGEX = "*.testgrid.yaml"
+    final def GH_RAW_URL = "https://raw.githubusercontent.com"
 
     pipeline {
         agent {
@@ -72,6 +76,13 @@ def call() {
                         log.info("Git branch : " + GIT_SSH_URL)
 
                         deleteDir()
+                        //TODO: We can optimize the process by analyzing the changed files before cloning the repo
+                        // Following information is available in the webhook event
+                        /**"added": [ ],
+                         "removed": [ ],
+                         "modified": [
+                         "test/testgrid.yaml"
+                         ] **/
                         cloneRepo(GIT_SSH_URL, GIT_BRANCH)
                         def tgYamls = findTestGridYamls(props.WORKSPACE + "/" + GIT_REPOSITORY)
                         processTgConfigs(tgYamls)
@@ -109,7 +120,7 @@ void processTgConfigs(def files) {
             }
         } catch (Exception e) {
           log.error("Error while reading the yaml content " + e.getMessage())
-          // TODO: We need to generate a Email here
+          // TODO: We need to generate an Email here
         }
         createJenkinsJob(jobName, "")
     }
@@ -117,6 +128,9 @@ void processTgConfigs(def files) {
 
 /**
  * This method is responsible for creating the Jenkins job.
+ * @param jobName jobName
+ * @param timerConfig cron expression to schedule the job
+ * @return
  */
 def createJenkinsJob(def jobName, def timerConfig) {
 
@@ -145,6 +159,16 @@ def createJenkinsJob(def jobName, def timerConfig) {
     job.addProperty(prop2)
     job.save()
     Jenkins.instance.reload()
+
+}
+
+String gennerateJobName() {
+    def jobName
+
+    return jobName
+}
+
+String generateRawYamlLocation() {
 
 }
 
