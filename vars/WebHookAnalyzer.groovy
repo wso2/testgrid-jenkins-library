@@ -16,6 +16,8 @@
  * under the License.
  */
 
+
+import jenkins.model.Jenkins
 import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.PipelineContext
 import org.wso2.tg.jenkins.Properties
@@ -30,6 +32,7 @@ def call() {
     PipelineContext.instance.setContext(this)
     // Initializing environment properties
     def props = Properties.instance
+    LocalProperties.instance.initProps()
     props.instance.initProperties()
     def log = new Logger()
 
@@ -238,12 +241,31 @@ def readConfigProperties(def prop) {
 
 @Singleton
 class LocalProperties {
-    // The full name will be something like <ORG_NAME>/<REPO>
-    final static def GIT_REPOSITORY = "${repoName}".split("/")[1]
-    final static def GIT_ORG_NAME = "${repoName}".split("/")[0]
-    final static def GIT_SSH_URL = "${sshUrl}"
-    final static def GIT_BRANCH = "${branch}"
+
     final static def TG_YAML_SEARCH_REGEX = "*.testgrid.yaml"
     final static def GH_RAW_URL = "https://raw.githubusercontent.com"
+    // The full name will be something like <ORG_NAME>/<REPO>
+    static def GIT_REPOSITORY
+    static def GIT_ORG_NAME
+    static def GIT_SSH_URL
+    static def GIT_BRANCH
 
+    def initProps() {
+        GIT_REPOSITORY = getJobProperty("repoName").split("/")[1]
+        GIT_ORG_NAME = getJobProperty("repoName").split("/")[0]
+        GIT_SSH_URL = getJobProperty("sshUrl")
+        GIT_BRANCH = getJobProperty("branch")
+    }
+
+    private def getJobProperty(def property, boolean isMandatory = true) {
+        def ctx = Jenkins.instance
+        def propertyMap = ctx.currentBuild.getRawBuild().getEnvironment()
+        def prop = propertyMap.get(property)
+        if ((prop == null || prop.trim() == "") && isMandatory) {
+            ctx.echo "A mandatory prop " + property + " is empty or null"
+            throw new Exception("A mandatory property " + property + " is empty or null")
+        }
+        ctx.echo "Property : " + property + " value is set as " + prop
+        return prop
+    }
 }
