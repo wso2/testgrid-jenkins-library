@@ -24,9 +24,6 @@ import org.wso2.tg.jenkins.Properties
 import org.jenkinsci.plugins.envinject.EnvInjectJobPropertyInfo
 import org.wso2.tg.jenkins.alert.Email
 
-// This is used to generate the Email content that will be sent to the user
-def emailContent;
-
 // The pipeline should reside in a call block
 def call() {
     // Setting the current pipeline context, this should be done initially
@@ -138,7 +135,6 @@ void processTgConfigs(def files) {
  */
 def createJenkinsJob(def jobName, def timerConfig, def file) {
 
-    jobName = "test-job-ycr-4"
     echo "Creating the job ${jobName}"
 
     //TODO: depending on the environment we need to select the correct pipeline branch, we can get this as a job
