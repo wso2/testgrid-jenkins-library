@@ -127,7 +127,7 @@ void processTgConfigs(def files) {
           log.error("Error while reading the yaml content " + e.getMessage())
           // TODO: We need to generate an Email here
         }
-        createJenkinsJob(jobName, "")
+        createJenkinsJob(jobName, "", files[i])
     }
 }
 
@@ -137,7 +137,7 @@ void processTgConfigs(def files) {
  * @param timerConfig cron expression to schedule the job
  * @return
  */
-def createJenkinsJob(def jobName, def timerConfig) {
+def createJenkinsJob(def jobName, def timerConfig, def file) {
 
     jobName = "test-job-ycr-4"
     echo "Creating the job ${jobName}"
@@ -156,7 +156,8 @@ def createJenkinsJob(def jobName, def timerConfig) {
     hudson.triggers.TimerTrigger newCron = new hudson.triggers.TimerTrigger(spec);
     newCron.start(job, true);
     job.addTrigger(newCron);
-    def prop = new EnvInjectJobPropertyInfo("", "ABCD=\"CDE\"", "", "", "", false)
+    def rawYamlLocation = generateRawYamlLocation(file)
+    def prop = new EnvInjectJobPropertyInfo("", "ABCD=\"${rawYamlLocation}\"", "", "", "", false)
     def prop2 = new org.jenkinsci.plugins.envinject.EnvInjectJobProperty(prop)
     prop2.setOn(true)
     prop2.setKeepBuildVariables(true)
@@ -175,8 +176,9 @@ String gennerateJobName() {
 
 String generateRawYamlLocation(def fileLocation) {
     // We will split from the repo name and get the rest to create the raw URL
-    def relativePath = fileLocation.split()
-
+    def relativePath = fileLocation.split(LocalProperties.GIT_REPOSITORY)[1]
+    return LocalProperties.GH_RAW_URL + "/" + LocalProperties.GIT_ORG_NAME + "/" + LocalProperties.GIT_REPOSITORY +
+            "/" + LocalProperties.GIT_BRANCH + relativePath
 }
 
 /**
