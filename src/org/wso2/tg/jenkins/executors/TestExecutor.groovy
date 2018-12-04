@@ -120,7 +120,7 @@ def prepareWorkspace(testPlanId) {
     def props = Properties.instance
     def log = new Logger()
     log.info(" Creating workspace and builds sub-directories")
-   
+
     sh """
         rm -r -f ${props.WORKSPACE}/${testPlanId}/
         mkdir -p ${props.WORKSPACE}/${testPlanId}
@@ -143,10 +143,11 @@ def prepareWorkspace(testPlanId) {
     } else {
         log.info("Deployment repository not specified")
     }
-    
-    cloneRepo(props.SCENARIOS_REPOSITORY_URL, props.SCENARIOS_REPOSITORY_BRANCH, props.WORKSPACE + '/' + testPlanId +
-            '/workspace/' + props.SCENARIOS_LOCATION );
 
+    for (i = 0; i < props.SCENARIOS_REPOSITORY_URL.size(); i++) {
+        cloneRepo(props.SCENARIOS_REPOSITORY_URL[i], props.SCENARIOS_REPOSITORY_BRANCH[i], props.WORKSPACE + '/' +
+                testPlanId + '/workspace/' + props.SCENARIOS_LOCATION + '/' + props.SCENARIOS_REPOSITORY_NAME[i])
+    }
     log.info("Copying the ssh key file to workspace : ${props.WORKSPACE}/${testPlanId}/${props.SSH_KEY_FILE_PATH}")
     withCredentials([file(credentialsId: 'DEPLOYMENT_KEY', variable: 'keyLocation')]) {
         sh """
@@ -172,8 +173,11 @@ def readRepositoryUrlsfromYaml(def testplan) {
     props.DEPLOYMENT_REPOSITORY_URL = tgYaml.deploymentConfig.deploymentPatterns[0].remoteRepository
     props.DEPLOYMENT_REPOSITORY_BRANCH = getRepositoryBranch(tgYaml.deploymentConfig.deploymentPatterns[0].remoteBranch)
 
-    props.SCENARIOS_REPOSITORY_URL = tgYaml.scenarioConfigs[0].remoteRepository
-    props.SCENARIOS_REPOSITORY_BRANCH = getRepositoryBranch(tgYaml.scenarioConfigs[0].remoteBranch)
+    for (repo in tgYaml.scenarioConfigs) {
+        props.SCENARIOS_REPOSITORY_URL.add(repo.remoteRepository)
+        props.SCENARIOS_REPOSITORY_BRANCH.add(repo.remoteBranch)
+        props.SCENARIOS_REPOSITORY_NAME.add(repo.name)
+    }
     echo ""
     echo "------------------------------------------------------------------------"
     echo "INFRASTRUCTURE_REPOSITORY_URL : ${props.INFRASTRUCTURE_REPOSITORY_URL}"

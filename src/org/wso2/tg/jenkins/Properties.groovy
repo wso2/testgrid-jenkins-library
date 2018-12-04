@@ -63,8 +63,9 @@ class Properties {
     static def WORKSPACE
     static def TESTGRID_YAML_URL
 
-    static def SCENARIOS_REPOSITORY_URL
-    static def SCENARIOS_REPOSITORY_BRANCH
+    static def SCENARIOS_REPOSITORY_URL = []
+    static def SCENARIOS_REPOSITORY_BRANCH = []
+    static def SCENARIOS_REPOSITORY_NAME = []
 
     static def INFRASTRUCTURE_REPOSITORY_URL
     static def INFRASTRUCTURE_REPOSITORY_BRANCH
@@ -100,7 +101,6 @@ class Properties {
         PASSWORD = getCredentials("WUM_PASSWORD", false)
         LATEST_PRODUCT_RELEASE_API = getJobProperty("LATEST_PRODUCT_RELEASE_API", false)
         LATEST_PRODUCT_BUILD_ARTIFACTS_API = getJobProperty("LATEST_PRODUCT_BUILD_ARTIFACTS_API", false)
-        SCENARIOS_REPOSITORY_URL = getJobProperty("SCENARIOS_REPOSITORY", false)
         INFRASTRUCTURE_REPOSITORY_URL = getJobProperty("INFRASTRUCTURE_REPOSITORY", false)
         DEPLOYMENT_REPOSITORY_URL = getJobProperty("DEPLOYMENT_REPOSITORY", false)
         EMAIL_TO_LIST = getJobProperty("EMAIL_TO_LIST", false)
