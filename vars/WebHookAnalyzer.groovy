@@ -95,7 +95,7 @@ void processTgConfigs(def files) {
 
             def addToJenkins = tgYamlContent.jobConfigs.onboardJob
             log.info("The onboarding flag is " + addToJenkins)
-            if (addToJenkins != null | !addToJenkins) {
+            if (addToJenkins == false) {
                 log.warn("Skipping on-boarding the testgrid yaml for " + files[i])
                 continue
             }
