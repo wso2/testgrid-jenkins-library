@@ -144,7 +144,7 @@ def createJenkinsJob(def jobName, def timerConfig, def file) {
         job.addTrigger(newCron)
     }
     def rawYamlLocation = generateRawYamlLocation(file)
-    def prop = new EnvInjectJobPropertyInfo("", "${LocalProperties.TESTGRID_YAML_URL_KEY}=\"${rawYamlLocation}\"", "",
+    def prop = new EnvInjectJobPropertyInfo("", "${LocalProperties.TESTGRID_YAML_URL_KEY}=${rawYamlLocation}", "",
             "", "", false)
     def prop2 = new org.jenkinsci.plugins.envinject.EnvInjectJobProperty(prop)
     prop2.setOn(true)
