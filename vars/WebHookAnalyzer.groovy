@@ -23,6 +23,13 @@ import org.jenkinsci.plugins.envinject.EnvInjectJobPropertyInfo
 
 // This is used to generate the Email content that will be sent to the user
 def emailContent;
+// The full name will be something like <ORG_NAME>/<REPO>
+final def GIT_REPOSITORY = "${repoName}".split("/")[1]
+final def GIT_ORG_NAME = "${repoName}".split("/")[0]
+final def GIT_SSH_URL = "${sshUrl}"
+final def GIT_BRANCH = "${branch}"
+final def TG_YAML_SEARCH_REGEX = "*.testgrid.yaml"
+final def GH_RAW_URL = "https://raw.githubusercontent.com"
 
 // The pipeline should reside in a call block
 def call() {
@@ -32,14 +39,6 @@ def call() {
     def props = Properties.instance
     props.instance.initProperties()
     def log = new Logger()
-
-    // The full name will be something like <ORG_NAME>/<REPO>
-    final def GIT_REPOSITORY = "${repoName}".split("/")[1]
-    final def GIT_ORG_NAME = "${repoName}".split("/")[0]
-    final def GIT_SSH_URL = "${sshUrl}"
-    final def GIT_BRANCH = "${branch}"
-    final def TG_YAML_SEARCH_REGEX = "*.testgrid.yaml"
-    final def GH_RAW_URL = "https://raw.githubusercontent.com"
 
     pipeline {
         agent {
@@ -168,7 +167,9 @@ String gennerateJobName() {
     return jobName
 }
 
-String generateRawYamlLocation() {
+String generateRawYamlLocation(def fileLocation) {
+    // We will split from the repo name and get the rest to create the raw URL
+    def relativePath = fileLocation.split("/")
 
 }
 
