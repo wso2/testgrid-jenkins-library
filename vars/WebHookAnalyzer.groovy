@@ -41,19 +41,6 @@ def call() {
                 customWorkspace "${props.WORKSPACE}"
             }
         }
-        // This trigger is removed from the pipeline itself due to few issues in the plugin when using
-        // shared libraries this configurations are in the job configurations
-//        triggers {
-//            GenericTrigger(
-//                    genericVariables: [
-//                            [expressionType: 'JSONPath', key: 'sshUrl', value: '$.repository.ssh_url'],
-//                            [expressionType: 'JSONPath', key: 'repoName', value: '$.repository.name'],
-//                            [expressionType: 'JSONPath', key: 'branch', value: '$.ref', regexpFilter: 'refs/heads/']
-//                    ],
-//                    regexpFilterText: '',
-//                    regexpFilterExpression: ''
-//            )
-//        }
         tools {
             jdk 'jdk8'
         }
@@ -62,7 +49,6 @@ def call() {
             stage('Receive web Hooks') {
                 steps {
                     script {
-                        // TODO:  we need to validate the payloads.
                         echo "Received the web hook request!"
                         log.info("The git repo name : " + LocalProperties.GIT_REPOSITORY)
                         log.info("Git SSH URL : " + LocalProperties.GIT_BRANCH)
@@ -71,6 +57,7 @@ def call() {
                         deleteDir()
                         //TODO: We can optimize the process by analyzing the changed files before cloning the repo
                         // Following information is available in the web-hook event regarding the file changes
+                        // We nede to take all commits nd check for all the files changed
                         /**
                          "added": [ ],
                          "removed": [ ],
@@ -78,6 +65,7 @@ def call() {
                          "test/testgrid.yaml"
                          ]
                          **/
+
                         cloneRepo(LocalProperties.GIT_SSH_URL, LocalProperties.GIT_BRANCH)
                         def tgYamls = findTestGridYamls(props.WORKSPACE + "/" + LocalProperties.GIT_REPOSITORY)
                         processTgConfigs(tgYamls)
@@ -89,6 +77,10 @@ def call() {
     }
 }
 
+/**
+ * Processes the found TG yaml files and adds the jobs
+ * @param files list of tg files
+ */
 void processTgConfigs(def files) {
     def log = new Logger()
     // First lets read the yaml and get the properties
@@ -97,34 +89,36 @@ void processTgConfigs(def files) {
         def tgYamlContent
         def jobName
         try {
+            // Reading the yaml file
             tgYamlContent = readYaml file: files[i]
             log.info("YAML Content : ${tgYamlContent}")
-            def addToJenkins = tgYamlContent.onboardJob
+
+            def addToJenkins = tgYamlContent.jobConfigs.onboardJob
             log.info("The onboarding flag is " + addToJenkins)
-            if (!addToJenkins) {
+            if (addToJenkins != null | !addToJenkins) {
                 log.warn("Skipping on-boarding the testgrid yaml for " + files[i])
                 continue
             }
-            jobName = tgYamlContent.jobName
+            jobName = tgYamlContent.jobConfigs.jobName
             if (jobName == null || jobName == "") {
                 jobName = gennerateJobName()
             }
-            def emailToList = tgYamlContent.emailToList
-
+            def emailToList = tgYamlContent.jobConfigs.emailToList
             //check whether a job exist with the same name
             // We will anyway update the job with the latest configs
             if (isJobExists(jobName)) {
                 log.warn("Found a job with the name " + jobName + " will be updating the job.")
             }
+            createJenkinsJob(jobName, "", files[i])
+            //TODO: We need to send an Email to the committer after creating the job
+            //Email email = new Email()
+            //email.send("Auto build creation Notification")
         } catch (Exception e) {
-          log.error("Error while reading the yaml content " + e.getMessage())
+          log.error("Error while creating the job " + e.getMessage())
           // TODO: We need to generate an Email here
         }
-        createJenkinsJob(jobName, "", files[i])
     }
-    //TODO: We need to send an Email to the committer after creating the job
-    //Email email = new Email()
-    //email.send("Auto build creation Notification")
+
 }
 
 /**
@@ -136,10 +130,7 @@ void processTgConfigs(def files) {
 def createJenkinsJob(def jobName, def timerConfig, def file) {
 
     echo "Creating the job ${jobName}"
-
-    //TODO: depending on the environment we need to select the correct pipeline branch, we can get this as a job
-    // property
-    def jobDSL="@Library('intg_test_template@dev') _\n" +
+    def jobDSL="@Library('intg_test_template@${LocalProperties.TG_ENV}') _\n" +
                 "Pipeline()"
     def flowDefinition = new org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition(jobDSL, true)
     def instance = Jenkins.instance
@@ -147,10 +138,11 @@ def createJenkinsJob(def jobName, def timerConfig, def file) {
     job.definition = flowDefinition
     job.setConcurrentBuild(false)
 
-    def spec = "H 0 1 * *"
-    hudson.triggers.TimerTrigger newCron = new hudson.triggers.TimerTrigger(spec);
-    newCron.start(job, true)
-    job.addTrigger(newCron)
+    if (timerConfig != null && timerConfig != "") {
+        hudson.triggers.TimerTrigger newCron = new hudson.triggers.TimerTrigger(timerConfig);
+        newCron.start(job, true)
+        job.addTrigger(newCron)
+    }
     def rawYamlLocation = generateRawYamlLocation(file)
     def prop = new EnvInjectJobPropertyInfo("", "${LocalProperties.TESTGRID_YAML_URL_KEY}=\"${rawYamlLocation}\"", "",
             "", "", false)
@@ -248,12 +240,14 @@ class LocalProperties {
     static def GIT_ORG_NAME
     static def GIT_SSH_URL
     static def GIT_BRANCH
+    static def TG_ENV
 
     def initProps() {
         GIT_REPOSITORY = getJobProperty("repoName").split("/")[1]
         GIT_ORG_NAME = getJobProperty("repoName").split("/")[0]
         GIT_SSH_URL = getJobProperty("sshUrl")
         GIT_BRANCH = getJobProperty("branch")
+        TG_ENV = getJobProperty("TG_ENV")
     }
 
     private def getJobProperty(def property, boolean isMandatory = true) {
