@@ -144,9 +144,9 @@ def prepareWorkspace(testPlanId) {
         log.info("Deployment repository not specified")
     }
 
-    for (i = 0; i < props.SCENARIOS_REPOSITORY_URL.size(); i++) {
-        cloneRepo(props.SCENARIOS_REPOSITORY_URL[i], props.SCENARIOS_REPOSITORY_BRANCH[i], props.WORKSPACE + '/' +
-                testPlanId + '/workspace/' + props.SCENARIOS_LOCATION + '/' + props.SCENARIOS_REPOSITORY_NAME[i])
+    for (repo in props.SCENARIO_CONFIGS) {
+        cloneRepo(repo.get("url"), repo.get("branch"), props.WORKSPACE + '/' +
+                testPlanId + '/workspace/' + props.SCENARIOS_LOCATION + '/' + repo.get("dir"))
     }
     log.info("Copying the ssh key file to workspace : ${props.WORKSPACE}/${testPlanId}/${props.SSH_KEY_FILE_PATH}")
     withCredentials([file(credentialsId: 'DEPLOYMENT_KEY', variable: 'keyLocation')]) {
@@ -174,9 +174,7 @@ def readRepositoryUrlsfromYaml(def testplan) {
     props.DEPLOYMENT_REPOSITORY_BRANCH = getRepositoryBranch(tgYaml.deploymentConfig.deploymentPatterns[0].remoteBranch)
 
     for (repo in tgYaml.scenarioConfigs) {
-        props.SCENARIOS_REPOSITORY_URL.add(repo.remoteRepository)
-        props.SCENARIOS_REPOSITORY_BRANCH.add(repo.remoteBranch)
-        props.SCENARIOS_REPOSITORY_NAME.add(repo.name)
+        props.SCENARIO_CONFIGS.add([url : repo.remoteRepository, branch : repo.remoteBranch, dir : repo.name])
     }
     echo ""
     echo "------------------------------------------------------------------------"
@@ -186,8 +184,12 @@ def readRepositoryUrlsfromYaml(def testplan) {
     echo "DEPLOYMENT_REPOSITORY_URL : ${props.DEPLOYMENT_REPOSITORY_URL}"
     echo "DEPLOYMENT_REPOSITORY_BRANCH : ${props.DEPLOYMENT_REPOSITORY_BRANCH}"
 
-    echo "SCENARIOS_REPOSITORY_URL : ${props.SCENARIOS_REPOSITORY_URL}"
-    echo "SCENARIOS_REPOSITORY_BRANCH: ${props.SCENARIOS_REPOSITORY_BRANCH}"
+    for (repo in props.SCENARIO_CONFIGS) {
+        echo "SCENARIOS_REPOSITORY_URL : ${repo.get("url")}"
+        echo "SCENARIOS_REPOSITORY_BRANCH: ${repo.get("branch")}"
+    }
+
+
     echo "------------------------------------------------------------------------"
     echo ""
 }

@@ -62,10 +62,7 @@ class Properties {
     static def LATEST_PRODUCT_BUILD_ARTIFACTS_API
     static def WORKSPACE
     static def TESTGRID_YAML_URL
-
-    static def SCENARIOS_REPOSITORY_URL = []
-    static def SCENARIOS_REPOSITORY_BRANCH = []
-    static def SCENARIOS_REPOSITORY_NAME = []
+    static def SCENARIO_CONFIGS = []
 
     static def INFRASTRUCTURE_REPOSITORY_URL
     static def INFRASTRUCTURE_REPOSITORY_BRANCH
