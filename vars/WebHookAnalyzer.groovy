@@ -258,7 +258,7 @@ class LocalProperties {
     }
 
     private def getJobProperty(def property, boolean isMandatory = true) {
-        def ctx = Jenkins.instance
+        def ctx = PipelineContext.getContext()
         def propertyMap = ctx.currentBuild.getRawBuild().getEnvironment()
         def prop = propertyMap.get(property)
         if ((prop == null || prop.trim() == "") && isMandatory) {
