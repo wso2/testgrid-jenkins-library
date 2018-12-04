@@ -23,13 +23,6 @@ import org.jenkinsci.plugins.envinject.EnvInjectJobPropertyInfo
 
 // This is used to generate the Email content that will be sent to the user
 def emailContent;
-// The full name will be something like <ORG_NAME>/<REPO>
-final def GIT_REPOSITORY = "${repoName}".split("/")[1]
-final def GIT_ORG_NAME = "${repoName}".split("/")[0]
-final def GIT_SSH_URL = "${sshUrl}"
-final def GIT_BRANCH = "${branch}"
-final def TG_YAML_SEARCH_REGEX = "*.testgrid.yaml"
-final def GH_RAW_URL = "https://raw.githubusercontent.com"
 
 // The pipeline should reside in a call block
 def call() {
@@ -39,6 +32,14 @@ def call() {
     def props = Properties.instance
     props.instance.initProperties()
     def log = new Logger()
+
+    // The full name will be something like <ORG_NAME>/<REPO>
+//    final def GIT_REPOSITORY = "${repoName}".split("/")[1]
+//    final def GIT_ORG_NAME = "${repoName}".split("/")[0]
+//    final def GIT_SSH_URL = "${sshUrl}"
+//    final def GIT_BRANCH = "${branch}"
+//    final def TG_YAML_SEARCH_REGEX = "*.testgrid.yaml"
+//    final def GH_RAW_URL = "https://raw.githubusercontent.com"
 
     pipeline {
         agent {
@@ -70,20 +71,22 @@ def call() {
                     script {
                         // TODO:  we need to validate the payloads.
                         echo "Received the web hook request!"
-                        log.info("The git repo name : " + GIT_REPOSITORY)
-                        log.info("Git SSH URL : " + GIT_BRANCH)
-                        log.info("Git branch : " + GIT_SSH_URL)
+                        log.info("The git repo name : " + LocalProperties.GIT_REPOSITORY)
+                        log.info("Git SSH URL : " + LocalProperties.GIT_BRANCH)
+                        log.info("Git branch : " + LocalProperties.GIT_SSH_URL)
 
                         deleteDir()
                         //TODO: We can optimize the process by analyzing the changed files before cloning the repo
-                        // Following information is available in the webhook event
-                        /**"added": [ ],
+                        // Following information is available in the web-hook event regarding the file changes
+                        /**
+                         "added": [ ],
                          "removed": [ ],
                          "modified": [
                          "test/testgrid.yaml"
-                         ] **/
+                         ]
+                         **/
                         cloneRepo(GIT_SSH_URL, GIT_BRANCH)
-                        def tgYamls = findTestGridYamls(props.WORKSPACE + "/" + GIT_REPOSITORY)
+                        def tgYamls = findTestGridYamls(props.WORKSPACE + "/" + LocalProperties.GIT_REPOSITORY)
                         processTgConfigs(tgYamls)
                         // We need to get a list of Jobs that are configured
                     }
@@ -169,7 +172,7 @@ String gennerateJobName() {
 
 String generateRawYamlLocation(def fileLocation) {
     // We will split from the repo name and get the rest to create the raw URL
-    def relativePath = fileLocation.split("/")
+    def relativePath = fileLocation.split()
 
 }
 
@@ -231,4 +234,16 @@ def readConfigProperties(def prop) {
     def props = Properties.instance
     def properties = readProperties file: "${props.CONFIG_PROPERTY_FILE_PATH}"
     return properties[prop]
+}
+
+@Singleton
+class LocalProperties {
+    // The full name will be something like <ORG_NAME>/<REPO>
+    final static def GIT_REPOSITORY = "${repoName}".split("/")[1]
+    final static def GIT_ORG_NAME = "${repoName}".split("/")[0]
+    final static def GIT_SSH_URL = "${sshUrl}"
+    final static def GIT_BRANCH = "${branch}"
+    final static def TG_YAML_SEARCH_REGEX = "*.testgrid.yaml"
+    final static def GH_RAW_URL = "https://raw.githubusercontent.com"
+
 }
