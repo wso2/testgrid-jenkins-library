@@ -88,7 +88,7 @@ def call() {
                          "test/testgrid.yaml"
                          ]
                          **/
-                        cloneRepo(GIT_SSH_URL, GIT_BRANCH)
+                        cloneRepo(LocalProperties.GIT_SSH_URL, LocalProperties.GIT_BRANCH)
                         def tgYamls = findTestGridYamls(props.WORKSPACE + "/" + LocalProperties.GIT_REPOSITORY)
                         processTgConfigs(tgYamls)
                         // We need to get a list of Jobs that are configured
