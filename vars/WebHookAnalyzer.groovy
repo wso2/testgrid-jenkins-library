@@ -22,6 +22,7 @@ import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.PipelineContext
 import org.wso2.tg.jenkins.Properties
 import org.jenkinsci.plugins.envinject.EnvInjectJobPropertyInfo
+import org.wso2.tg.jenkins.alert.Email
 
 // This is used to generate the Email content that will be sent to the user
 def emailContent;
@@ -35,14 +36,6 @@ def call() {
     LocalProperties.instance.initProps()
     props.instance.initProperties()
     def log = new Logger()
-
-    // The full name will be something like <ORG_NAME>/<REPO>
-//    final def GIT_REPOSITORY = "${repoName}".split("/")[1]
-//    final def GIT_ORG_NAME = "${repoName}".split("/")[0]
-//    final def GIT_SSH_URL = "${sshUrl}"
-//    final def GIT_BRANCH = "${branch}"
-//    final def TG_YAML_SEARCH_REGEX = "*.testgrid.yaml"
-//    final def GH_RAW_URL = "https://raw.githubusercontent.com"
 
     pipeline {
         agent {
@@ -116,6 +109,9 @@ void processTgConfigs(def files) {
                 continue
             }
             jobName = tgYamlContent.jobName
+            if (jobName == null || jobName == "") {
+                jobName = gennerateJobName()
+            }
             def emailToList = tgYamlContent.emailToList
 
             //check whether a job exist with the same name
@@ -129,6 +125,9 @@ void processTgConfigs(def files) {
         }
         createJenkinsJob(jobName, "", files[i])
     }
+    //TODO: We need to send an Email to the committer after creating the job
+    //Email email = new Email()
+    //email.send("Auto build creation Notification")
 }
 
 /**
@@ -152,12 +151,13 @@ def createJenkinsJob(def jobName, def timerConfig, def file) {
     job.definition = flowDefinition
     job.setConcurrentBuild(false)
 
-    def spec = "H 0 1 * *";
+    def spec = "H 0 1 * *"
     hudson.triggers.TimerTrigger newCron = new hudson.triggers.TimerTrigger(spec);
-    newCron.start(job, true);
-    job.addTrigger(newCron);
+    newCron.start(job, true)
+    job.addTrigger(newCron)
     def rawYamlLocation = generateRawYamlLocation(file)
-    def prop = new EnvInjectJobPropertyInfo("", "ABCD=\"${rawYamlLocation}\"", "", "", "", false)
+    def prop = new EnvInjectJobPropertyInfo("", "${LocalProperties.TESTGRID_YAML_URL_KEY}=\"${rawYamlLocation}\"", "",
+            "", "", false)
     def prop2 = new org.jenkinsci.plugins.envinject.EnvInjectJobProperty(prop)
     prop2.setOn(true)
     prop2.setKeepBuildVariables(true)
@@ -169,8 +169,8 @@ def createJenkinsJob(def jobName, def timerConfig, def file) {
 }
 
 String gennerateJobName() {
-    def jobName
-
+    def props = LocalProperties.instance
+    def jobName = props.GIT_REPOSITORY + "-" + props.GIT_BRANCH
     return jobName
 }
 
@@ -246,6 +246,7 @@ class LocalProperties {
 
     final static def TG_YAML_SEARCH_REGEX = "*.testgrid.yaml"
     final static def GH_RAW_URL = "https://raw.githubusercontent.com"
+    final static def TESTGRID_YAML_URL_KEY = "TESTGRID_YAML_URL"
     // The full name will be something like <ORG_NAME>/<REPO>
     static def GIT_REPOSITORY
     static def GIT_ORG_NAME
