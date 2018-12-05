@@ -117,13 +117,73 @@ def call() {
                             if(props.EMAIL_TO_LIST == null) {
                                 throw new Exception("emailToList property is not found in testgrid.yaml file")
                             }
+
+
                             log.info("Creating Job config in " + props.JOB_CONFIG_YAML_PATH)
                             // Creating the job config file
                             ws.createJobConfigYamlFile("${props.JOB_CONFIG_YAML_PATH}")
                             sh """
                                 echo The job-config.yaml content :
                                 cat ${props.JOB_CONFIG_YAML_PATH}
+                               
                             """
+
+                            echo "Read Job config yaml"
+                            def jobconfigYaml = readYaml file: "${props.JOB_CONFIG_YAML_PATH}"
+                            echo jobconfigYaml.properties.getClass().toString()
+                            jobconfigYaml.properties.put("NEW_KEY","NEWVALUE")
+
+                            sh " rm ${props.JOB_CONFIG_YAML_PATH}"
+
+                            writeYaml file: "${props.JOB_CONFIG_YAML_PATH}", data: jobconfigYaml
+
+                            sh """
+    
+                                echo The job-config.yaml content :
+                                cat ${props.JOB_CONFIG_YAML_PATH}
+                            """
+
+                            /******************************************/
+
+                            configFileProvider(
+                                    [configFile(fileId: "common-configs", targetLocation:
+                                            "${props.WORKSPACE}/common-configs.properties")]) {
+                            }
+
+                            sh """
+    
+                                echo Read the common configs :
+                                cat ${props.WORKSPACE}/common-configs.properties
+                            """
+
+                            def commonConfigs = readProperties file:"${props.WORKSPACE}/common-configs.properties"
+                            echo commonConfigs.toString();
+                            echo commonConfigs.getClass().toString()
+
+                            commonConfigs.each{ entry ->
+                                println "Name: $entry.key Age: $entry.value"
+                            }
+
+                            def provisioners = tgYamlContent.infrastructureConfig.provisioners;
+
+                            for(i=0;i<provisioners.size();i++){
+//                                echo i
+                                def scripts = provisioners[i].scripts;
+                                echo scripts[0].inputParameters.toString()
+                                for(j=0;j<scripts.size();j++){
+                                    def inputParams = scripts[j].inputParameters;
+                                    inputParams.put("NEWKEY","NEW_VALUE");
+                                }
+                            }
+
+                            sh " rm ${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}"
+                            writeYaml file: "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}", data: tgYamlContent
+                            sh """
+    
+                                echo The testgrid.yaml content :
+                                cat ${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}
+                            """
+                            /******************************************************/
 
                             log.info("Generating test plans for the product : " + props.PRODUCT)
                             tgExecutor.generateTesPlans(props.PRODUCT, props.JOB_CONFIG_YAML_PATH)
@@ -134,6 +194,7 @@ def call() {
                             }
                         } catch (e) {
                             currentBuild.result = "FAILED"
+                            echo e
                         } finally {
                             alert.sendNotification(currentBuild.result, "preparation", "#build_status_verbose")
                         }
