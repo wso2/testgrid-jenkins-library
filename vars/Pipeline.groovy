@@ -28,6 +28,7 @@ import org.wso2.tg.jenkins.Properties
 import org.wso2.tg.jenkins.util.Common
 import org.wso2.tg.jenkins.util.RuntimeUtils
 import org.wso2.tg.jenkins.util.WorkSpaceUtils
+import org.wso2.tg.jenkins.util.ConfigUtils
 
 
 // The pipeline should reside in a call block
@@ -48,6 +49,7 @@ def call() {
     def ws = new WorkSpaceUtils()
     def common = new Common()
     def log = new Logger()
+    def config = new ConfigUtils()
 
     pipeline {
         agent {
@@ -123,9 +125,23 @@ def call() {
                             sh """
                                 echo The job-config.yaml content :
                                 cat ${props.JOB_CONFIG_YAML_PATH}
+                               
                             """
+                            configFileProvider(
+                                    [configFile(fileId: "common-configs", targetLocation:
+                                            "${props.WORKSPACE}/common-configs.properties")]) {
+                            }
+
+                            def commonConfigs = readProperties file:"${props.WORKSPACE}/common-configs.properties"
+                            tgYamlContent = config.addCommonConfigsToTestGridYaml(tgYamlContent,commonConfigs)
+
+                            //remove the existing testgrid yaml file before creating the new one
+                            sh " rm ${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}"
+                            //write the new testgrid yaml file after adding new config values
+                            writeYaml file: "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}", data: tgYamlContent
 
                             log.info("Generating test plans for the product : " + props.PRODUCT)
+
                             tgExecutor.generateTesPlans(props.PRODUCT, props.JOB_CONFIG_YAML_PATH)
 
                             log.info("Stashing test plans to be used in different slave nodes")
@@ -134,6 +150,7 @@ def call() {
                             }
                         } catch (e) {
                             currentBuild.result = "FAILED"
+                            echo e.toString()
                         } finally {
                             alert.sendNotification(currentBuild.result, "preparation", "#build_status_verbose")
                         }
