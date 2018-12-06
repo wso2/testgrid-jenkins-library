@@ -115,7 +115,7 @@ def getTestExecutionMap(parallel_executor_count) {
                                 log.info("POINT B ${i}")
                                 sh """
                                     pwd
-                                    grep scenarioConfigs ${props.WORKSPACE}/test-plans/test-plan-02.yaml
+                                    
                                 """
                                 int fileNo = processFileCount * (executor - 1) + i
                                 testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/"
