@@ -88,7 +88,7 @@ def getTestExecutionMap(parallel_executor_count) {
                         sh """
                             pwd
                         """
-                        runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
+
                         int processFileCount = 0
                         if (files.length < parallelExecCount) {
                             processFileCount = 1
@@ -107,15 +107,15 @@ def getTestExecutionMap(parallel_executor_count) {
                                 runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
                                 testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/"
                                                                                         + files[fileNo].name)
-                                sh """
-                                    pwd
-                                 """
                                 runPlan(files[i], testplanId)
                             }
                         } else {
                             log.info("POINT B ")
                             for (int i = 0; i < processFileCount; i++) {
                                 log.info("POINT B ${i}")
+                                sh """
+                                    pwd
+                                """
                                 int fileNo = processFileCount * (executor - 1) + i
                                 testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/"
                                                                                         + files[fileNo].name)
