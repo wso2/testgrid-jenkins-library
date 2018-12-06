@@ -35,12 +35,12 @@ def runPlan(tPlan, testPlanId) {
     def tgExecutor = new TestGridExecutor()
     def runtime = new RuntimeUtils()
     def log = new Logger()
-    def SCENARIO_CONFIGS = []
+    def scenarioConfigs = []
 
-    SCENARIO_CONFIGS = readRepositoryUrlsfromYaml("${props.WORKSPACE}/${tPlan}")
+    scenarioConfigs = readRepositoryUrlsfromYaml("${props.WORKSPACE}/${tPlan}")
     fileUtil.createDirectory("${props.WORKSPACE}/${testPlanId}")
     log.info("Preparing workspace for testplan : " + testPlanId)
-    prepareWorkspace(testPlanId, SCENARIO_CONFIGS)
+    prepareWorkspace(testPlanId, scenarioConfigs)
     //sleep(time:commonUtil.getRandomNumber(10),unit:"SECONDS")
     log.info("Unstashing test-plans and testgrid.yaml to ${props.WORKSPACE}/${testPlanId}")
     runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
@@ -186,7 +186,7 @@ def readRepositoryUrlsfromYaml(def testplan) {
     echo "DEPLOYMENT_REPOSITORY_URL : ${props.DEPLOYMENT_REPOSITORY_URL}"
     echo "DEPLOYMENT_REPOSITORY_BRANCH : ${props.DEPLOYMENT_REPOSITORY_BRANCH}"
 
-    for (repo in props.SCENARIO_CONFIGS) {
+    for (repo in SCENARIO_CONFIGS) {
         echo "SCENARIOS_REPOSITORY_URL : ${repo.get("url")}"
         echo "SCENARIOS_REPOSITORY_BRANCH: ${repo.get("branch")}"
     }
