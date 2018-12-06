@@ -49,18 +49,20 @@ def addCommonConfigsToTestGridYaml(tgYamlContent, commonConfigs) {
         }
 
         scenarioConfigs = tgYamlContent.scenarioConfigs
-
         //split each property from . symbol
         def split = key.split('\\.');
-
         if (split[0].equals("common")) {
             //apply to all  the available inputParams
-            addToInputParams(infraProvisioners, split[split.length - 1], value)
-            addToInputParams(deploymentPatterns, split[split.length - 1], value)
+            addToInputParams(infraProvisioners, split[split.length - 1], value,"infra")
+            addToInputParams(deploymentPatterns, split[split.length - 1], value,"deployment")
+            //handle scenario
             if(scenarioConfigs.inputParameters.get(0) != null ){
                 scenarioConfigs.inputParameters.get(0).put(split[split.length - 1], value)
+            }else{
+                def paramvalues = new LinkedHashMap<String,String>()
+                paramvalues.put(split[split.length - 1], value)
+                scenarioConfigs.get(0).put("inputParameters",paramvalues)
             }
-
 
         } else if (split[0].equals("infra")) { //apply to only infraConfig section
             //proceed if only valid entry
@@ -68,9 +70,8 @@ def addCommonConfigsToTestGridYaml(tgYamlContent, commonConfigs) {
 
                 //add to inputParams if default prefix is present
                 if (split[1].equals("default")) {
-                    addToInputParams(infraProvisioners, split[split.length - 1], value)
+                    addToInputParams(infraProvisioners, split[split.length - 1], value,"infra")
                 } else {
-                    //else only add if user has specified
                     if (infraProvisioners != null) {
                         infraProvisioners.each { provisioner ->
                             provisioner.scripts.each { script ->
@@ -79,7 +80,10 @@ def addCommonConfigsToTestGridYaml(tgYamlContent, commonConfigs) {
                                         if (param.equals(split[split.length - 1])) {
                                             if(script.inputParameters != null){
                                                 script.inputParameters.put(split[split.length - 1], value)
-                                                echo "Added new input Parameter " + key
+                                                echo "Added new infra input Parameter " + key
+                                            }else{
+                                                script.inputParameters = new LinkedHashMap<String,String>();
+                                                script.inputParameters.put(split[split.length - 1], value)
                                             }
                                         }
                                     }
@@ -94,8 +98,7 @@ def addCommonConfigsToTestGridYaml(tgYamlContent, commonConfigs) {
             if (split.length >= 2 && deploymentPatterns != null) {
 
                 if (split[1].equals("default")) {
-                    addToInputParams(deploymentPatterns, split[split.length - 1], value)
-
+                    addToInputParams(deploymentPatterns, split[split.length - 1], value,"deployment")
                 } else {
                     if (deploymentPatterns != null) {
                         deploymentPatterns.each { pattern ->
@@ -105,8 +108,11 @@ def addCommonConfigsToTestGridYaml(tgYamlContent, commonConfigs) {
                                         if (param.equals(split[split.length - 1])) {
                                             if(script.inputParameters!= null){
                                                 script.inputParameters.put(split[split.length - 1], value)
-                                                echo "Added new input Parameter " + key
+                                            }else{
+                                                script.inputParameters = new LinkedHashMap<String,String>();
+                                                script.inputParameters.put(split[split.length - 1], value)
                                             }
+                                            echo "Added new deployment input Parameter " + key
                                         }
                                     }
                                 }
@@ -121,7 +127,12 @@ def addCommonConfigsToTestGridYaml(tgYamlContent, commonConfigs) {
                 if (split[1].equals("default")) {
                     if (scenarioConfigs.inputParameters.get(0) != null) {
                         scenarioConfigs.inputParameters.get(0).put(split[split.length - 1], value)
+                    }else{
+                        def paramvalues = new LinkedHashMap<String,String>()
+                        paramvalues.put(split[split.length - 1], value)
+                        scenarioConfigs.get(0).put("infraParameters",paramvalues)
                     }
+                    echo "Added new scenario input Parameter " + key
                 } else {
                     if (scenarioConfigs.testgridProvidedParameters != null) {
                         scenarioConfigs.testgridProvidedParameters.each { paramList ->
@@ -129,8 +140,12 @@ def addCommonConfigsToTestGridYaml(tgYamlContent, commonConfigs) {
                                 if (param.equals(split[split.length - 1])) {
                                     if(scenarioConfigs.inputParameters.get(0) !=null){
                                         scenarioConfigs.inputParameters.get(0).put(split[split.length - 1], value)
-                                        echo "Added new input Parameter " + key
+                                    }else{
+                                        def paramvalues = new LinkedHashMap<String,String>()
+                                        paramvalues.put(split[split.length - 1], value)
+                                        scenarioConfigs.get(0).put("inputParameters",paramvalues)
                                     }
+                                    echo "Added new scenario input Parameter " + key
                                 }
                             }
                         }
@@ -149,15 +164,18 @@ def addCommonConfigsToTestGridYaml(tgYamlContent, commonConfigs) {
  * @param key key value of the new parameter
  * @param value value of new parameter
  */
-def addToInputParams(yamlContent, key, value) {
+def addToInputParams(yamlContent, key, value, section) {
 
     if (yamlContent != null) {
         yamlContent.each { content ->
             content.scripts.each { script ->
                 if(script.inputParameters != null) {
                     script.inputParameters.put(key, value)
-                    echo "Added new input Parameter " + key
+                }else{
+                    script.inputParameters = new LinkedHashMap<String,String>();
+                    script.inputParameters.put(key, value)
                 }
+                echo "Added new "+section+" input Parameter " + key
             }
         }
     }

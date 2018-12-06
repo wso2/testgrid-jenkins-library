@@ -141,6 +141,7 @@ def call() {
                             writeYaml file: "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}", data: tgYamlContent
 
                             log.info("Generating test plans for the product : " + props.PRODUCT)
+
                             tgExecutor.generateTesPlans(props.PRODUCT, props.JOB_CONFIG_YAML_PATH)
 
                             log.info("Stashing test plans to be used in different slave nodes")
@@ -149,6 +150,7 @@ def call() {
                             }
                         } catch (e) {
                             currentBuild.result = "FAILED"
+                            echo e.toString()
                         } finally {
                             alert.sendNotification(currentBuild.result, "preparation", "#build_status_verbose")
                         }
