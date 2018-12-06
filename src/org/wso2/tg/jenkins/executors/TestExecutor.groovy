@@ -68,6 +68,7 @@ def runPlan(tPlan, testPlanId) {
 }
 
 def getTestExecutionMap(parallel_executor_count) {
+    def runtime = new RuntimeUtils()
     def commonUtils = new Common()
     def log = new Logger()
     def props = Properties.instance
@@ -90,6 +91,7 @@ def getTestExecutionMap(parallel_executor_count) {
                         } else {
                             processFileCount = files.length / parallelExecCount
                         }
+                        runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
                         if (executor == parallelExecCount) {
                             for (int i = processFileCount * (executor - 1); i < files.length; i++) {
                                 /*IMPORTANT: Instead of using 'i' directly in your logic below, 
