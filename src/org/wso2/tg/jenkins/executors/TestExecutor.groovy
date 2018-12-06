@@ -85,7 +85,11 @@ def getTestExecutionMap(parallel_executor_count) {
                 stage("Parallel Executor : ${executor}") {
                     script {
                         log.info("Running DIR = ")
-
+                        sh """
+                            pwd
+                            mkdir -p ${props.WORKSPACE}/${testPlanId}
+                        """
+                        runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
                         int processFileCount = 0
                         if (files.length < parallelExecCount) {
                             processFileCount = 1
@@ -146,7 +150,7 @@ def prepareWorkspace(testPlanId) {
     } else {
         log.info("Deployment repository not specified")
     }
-
+    log.info("scenario size = ${props.SCENARIO_CONFIGS.size()}")
     for (repo in props.SCENARIO_CONFIGS) {
         cloneRepo(repo.get("url"), repo.get("branch"), props.WORKSPACE + '/' +
                 testPlanId + '/workspace/' + props.SCENARIOS_LOCATION + '/' + repo.get("dir"))
