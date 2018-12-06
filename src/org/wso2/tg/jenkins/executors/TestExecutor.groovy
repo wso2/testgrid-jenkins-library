@@ -97,20 +97,14 @@ def getTestExecutionMap(parallel_executor_count) {
                                 // Execution logic
                                 int fileNo = i
                                 testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/"
-                                                                                        + files[fileNo].name)
-                                sh """
-                                    grep scenarioConfigs ${props.WORKSPACE}/test-plans/test-plan-01.yaml
-                                """
+                                        + files[fileNo].name)
                                 runPlan(files[i], testplanId)
                             }
                         } else {
                             for (int i = 0; i < processFileCount; i++) {
                                 int fileNo = processFileCount * (executor - 1) + i
                                 testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/"
-                                                                                        + files[fileNo].name)
-                                sh """
-                                    grep scenarioConfigs ${props.WORKSPACE}/test-plans/test-plan-01.yaml
-                                """
+                                        + files[fileNo].name)
                                 runPlan(files[fileNo], testplanId)
                             }
                         }
@@ -149,7 +143,7 @@ def prepareWorkspace(testPlanId) {
     } else {
         log.info("Deployment repository not specified")
     }
-    log.info("scenario size = ${props.SCENARIO_CONFIGS.size()}")
+
     for (repo in props.SCENARIO_CONFIGS) {
         cloneRepo(repo.get("url"), repo.get("branch"), props.WORKSPACE + '/' +
                 testPlanId + '/workspace/' + props.SCENARIOS_LOCATION + '/' + repo.get("dir"))
@@ -166,7 +160,7 @@ def prepareWorkspace(testPlanId) {
 }
 
 def readRepositoryUrlsfromYaml(def testplan) {
-    def log = new Logger()
+
     def props = Properties.instance
     def tgYaml = readYaml file: testplan
     if (tgYaml.isEmpty()) {
@@ -180,7 +174,6 @@ def readRepositoryUrlsfromYaml(def testplan) {
     props.DEPLOYMENT_REPOSITORY_BRANCH = getRepositoryBranch(tgYaml.deploymentConfig.deploymentPatterns[0].remoteBranch)
 
     for (repo in tgYaml.scenarioConfigs) {
-        log.info("THIS IS FOR ${testplan}")
         props.SCENARIO_CONFIGS.add([url : repo.remoteRepository, branch : repo.remoteBranch, dir : repo.name])
     }
     echo ""
