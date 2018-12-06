@@ -166,7 +166,7 @@ def prepareWorkspace(testPlanId) {
 }
 
 def readRepositoryUrlsfromYaml(def testplan) {
-
+    def log = new Logger()
     def props = Properties.instance
     def tgYaml = readYaml file: testplan
     if (tgYaml.isEmpty()) {
@@ -180,6 +180,7 @@ def readRepositoryUrlsfromYaml(def testplan) {
     props.DEPLOYMENT_REPOSITORY_BRANCH = getRepositoryBranch(tgYaml.deploymentConfig.deploymentPatterns[0].remoteBranch)
 
     for (repo in tgYaml.scenarioConfigs) {
+        log.info("THIS IS FOR ${testplan}")
         props.SCENARIO_CONFIGS.add([url : repo.remoteRepository, branch : repo.remoteBranch, dir : repo.name])
     }
     echo ""
