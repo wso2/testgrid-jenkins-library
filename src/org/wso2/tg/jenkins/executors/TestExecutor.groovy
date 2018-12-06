@@ -83,6 +83,10 @@ def getTestExecutionMap(parallel_executor_count) {
             node {
                 stage("Parallel Executor : ${executor}") {
                     script {
+                        log.info("Running DIR = ")
+                        sh """
+                            pwd
+                        """
                         int processFileCount = 0
                         if (files.length < parallelExecCount) {
                             processFileCount = 1
