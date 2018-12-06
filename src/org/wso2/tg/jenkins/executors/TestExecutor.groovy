@@ -85,9 +85,6 @@ def getTestExecutionMap(parallel_executor_count) {
                 stage("Parallel Executor : ${executor}") {
                     script {
                         log.info("Running DIR = ")
-                        sh """
-                            pwd
-                        """
 
                         int processFileCount = 0
                         if (files.length < parallelExecCount) {
@@ -96,27 +93,18 @@ def getTestExecutionMap(parallel_executor_count) {
                             processFileCount = files.length / parallelExecCount
                         }
                         if (executor == parallelExecCount) {
-                            log.info("POINT A ")
                             for (int i = processFileCount * (executor - 1); i < files.length; i++) {
                                 /*IMPORTANT: Instead of using 'i' directly in your logic below, 
                                 you should assign it to a new variable and use it.
                                 (To avoid same 'i-object' being refered)*/
                                 // Execution logic
-                                log.info("POINT A ${i}")
                                 int fileNo = i
-                                runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
                                 testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/"
                                                                                         + files[fileNo].name)
                                 runPlan(files[i], testplanId)
                             }
                         } else {
-                            log.info("POINT B ")
                             for (int i = 0; i < processFileCount; i++) {
-                                log.info("POINT B ${i}")
-                                sh """
-                                    pwd
-                                    
-                                """
                                 int fileNo = processFileCount * (executor - 1) + i
                                 testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/"
                                                                                         + files[fileNo].name)
