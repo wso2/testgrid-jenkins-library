@@ -113,16 +113,9 @@ def getTestExecutionMap(parallel_executor_count) {
                             }
                         } else {
                             for (int i = 0; i < processFileCount; i++) {
-
                                 int fileNo = processFileCount * (executor - 1) + i
                                 testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/"
                                                                                         + files[fileNo].name)
-
-                                sh """
-                                    echo ${props.WORKSPACE}/test-plans
-                                    pwd
-                                    mkdir -p ${props.WORKSPACE}/${testPlanId}
-                                """
                                 runPlan(files[fileNo], testplanId)
                             }
                         }
