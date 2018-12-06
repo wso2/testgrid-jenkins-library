@@ -108,6 +108,9 @@ def getTestExecutionMap(parallel_executor_count) {
                                 int fileNo = processFileCount * (executor - 1) + i
                                 testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/"
                                                                                         + files[fileNo].name)
+                                sh """
+                                    grep scenarioConfigs ${props.WORKSPACE}/test-plans/test-plan-01.yaml
+                                """
                                 runPlan(files[fileNo], testplanId)
                             }
                         }
