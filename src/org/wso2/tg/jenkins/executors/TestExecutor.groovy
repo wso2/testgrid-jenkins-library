@@ -117,7 +117,7 @@ def getTestExecutionMap(parallel_executor_count) {
     return tests
 }
 
-def prepareWorkspace(testPlanId, SCENARIO_CONFIGS) {
+def prepareWorkspace(testPlanId, scenarioConfigs) {
     def props = Properties.instance
     def log = new Logger()
     log.info(" Creating workspace and builds sub-directories")
@@ -145,7 +145,7 @@ def prepareWorkspace(testPlanId, SCENARIO_CONFIGS) {
         log.info("Deployment repository not specified")
     }
 
-    for (repo in SCENARIO_CONFIGS) {
+    for (repo in scenarioConfigs) {
         cloneRepo(repo.get("url"), repo.get("branch"), props.WORKSPACE + '/' +
                 testPlanId + '/workspace/' + props.SCENARIOS_LOCATION + '/' + repo.get("dir"))
     }
@@ -162,7 +162,7 @@ def prepareWorkspace(testPlanId, SCENARIO_CONFIGS) {
 
 def readRepositoryUrlsfromYaml(def testplan) {
 
-    def SCENARIO_CONFIGS = []
+    def scenarioConfigs = []
     def props = Properties.instance
     def tgYaml = readYaml file: testplan
     if (tgYaml.isEmpty()) {
@@ -176,7 +176,7 @@ def readRepositoryUrlsfromYaml(def testplan) {
     props.DEPLOYMENT_REPOSITORY_BRANCH = getRepositoryBranch(tgYaml.deploymentConfig.deploymentPatterns[0].remoteBranch)
 
     for (repo in tgYaml.scenarioConfigs) {
-        SCENARIO_CONFIGS.add([url : repo.remoteRepository, branch : repo.remoteBranch, dir : repo.name])
+        scenarioConfigs.add([url : repo.remoteRepository, branch : repo.remoteBranch, dir : repo.name])
     }
     echo ""
     echo "------------------------------------------------------------------------"
@@ -186,14 +186,14 @@ def readRepositoryUrlsfromYaml(def testplan) {
     echo "DEPLOYMENT_REPOSITORY_URL : ${props.DEPLOYMENT_REPOSITORY_URL}"
     echo "DEPLOYMENT_REPOSITORY_BRANCH : ${props.DEPLOYMENT_REPOSITORY_BRANCH}"
 
-    for (repo in SCENARIO_CONFIGS) {
+    for (repo in scenarioConfigs) {
         echo "SCENARIOS_REPOSITORY_URL : ${repo.get("url")}"
         echo "SCENARIOS_REPOSITORY_BRANCH: ${repo.get("branch")}"
     }
 
     echo "------------------------------------------------------------------------"
     echo ""
-    return SCENARIO_CONFIGS
+    return scenarioConfigs
 }
 
 void cloneRepo(def gitURL, gitBranch, dir) {
