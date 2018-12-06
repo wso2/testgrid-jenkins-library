@@ -70,7 +70,6 @@ def getTestExecutionMap(parallel_executor_count) {
     def commonUtils = new Common()
     def log = new Logger()
     def props = Properties.instance
-    def runtime = new RuntimeUtils()
     def parallelExecCount = parallel_executor_count as int
     def name = "unknown"
     def tests = [:]
@@ -84,7 +83,6 @@ def getTestExecutionMap(parallel_executor_count) {
             node {
                 stage("Parallel Executor : ${executor}") {
                     script {
-
                         int processFileCount = 0
                         if (files.length < parallelExecCount) {
                             processFileCount = 1
