@@ -35,11 +35,12 @@ def runPlan(tPlan, testPlanId) {
     def tgExecutor = new TestGridExecutor()
     def runtime = new RuntimeUtils()
     def log = new Logger()
+    def scenarioConfigs = []
 
-    readRepositoryUrlsfromYaml("${props.WORKSPACE}/${tPlan}")
+    scenarioConfigs = readRepositoryUrlsfromYaml("${props.WORKSPACE}/${tPlan}")
     fileUtil.createDirectory("${props.WORKSPACE}/${testPlanId}")
     log.info("Preparing workspace for testplan : " + testPlanId)
-    prepareWorkspace(testPlanId)
+    prepareWorkspace(testPlanId, scenarioConfigs)
     //sleep(time:commonUtil.getRandomNumber(10),unit:"SECONDS")
     log.info("Unstashing test-plans and testgrid.yaml to ${props.WORKSPACE}/${testPlanId}")
     runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
@@ -67,6 +68,7 @@ def runPlan(tPlan, testPlanId) {
 }
 
 def getTestExecutionMap(parallel_executor_count) {
+    def runtime = new RuntimeUtils()
     def commonUtils = new Common()
     def log = new Logger()
     def props = Properties.instance
@@ -89,6 +91,7 @@ def getTestExecutionMap(parallel_executor_count) {
                         } else {
                             processFileCount = files.length / parallelExecCount
                         }
+                        runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
                         if (executor == parallelExecCount) {
                             for (int i = processFileCount * (executor - 1); i < files.length; i++) {
                                 /*IMPORTANT: Instead of using 'i' directly in your logic below, 
@@ -97,14 +100,14 @@ def getTestExecutionMap(parallel_executor_count) {
                                 // Execution logic
                                 int fileNo = i
                                 testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/"
-                                                                                        + files[fileNo].name)
+                                        + files[fileNo].name)
                                 runPlan(files[i], testplanId)
                             }
                         } else {
                             for (int i = 0; i < processFileCount; i++) {
                                 int fileNo = processFileCount * (executor - 1) + i
                                 testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/"
-                                                                                        + files[fileNo].name)
+                                        + files[fileNo].name)
                                 runPlan(files[fileNo], testplanId)
                             }
                         }
@@ -116,7 +119,7 @@ def getTestExecutionMap(parallel_executor_count) {
     return tests
 }
 
-def prepareWorkspace(testPlanId) {
+def prepareWorkspace(testPlanId, scenarioConfigs) {
     def props = Properties.instance
     def log = new Logger()
     log.info(" Creating workspace and builds sub-directories")
@@ -144,7 +147,7 @@ def prepareWorkspace(testPlanId) {
         log.info("Deployment repository not specified")
     }
 
-    for (repo in props.SCENARIO_CONFIGS) {
+    for (repo in scenarioConfigs) {
         cloneRepo(repo.get("url"), repo.get("branch"), props.WORKSPACE + '/' +
                 testPlanId + '/workspace/' + props.SCENARIOS_LOCATION + '/' + repo.get("dir"))
     }
@@ -161,6 +164,7 @@ def prepareWorkspace(testPlanId) {
 
 def readRepositoryUrlsfromYaml(def testplan) {
 
+    def scenarioConfigs = []
     def props = Properties.instance
     def tgYaml = readYaml file: testplan
     if (tgYaml.isEmpty()) {
@@ -174,7 +178,7 @@ def readRepositoryUrlsfromYaml(def testplan) {
     props.DEPLOYMENT_REPOSITORY_BRANCH = getRepositoryBranch(tgYaml.deploymentConfig.deploymentPatterns[0].remoteBranch)
 
     for (repo in tgYaml.scenarioConfigs) {
-        props.SCENARIO_CONFIGS.add([url : repo.remoteRepository, branch : repo.remoteBranch, dir : repo.name])
+        scenarioConfigs.add([url : repo.remoteRepository, branch : repo.remoteBranch, dir : repo.name])
     }
     echo ""
     echo "------------------------------------------------------------------------"
@@ -184,14 +188,14 @@ def readRepositoryUrlsfromYaml(def testplan) {
     echo "DEPLOYMENT_REPOSITORY_URL : ${props.DEPLOYMENT_REPOSITORY_URL}"
     echo "DEPLOYMENT_REPOSITORY_BRANCH : ${props.DEPLOYMENT_REPOSITORY_BRANCH}"
 
-    for (repo in props.SCENARIO_CONFIGS) {
+    for (repo in scenarioConfigs) {
         echo "SCENARIOS_REPOSITORY_URL : ${repo.get("url")}"
         echo "SCENARIOS_REPOSITORY_BRANCH: ${repo.get("branch")}"
     }
 
-
     echo "------------------------------------------------------------------------"
     echo ""
+    return scenarioConfigs
 }
 
 void cloneRepo(def gitURL, gitBranch, dir) {
