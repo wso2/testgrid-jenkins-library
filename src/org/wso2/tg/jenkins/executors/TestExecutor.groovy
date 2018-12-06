@@ -87,7 +87,6 @@ def getTestExecutionMap(parallel_executor_count) {
                         log.info("Running DIR = ")
                         sh """
                             pwd
-                            mkdir -p ${props.WORKSPACE}/${testPlanId}
                         """
                         runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
                         int processFileCount = 0
@@ -105,6 +104,10 @@ def getTestExecutionMap(parallel_executor_count) {
                                 int fileNo = i
                                 testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/"
                                                                                         + files[fileNo].name)
+                                sh """
+                                    pwd
+                                    mkdir -p ${props.WORKSPACE}/${testPlanId}
+                                """
                                 runPlan(files[i], testplanId)
                             }
                         } else {
