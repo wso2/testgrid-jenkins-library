@@ -84,12 +84,7 @@ def getTestExecutionMap(parallel_executor_count) {
             node {
                 stage("Parallel Executor : ${executor}") {
                     script {
-                        log.info("Running DIR = ")
-                        sh """
-                            pwd
-                            mkdir -p ${props.WORKSPACE}/${testPlanId}
-                        """
-                        runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
+
                         int processFileCount = 0
                         if (files.length < parallelExecCount) {
                             processFileCount = 1
