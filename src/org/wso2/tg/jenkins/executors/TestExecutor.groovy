@@ -85,6 +85,7 @@ def getTestExecutionMap(parallel_executor_count) {
             node {
                 stage("Parallel Executor : ${executor}") {
                     script {
+                        log.info("test run blue ocean link:" + commonUtils.getStageId(currentBuild))
                         int processFileCount = 0
                         if (files.length < parallelExecCount) {
                             processFileCount = 1
@@ -94,7 +95,7 @@ def getTestExecutionMap(parallel_executor_count) {
                         runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
                         if (executor == parallelExecCount) {
                             for (int i = processFileCount * (executor - 1); i < files.length; i++) {
-                                /*IMPORTANT: Instead of using 'i' directly in your logic below, 
+                                /*IMPORTANT: Instead of using 'i' directly in your logic below,
                                 you should assign it to a new variable and use it.
                                 (To avoid same 'i-object' being refered)*/
                                 // Execution logic

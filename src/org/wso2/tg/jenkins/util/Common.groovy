@@ -20,6 +20,11 @@ package org.wso2.tg.jenkins.util
 
 import org.wso2.tg.jenkins.Properties
 
+import hudson.model.Action;
+import org.jenkinsci.plugins.workflow.graph.FlowNode
+import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode
+import org.jenkinsci.plugins.workflow.actions.LabelAction
+
 def getTimestamp(Date date = new Date()) {
     return date.format('yyyyMMddHHmmss', TimeZone.getTimeZone('GMT')) as String
 }
@@ -80,4 +85,33 @@ def getJenkinsCredentials(def key) {
         cred = value
     }
     return cred
+}
+
+def getStageId(currentBuild){
+    def build = currentBuild.getRawBuild()
+    def execution = build.getExecution()
+    def executionHeads = execution.getCurrentHeads()
+    def stepStartNode = getStepStartNode(executionHeads)
+
+    if(stepStartNode){
+        return stepStartNode.getId()
+    }
+}
+
+def getStepStartNode(List<FlowNode> flowNodes) {
+    def currentFlowNode = null
+    def labelAction = null
+
+    for (FlowNode flowNode : flowNodes) {
+        currentFlowNode = flowNode
+        labelAction = false
+
+        if (flowNode instanceof StepStartNode) {
+            labelAction = hasLabelAction(flowNode)
+        }
+
+        if (labelAction) {
+            return flowNode
+        }
+    }
 }
