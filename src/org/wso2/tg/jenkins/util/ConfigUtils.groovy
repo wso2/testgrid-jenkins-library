@@ -37,6 +37,15 @@ def addCommonConfigsToTestGridYaml(tgYamlContent, commonConfigs) {
     echo "Populating testgrid yaml file with common configs"
 
     commonConfigs.each { key, value ->
+
+        resolvedValue = resolveCredentials(value)
+        if(resolvedValue != null ){
+            value = resolvedValue
+        }else{
+            echo "Unable to find secret value " + key + "in Jenkins Credentials"
+            return
+        }
+
         def infraProvisioners = null;
         def deploymentPatterns = null;
         def scenarioConfigs = null;
@@ -181,3 +190,27 @@ def addToInputParams(yamlContent, key, value, section) {
     }
 }
 
+/**
+ * Resolves the values if they are sensitive parameters stored as Jenkins credentials
+ * Ex:
+ * infra.secretValue=CREDENTIALS(secret-key)
+ *
+ * if the Value is presented in the above manner, secret-key will be used to retrieve the
+ * parameter from Credentials plugin
+ *
+ * @param value user defined value
+ * @return resolved parameter
+ */
+def resolveCredentials(value){
+    def common = new Common()
+    if (value.startsWith("CREDENTIALS(") && value.endsWith(")")){
+        def split = value.split("[()]")
+        if (split.length == 2) {
+            def credentials_id = split[1]
+            def result = common.getJenkinsCredentials(credentials_id)
+            return result
+        }
+    }else{
+        return value
+    }
+}
