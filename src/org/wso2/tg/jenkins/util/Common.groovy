@@ -19,6 +19,8 @@
 package org.wso2.tg.jenkins.util
 
 import org.wso2.tg.jenkins.Properties
+import org.wso2.tg.jenkins.Logger
+
 
 def getTimestamp(Date date = new Date()) {
     return date.format('yyyyMMddHHmmss', TimeZone.getTimeZone('GMT')) as String
@@ -60,6 +62,23 @@ def getTestPlanId(file) {
     def tpyaml = readFile(file)
     def m = tpyaml =~ /(id:)([A-z :'0-9\.-]*)(\n)/
     return m[0][2].trim()
+}
+
+/**
+ * Extracts the infra combination from testplan id to be displayed in the
+ * blueocean UI parallel stages
+ *
+ * @param testPlanId testplan id
+ * @return Only the infra combination section from the testplan
+ */
+def extractInfraCombination(def testPlanId){
+
+    def split = testPlanId.split("_")
+    def name=split[2]
+    for (def i = 3; i < split.length - 1; i++) {
+        name += "_" + split[i]
+    }
+    return name
 }
 
 def getRandomNumber(limit) {

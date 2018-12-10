@@ -18,6 +18,9 @@
 
 package org.wso2.tg.jenkins.executors
 
+import com.cloudbees.groovy.cps.NonCPS
+import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode
+import org.jenkinsci.plugins.workflow.job.views.FlowGraphAction
 import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.Properties
 import org.wso2.tg.jenkins.alert.Slack
@@ -37,8 +40,13 @@ def runPlan(tPlan, testPlanId) {
     def log = new Logger()
     def scenarioConfigs = []
 
+    def execName = commonUtil.extractInfraCombination("${testPlanId}")
+    def paralleId = getParalleId(execName)
+    def buildURL = "${env.BUILD_URL}"
+    def url = generateBluoceanLink("${buildURL}","${paralleId}")
+    echo "URL : " + "${url}"
+
     scenarioConfigs = readRepositoryUrlsfromYaml("${props.WORKSPACE}/${tPlan}")
-    fileUtil.createDirectory("${props.WORKSPACE}/${testPlanId}")
     log.info("Preparing workspace for testplan : " + testPlanId)
     prepareWorkspace(testPlanId, scenarioConfigs)
     //sleep(time:commonUtil.getRandomNumber(10),unit:"SECONDS")
@@ -50,13 +58,13 @@ def runPlan(tPlan, testPlanId) {
     mkdir -p ${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}
     curl --max-time 6 --retry 6 -o ${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}/deploy.sh https://raw.githubusercontent.com/wso2/testgrid/master/jobs/test-resources/deploy.sh
     """
-
-    def name = commonUtil.getParameters("${props.WORKSPACE}/${tPlan}")
+    def name = commonUtil.extractInfraCombination(testplanId)
     notifier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
     try {
         tgExecutor.runTesPlans(props.PRODUCT,
-                "${props.WORKSPACE}/${tPlan}", "${props.WORKSPACE}/${testPlanId}")
-        //commonUtil.truncateTestRunLog(testPlanId)
+                "${props.WORKSPACE}/${tPlan}", "${props.WORKSPACE}/${testPlanId}","${url}")
+        commonUtil.truncateTestRunLog(testPlanId)
+        echo "run test plan"
     } catch (Exception err) {
         log.error("Error : ${err}")
         currentBuild.result = 'UNSTABLE'
@@ -80,7 +88,9 @@ def getTestExecutionMap(parallel_executor_count) {
     log.info("Parallel exec count " + parallelExecCount)
     for (int f = 1; f < parallelExecCount + 1 && f <= files.length; f++) {
         def executor = f
-        name = commonUtils.getParameters("${props.WORKSPACE}/test-plans/" + files[f - 1].name)
+        testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/" + files[f - 1].name)
+        name = commonUtils.extractInfraCombination(testplanId)
+
         tests["${name}"] = {
             node {
                 stage("Parallel Executor : ${executor}") {
@@ -94,7 +104,7 @@ def getTestExecutionMap(parallel_executor_count) {
                         runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
                         if (executor == parallelExecCount) {
                             for (int i = processFileCount * (executor - 1); i < files.length; i++) {
-                                /*IMPORTANT: Instead of using 'i' directly in your logic below, 
+                                /*IMPORTANT: Instead of using 'i' directly in your logic below,
                                 you should assign it to a new variable and use it.
                                 (To avoid same 'i-object' being refered)*/
                                 // Execution logic
@@ -162,6 +172,39 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
     }
 }
 
+/**
+ * Returns the parallel id of the test test plan
+ *
+ * @param name of the executor where test plan is running
+ * @return parallel id of test plan
+ */
+@NonCPS
+def getParalleId(name){
+
+    def parallelname = name
+    def build = currentBuild.getRawBuild()
+    def actions = build.getAllActions();
+    def parallelId = ""
+    actions.each{act ->
+        if(act instanceof FlowGraphAction){
+            def nodes = act.getNodes();
+            nodes.each{node ->
+                if(node instanceof StepStartNode){
+                    if(node.displayName.endsWith(parallelname)){
+                        println("Parallel node  : " + parallelname + " : " + node.id.toString())
+                        parallelId = node.id.toString()
+                    }
+                }
+
+            }
+        }
+    }
+    build = null
+    actions = null
+    parallelname = null
+    return parallelId
+}
+
 def readRepositoryUrlsfromYaml(def testplan) {
 
     def scenarioConfigs = []
@@ -227,4 +270,22 @@ static def getRepositoryBranch(def branch) {
     } else {
         "master"
     }
+}
+
+/**
+ * Builds the bluocean console link for a given test plan
+ *
+ * @param buildURL Jenkins classic build URL
+ * @param parallelId Parallel id of the test plan
+ * @return Blueocean link
+ */
+def generateBluoceanLink(def buildURL , def parallelId){
+    def split = buildURL.split('/')
+    def url = null
+    if (split.length > 0 ){
+        url = split[0] + "//" + split[2] + "/admin/blue/organizations/jenkins/" + split[5] +
+                "/detail/" + split[5] + "/" + split[6] + "/pipeline/" + "${parallelId}"
+    }
+    return url
+
 }
