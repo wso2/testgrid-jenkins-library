@@ -30,8 +30,8 @@ import org.wso2.tg.jenkins.alert.Slack
 @Singleton
 class JobCreatorProperties {
   final static JENKINS_SHARED_LIB_NAME = 'intg_test_template@dev'
-  final static GIT_REPO = 'kasunbg/testgrid-job-configs'
-  final static GIT_BRANCH = 'job-creator-test'
+  final static GIT_REPO = 'wso2-incubator/testgrid-job-configs'
+  final static GIT_BRANCH = 'master'
   final static JOB_CONFIG_REPO_RAW_URL = "https://raw.githubusercontent.com/${GIT_REPO}/${GIT_BRANCH}/"
 
   final static String TESTGRID_YAML_URL_KEY = "TESTGRID_YAML_URL"
@@ -67,8 +67,6 @@ def call() {
         steps {
           deleteDir()
           git url: "https://github.com/${JobCreatorProperties.GIT_REPO}", branch: "${JobCreatorProperties.GIT_BRANCH}"
-
-          echo "Git URL: ${env}"
           script {
             try {
               def changedFiles = getChangedFiles()
@@ -77,7 +75,6 @@ def call() {
               handleException(e.getMessage(), e)
             }
           }
-
         }
       }
     }
