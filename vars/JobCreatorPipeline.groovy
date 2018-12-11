@@ -15,72 +15,67 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
+import hudson.triggers.TimerTrigger
 import jenkins.model.Jenkins
-import org.jenkinsci.plugins.envinject.EnvInjectJobPropertyInfo
 import org.jenkinsci.plugins.envinject.EnvInjectJobProperty
-import org.wso2.tg.jenkins.Logger
+import org.jenkinsci.plugins.envinject.EnvInjectJobPropertyInfo
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition
+import org.jenkinsci.plugins.workflow.job.WorkflowJob
 import org.wso2.tg.jenkins.PipelineContext
 import org.wso2.tg.jenkins.Properties
 import org.wso2.tg.jenkins.alert.Email
 import org.wso2.tg.jenkins.alert.Slack
-import org.wso2.tg.jenkins.executors.TestExecutor
-import org.wso2.tg.jenkins.executors.TestGridExecutor
-import org.wso2.tg.jenkins.util.*
 
-def JENKINS_SHARED_LIB_NAME = 'intg_test_template@dev'
-def JOB_CONFIG_REPO_RAW_URL = 'https://raw.githubusercontent.com/wso2-incubator/testgrid-job-configs/master/'
+@Singleton
+class JobCreatorProperties {
+  final static JENKINS_SHARED_LIB_NAME = 'intg_test_template@dev'
+  final static GIT_REPO = 'kasunbg/testgrid-job-configs'
+  final static GIT_BRANCH = 'job-creator-test'
+  final static JOB_CONFIG_REPO_RAW_URL = "https://raw.githubusercontent.com/${GIT_REPO}/${GIT_BRANCH}/"
 
-call() //TODO: remove
+  final static String TESTGRID_YAML_URL_KEY = "TESTGRID_YAML_URL"
+  final static String JOB_CONFIG_YAML_URL_KEY = "JOB_CONFIG_YAML_URL"
+}
 
+/**
+ * This pipeline listens on the testgrid-job-configs git repo for any file changes.
+ * If a file change is detected, then this pipeline will fetch that,
+ * and create/update/delete the testgrid jenkins jobs as necessary.
+ *
+ * Caveats:
+ * On deletion, this does not delete the testgrid job from the database. It only
+ * deletes the jenkins job.
+ *
+ */
 def call() {
-  // Setting the current pipeline context, this should be done initially
   PipelineContext.instance.setContext(this)
-  // Initializing environment properties
   def props = Properties.instance
   props.instance.initProperties()
 
-  // For scaling we need to create slave nodes before starting the pipeline and schedule it appropriately
   def alert = new Slack()
   def email = new Email()
-  def awsHelper = new AWSUtils()
-  def testExecutor = new TestExecutor()
-  def tgExecutor = new TestGridExecutor()
-  def runtime = new RuntimeUtils()
-  def ws = new WorkSpaceUtils()
-  def common = new Common()
-  def log = new Logger()
-  def config = new ConfigUtils()
 
   pipeline {
     agent {
       node {
         label ""
-        customWorkspace "${props.WORKSPACE}"
       }
     }
-
     stages {
-      stage('Create Testgrid Job') {
+      stage('Create Testgrid Jobs') {
         steps {
           deleteDir()
-          git url: 'https://github.com/kasunbg/testgrid-job-configs', branch: 'job-creator-test'
+          git url: "https://github.com/${JobCreatorProperties.GIT_REPO}", branch: "${JobCreatorProperties.GIT_BRANCH}"
 
+          echo "Git URL: ${env}"
           script {
-            def changeLogSets = currentBuild.changeSet
-            for (int i = 0; i < changeLogSets.size(); i++) {
-              def entries = changeLogSets[i].items
-              for (int j = 0; j < entries.length; j++) {
-                def entry = entries[j]
-                echo "${entry.commitId} by ${entry.author} on ${new Date(entry.timestamp)}: ${entry.msg}"
-                def files = new ArrayList(entry.affectedFiles)
-                for (int k = 0; k < files.size(); k++) {
-                  def file = files[k]
-                  echo "  ${file.editType.name} ${file.path}"
-                  handleChange(${file.editType.name}, ${file.path})
-                }
-              }
+            try {
+              def changedFiles = getChangedFiles()
+              process(changedFiles)
+            } catch (e) {
+              handleException(e.getMessage(), e)
             }
-
           }
 
         }
@@ -88,53 +83,82 @@ def call() {
     }
   }
 }
-
-def handleChange(String action, String filePath) {
-  switch (action) {
-    case "add":
-      addOrModifyJenkinsJob(editType, filePath)
-      break
-    case "modify":
-      addOrModifyJenkinsJob(editType, filePath)
-      break
-    case "delete":
-    default:
-
-      break
+def process(def changedFiles) {
+  for (change in changedFiles) {
+    try {
+      handleChange(change.type, change.file)
+    } catch(e) {
+      handleException("Error while processing ${change.file}. ${e.getMessage()}", e)
+    }
   }
+
 }
 
-def addOrModifyJenkinsJob(def action, filePath) {
-  echo "Processing file $action: $filePath"
-  def tgYamlContent
-  def jobName
-  try {
-    // Reading the yaml file
-    jobConfigYaml = readYaml file: filePath
-    log.info("Job config yaml content : ${jobConfigYaml}")
+@NonCPS
+def getChangedFiles() {
+  MAX_MSG_LEN = 150
+  def changeString = ""
 
-//    def addToJenkins = tgYamlContent.jobConfigs.onboardJob
-//    log.info("The onboarding flag is " + addToJenkins)
-//    if (addToJenkins == false) {
-//      log.warn("Skipping on-boarding the testgrid yaml for " + files[i])
-//      continue
-//    }
-
-    jobName = filePath
-//    if (jobName == null || jobName == "") {
-//      jobName = gennerateJobName()
-//    }
-    def emailToList = jobConfigYaml.jobConfig.emailToList
-    if ("add" == action && isJobExists(jobName)) {
-      log.warn("Found an existing job with the name: " + jobName + ". Will update that instead.")
+  List changedFiles = new ArrayList()
+  echo "Gathering SCM changes"
+  def changeLogSets = currentBuild.changeSets
+    for (logset in changeLogSets) {
+    for (entry in logset.items) {
+      truncated_msg = entry.msg.take(MAX_MSG_LEN)
+      commitId = entry.commitId.take(7)
+      changeString += "|- ${commitId}: ${truncated_msg} [${entry.author}]\n"
+      for (file in entry.affectedFiles) {
+        def change = Change.newInstance()
+        change.type = file.editType.name
+        change.file = file.path
+        changedFiles.add(change)
+        changeString += "|  |- [${file.editType.name}] ${file.path}\n"
+      }
     }
-    createJenkinsJob(jobName, "", filePath, jobConfigYaml)
-    //TODO: Email to the committer after creating the job
-    //Email email = new Email()
-    //email.send("Auto build creation Notification")
-  } catch (e) {
-    echo "Error while creating the job ${e.getMessage()}"
-    // TODO: notify about the error
+  }
+
+  if (!changeString) {
+    changeString = " - No new changes"
+  } else {
+    changeString = "Changes found: \n${changeString}"
+  }
+
+  echo changeString
+  return changedFiles
+}
+
+/**
+ * Handle the change to the file based on what the change is.
+ *
+ * @param instruction add/edit/delete are supported
+ * @param filePath the relative path to changed file.
+ */
+def handleChange(String instruction, String filePath) {
+  echo "Processing '${instruction}' instruction on file ${filePath}"
+  switch (instruction) {
+    case "add":
+    case "edit":
+      def exists = fileExists "${filePath}"
+      if (!exists) {
+        echo "[ERROR] File not found: " + filePath
+        // TODO handle
+        return
+      }
+
+      def jobConfigYaml = readYaml file: filePath
+      String jobName = filePath
+      if ("add" == instruction && isJobExists(jobName)) {
+        echo "Found an existing job with the name: " + jobName + ". Will update that instead."
+      }
+
+      createJenkinsJob(jobName, "", filePath, jobConfigYaml)
+      break
+    case "delete":
+      def jobName = filePath;
+      shelveJenkinsJob(jobName)
+      break
+    default:
+      echo "Instruction not supported: $instruction. file: $filePath"
   }
 }
 
@@ -146,7 +170,6 @@ def addOrModifyJenkinsJob(def action, filePath) {
  */
 boolean isJobExists(def jobName) {
   Jenkins.instance.getAllItems(AbstractItem.class).each {
-    echo "iterating $it.fullName";
     if (it.fullName == jobName) {
       return true
     }
@@ -156,47 +179,93 @@ boolean isJobExists(def jobName) {
 
 /**
  * This method is responsible for creating the Jenkins job.
+ * TODO: create folders as needed.
  *
  * @param jobName jobName
  * @param timerConfig cron expression to schedule the job
  * @return
  */
-def createJenkinsJob(def jobName, def timerConfig, def file, def jobConfigYaml) {
-
-  echo "Creating the job ${jobName}"
-  echo "shared lib name: ${JENKINS_SHARED_LIB_NAME}"  //todo remove
-  def jobDSL="@Library('$JENKINS_SHARED_LIB_NAME') _\n" +
+def createJenkinsJob(String jobName, String timerConfig, String file, def jobConfigYaml) {
+  echo "Creating the job ${jobName}.."
+  def jobDSL = "@Library('$JobCreatorProperties.JENKINS_SHARED_LIB_NAME') _\n" +
           "Pipeline()"
   def instance = Jenkins.instance
-  def job = new org.jenkinsci.plugins.workflow.job.WorkflowJob(instance, jobName)
-  def flowDefinition = new org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition(jobDSL, true)
+  def job = new WorkflowJob(instance, jobName)
+  def flowDefinition = new CpsFlowDefinition(jobDSL, true)
   job.definition = flowDefinition
-  job.setConcurrentBuild(false)
+  job.concurrentBuild = false
 
   if (timerConfig != null && timerConfig != "") {
-    hudson.triggers.TimerTrigger newCron = new hudson.triggers.TimerTrigger(timerConfig)
+    TimerTrigger newCron = new TimerTrigger(timerConfig)
     newCron.start(job, true)
     job.addTrigger(newCron)
   }
-  def testgridYamlURL = jobConfigYaml.testgridYamlURL;
+  def testgridYamlURL = jobConfigYaml.testgridYamlURL
+  if (!testgridYamlURL) {
+    echo "testgridYamlURL element is not found in the job configuration file: $file. Not adding a job."
+    //TODO: notify relevant people
+    return
+  }
+
   def rawGitHubFileLocation = getRawGitHubFileLocation(file)
-  addJobProperty(LocalProperties.TESTGRID_YAML_URL_KEY, testgridYamlURL, job)
-  addJobProperty(LocalProperties.JOB_CONFIG_YAML_URL_KEY, rawGitHubFileLocation, job)
+  String properties = """${JobCreatorProperties.JOB_CONFIG_YAML_URL_KEY}="${rawGitHubFileLocation}"
+${JobCreatorProperties.TESTGRID_YAML_URL_KEY}="${testgridYamlURL}"
+"""
+  addJobProperty(properties, job)
   job.save()
+  echo "Created the job ${jobName} successfully."
   Jenkins.instance.reload()
 
+  //trigger the initial job
+  build job: "${jobName}", quietPeriod: 10, wait: false
 }
 
-private void addJobProperty(String key, value, org.jenkinsci.plugins.workflow.job.WorkflowJob job) {
-  def prop = new EnvInjectJobPropertyInfo("", key + "=${value}", "",
-          "", "", false)
+private static void addJobProperty(String properties, WorkflowJob job) {
+  def prop = new EnvInjectJobPropertyInfo("", "${properties}", "", "", "", false)
   prop = new EnvInjectJobProperty(prop)
   prop.setOn(true)
   prop.setKeepBuildVariables(true)
   prop.setKeepJenkinsSystemVariables(true)
-  job.addProperty(prop2)
+  job.addProperty(prop)
 }
 
-String getRawGitHubFileLocation(def fileLocation) {
-  return JOB_CONFIG_REPO_RAW_URL + fileLocation
+static String getRawGitHubFileLocation(def fileLocation) {
+  return JobCreatorProperties.JOB_CONFIG_REPO_RAW_URL + fileLocation
+}
+
+/**
+ * TODO: Implement shelve logic. Currently this deletes the job.
+ *
+ * @param jobName
+ * @return
+ */
+def shelveJenkinsJob(String jobName) {
+  boolean deleted = false;
+  Jenkins.instance.items.each { item ->
+    if (item.class.canonicalName != 'com.cloudbees.hudson.plugins.folder.Folder') {
+      if (jobName.contains(item.fullName)) {
+        echo "Deleting job: $item.fullName"
+        item.delete()
+        deleted = true
+      }
+    }
+  }
+
+  if (!deleted) {
+    echo "[ERROR] Could not delete job. A job does not exist with the given name: ${jobName}."
+  }
+}
+
+private void handleException(String msg, Exception e) {
+  echo "${msg}"
+  def sw = new StringWriter()
+  def pw = new PrintWriter(sw)
+  e.printStackTrace(pw)
+  sw = sw.toString()
+  echo sw
+}
+
+class Change implements Serializable {
+  def type
+  def file
 }
