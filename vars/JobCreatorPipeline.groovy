@@ -30,9 +30,7 @@ import org.wso2.tg.jenkins.alert.Slack
 @Singleton
 class JobCreatorProperties {
   final static JENKINS_SHARED_LIB_NAME = 'intg_test_template@dev'
-  final static GIT_REPO = 'wso2-incubator/testgrid-job-configs'
-  final static GIT_BRANCH = 'master'
-  final static JOB_CONFIG_REPO_RAW_URL = "https://raw.githubusercontent.com/${GIT_REPO}/${GIT_BRANCH}/"
+  final static JOB_CONFIG_REPO_RAW_URL_PREFIX = "https://raw.githubusercontent.com/"
 
   final static String TESTGRID_YAML_URL_KEY = "TESTGRID_YAML_URL"
   final static String JOB_CONFIG_YAML_URL_KEY = "JOB_CONFIG_YAML_URL"
@@ -48,6 +46,7 @@ class JobCreatorProperties {
  * deletes the jenkins job.
  *
  */
+
 def call() {
   PipelineContext.instance.setContext(this)
   def props = Properties.instance
@@ -62,11 +61,17 @@ def call() {
         label ""
       }
     }
+    environment {
+      GIT_REPO = "${env.GIT_REPO}"
+      GIT_BRANCH = "${env.GIT_BRANCH}"
+    }
+
     stages {
       stage('Create Testgrid Jobs') {
         steps {
           deleteDir()
-          git url: "https://github.com/${JobCreatorProperties.GIT_REPO}", branch: "${JobCreatorProperties.GIT_BRANCH}"
+          git url: "https://github.com/${env.GIT_REPO}", branch: "${env.GIT_BRANCH}"
+
           script {
             try {
               def changedFiles = getChangedFiles()
@@ -226,8 +231,8 @@ private static void addJobProperty(String properties, WorkflowJob job) {
   job.addProperty(prop)
 }
 
-static String getRawGitHubFileLocation(def fileLocation) {
-  return JobCreatorProperties.JOB_CONFIG_REPO_RAW_URL + fileLocation
+String getRawGitHubFileLocation(def fileLocation) {
+  return "${JobCreatorProperties.JOB_CONFIG_REPO_RAW_URL_PREFIX}${env.GIT_REPO}/${env.GIT_BRANCH}/${fileLocation}"
 }
 
 /**
