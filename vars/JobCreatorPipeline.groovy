@@ -49,7 +49,6 @@ class JobCreatorProperties {
  * deletes the jenkins job.
  *
  */
-
 def call() {
   PipelineContext.instance.setContext(this)
   def props = Properties.instance
@@ -90,6 +89,12 @@ def call() {
     }
   }
 }
+
+/**
+ * Processes the changed files iteratively.
+ *
+ * @param changedFiles
+ */
 def process(def changedFiles) {
   for (change in changedFiles) {
     try {
@@ -101,6 +106,11 @@ def process(def changedFiles) {
 
 }
 
+/**
+ * Read the jenkins changeSets and find the list of changed files.
+ *
+ * @return a list of @Change instances representing the changed files.
+ */
 @NonCPS
 def getChangedFiles() {
   MAX_MSG_LEN = 150
@@ -135,7 +145,7 @@ def getChangedFiles() {
 }
 
 /**
- * Handle the change to the file based on what the change is.
+ * Handle the change to a given file based on what the change is.
  *
  * @param instruction add/edit/delete are supported
  * @param filePath the relative path to changed file.
@@ -260,6 +270,11 @@ String getRawGitHubFileLocation(def fileLocation) {
   return "${JobCreatorProperties.JOB_CONFIG_REPO_RAW_URL_PREFIX}${env.GIT_REPO}/${env.GIT_BRANCH}/${fileLocation}"
 }
 
+/**
+ * Create intermediate job folders.
+ *
+ * @param filePath the relative path to the modified file
+ */
 def createIntermediateJobFolders(String filePath) {
   def folders = filePath.split("/")
   def parent = Jenkins.instance
@@ -298,7 +313,14 @@ def shelveJenkinsJob(String jobName) {
   }
 }
 
-def synchronizeJenkinsWithGitRepo() {
+/**
+ * Synchronize Jenkins with Git repo to gracefully recover from intermittent issues.
+ *
+ * If a file is there in git repo, but the relevant testgrid job is not found, then
+ * this will add it.
+ *
+ */
+void synchronizeJenkinsWithGitRepo() {
   echo "Synchronizing Jenkins with git repository ${env.GIT_REPO} - ${env.GIT_BRANCH}"
   final yamls = findFiles(glob: '**/*yaml')
   yamls.each { yaml ->
@@ -319,6 +341,12 @@ private void handleException(String msg, Exception e) {
   echo sw
 }
 
+/**
+ * Represents a given file change in a repo.
+ * type is what's the change type: add/edit/delete
+ * file is the relative path to the changed file.
+ *
+ */
 class Change implements Serializable {
   def type
   def file
