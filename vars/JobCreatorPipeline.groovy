@@ -196,9 +196,16 @@ def createJenkinsJob(String jobName, String timerConfig, String file, def jobCon
           "Pipeline()"
   def testgridYamlURL = jobConfigYaml.testgridYamlURL
   if (!testgridYamlURL) {
-    echo "testgridYamlURL element is not found in the job configuration file: $file. Not adding a job."
-    //TODO: notify relevant people
-    return
+    echo "testgridYamlURL element is not found in the job configuration file: $file. Checking whether this is a " +
+            "testgrid.yaml instead."
+    if (jobConfigYaml.infrastructureConfig && jobConfigYaml.scenarioConfigs) {
+      echo "testgrid.yaml content found in the job configuration file. Treating the file as a testgrid.yaml and " +
+              "adding a job."
+    } else {
+      //TODO: notify relevant people
+      echo "[WARN] Invalid job configuration file. Not adding a job."
+      return
+    }
   }
 
   def parent = createIntermediateJobFolders(file)
@@ -216,9 +223,15 @@ def createJenkinsJob(String jobName, String timerConfig, String file, def jobCon
   }
 
   def rawGitHubFileLocation = getRawGitHubFileLocation(file)
-  String properties = """${JobCreatorProperties.JOB_CONFIG_YAML_URL_KEY}="${rawGitHubFileLocation}"
+  String properties;
+  if (testgridYamlURL) {
+    properties = """${JobCreatorProperties.JOB_CONFIG_YAML_URL_KEY}="${rawGitHubFileLocation}"
 ${JobCreatorProperties.TESTGRID_YAML_URL_KEY}="${testgridYamlURL}"
 """
+  } else {
+    properties = """${JobCreatorProperties.TESTGRID_YAML_URL_KEY}="${rawGitHubFileLocation}"
+"""
+  }
   addJobProperty(properties, job)
   job.save()
   if (!isJobExists(jobName)) {
