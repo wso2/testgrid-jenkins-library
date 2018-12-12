@@ -16,12 +16,14 @@
  * under the License.
  */
 
+import hudson.model.AbstractItem
 import hudson.triggers.TimerTrigger
 import jenkins.model.Jenkins
 import org.jenkinsci.plugins.envinject.EnvInjectJobProperty
 import org.jenkinsci.plugins.envinject.EnvInjectJobPropertyInfo
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition
 import org.jenkinsci.plugins.workflow.job.WorkflowJob
+import com.cloudbees.hudson.plugins.folder.Folder
 import org.wso2.tg.jenkins.PipelineContext
 import org.wso2.tg.jenkins.Properties
 import org.wso2.tg.jenkins.alert.Email
@@ -30,9 +32,7 @@ import org.wso2.tg.jenkins.alert.Slack
 @Singleton
 class JobCreatorProperties {
   final static JENKINS_SHARED_LIB_NAME = 'intg_test_template@dev'
-  final static GIT_REPO = 'wso2-incubator/testgrid-job-configs'
-  final static GIT_BRANCH = 'master'
-  final static JOB_CONFIG_REPO_RAW_URL = "https://raw.githubusercontent.com/${GIT_REPO}/${GIT_BRANCH}/"
+  final static JOB_CONFIG_REPO_RAW_URL_PREFIX = "https://raw.githubusercontent.com/"
 
   final static String TESTGRID_YAML_URL_KEY = "TESTGRID_YAML_URL"
   final static String JOB_CONFIG_YAML_URL_KEY = "JOB_CONFIG_YAML_URL"
@@ -48,6 +48,7 @@ class JobCreatorProperties {
  * deletes the jenkins job.
  *
  */
+
 def call() {
   PipelineContext.instance.setContext(this)
   def props = Properties.instance
@@ -62,11 +63,17 @@ def call() {
         label ""
       }
     }
+    environment {
+      GIT_REPO = "${env.GIT_REPO}"
+      GIT_BRANCH = "${env.GIT_BRANCH}"
+    }
+
     stages {
       stage('Create Testgrid Jobs') {
         steps {
           deleteDir()
-          git url: "https://github.com/${JobCreatorProperties.GIT_REPO}", branch: "${JobCreatorProperties.GIT_BRANCH}"
+          git url: "https://github.com/${env.GIT_REPO}", branch: "${env.GIT_BRANCH}"
+
           script {
             try {
               def changedFiles = getChangedFiles()
@@ -137,8 +144,7 @@ def handleChange(String instruction, String filePath) {
     case "edit":
       def exists = fileExists "${filePath}"
       if (!exists) {
-        echo "[ERROR] File not found: " + filePath
-        // TODO handle
+        echo "File not found: " + filePath
         return
       }
 
@@ -160,23 +166,25 @@ def handleChange(String instruction, String filePath) {
 }
 
 /**
- * TODO: handle job names with folders.
+ * Find whether a job exists with the given name.
+ * Supports recursively searching the job folders.
  *
  * @param jobName
- * @return
+ * @return true if and only if a job exists.
  */
 boolean isJobExists(def jobName) {
-  Jenkins.instance.getAllItems(AbstractItem.class).each {
+  boolean isFound = false
+  Jenkins.instance.getAllItems(AbstractItem.class).find {
     if (it.fullName == jobName) {
+      isFound = true
       return true
     }
   }
-  return false
+  return isFound
 }
 
 /**
  * This method is responsible for creating the Jenkins job.
- * TODO: create folders as needed.
  *
  * @param jobName jobName
  * @param timerConfig cron expression to schedule the job
@@ -186,8 +194,17 @@ def createJenkinsJob(String jobName, String timerConfig, String file, def jobCon
   echo "Creating the job ${jobName}.."
   def jobDSL = "@Library('$JobCreatorProperties.JENKINS_SHARED_LIB_NAME') _\n" +
           "Pipeline()"
-  def instance = Jenkins.instance
-  def job = new WorkflowJob(instance, jobName)
+  def testgridYamlURL = jobConfigYaml.testgridYamlURL
+  if (!testgridYamlURL) {
+    echo "testgridYamlURL element is not found in the job configuration file: $file. Not adding a job."
+    //TODO: notify relevant people
+    return
+  }
+
+  def parent = createIntermediateJobFolders(file)
+  def folderAwareJobName = jobName.split("/")
+  folderAwareJobName = folderAwareJobName[folderAwareJobName.length - 1]
+  def job = new WorkflowJob(parent, folderAwareJobName)
   def flowDefinition = new CpsFlowDefinition(jobDSL, true)
   job.definition = flowDefinition
   job.concurrentBuild = false
@@ -197,12 +214,6 @@ def createJenkinsJob(String jobName, String timerConfig, String file, def jobCon
     newCron.start(job, true)
     job.addTrigger(newCron)
   }
-  def testgridYamlURL = jobConfigYaml.testgridYamlURL
-  if (!testgridYamlURL) {
-    echo "testgridYamlURL element is not found in the job configuration file: $file. Not adding a job."
-    //TODO: notify relevant people
-    return
-  }
 
   def rawGitHubFileLocation = getRawGitHubFileLocation(file)
   String properties = """${JobCreatorProperties.JOB_CONFIG_YAML_URL_KEY}="${rawGitHubFileLocation}"
@@ -210,6 +221,9 @@ ${JobCreatorProperties.TESTGRID_YAML_URL_KEY}="${testgridYamlURL}"
 """
   addJobProperty(properties, job)
   job.save()
+  if (!isJobExists(jobName)) {
+    parent.add(job, folderAwareJobName)
+  }
   echo "Created the job ${jobName} successfully."
   Jenkins.instance.reload()
 
@@ -226,8 +240,23 @@ private static void addJobProperty(String properties, WorkflowJob job) {
   job.addProperty(prop)
 }
 
-static String getRawGitHubFileLocation(def fileLocation) {
-  return JobCreatorProperties.JOB_CONFIG_REPO_RAW_URL + fileLocation
+String getRawGitHubFileLocation(def fileLocation) {
+  return "${JobCreatorProperties.JOB_CONFIG_REPO_RAW_URL_PREFIX}${env.GIT_REPO}/${env.GIT_BRANCH}/${fileLocation}"
+}
+
+def createIntermediateJobFolders(String filePath) {
+  def folders = filePath.split("/")
+  def parent = Jenkins.instance
+  folders.eachWithIndex { item, index ->
+    if (index != folders.length - 1) {
+      echo "Create job folder ${item}"
+      Folder folder = new Folder(parent, item)
+      folder.save()
+      parent = folder
+    }
+  }
+
+  return parent
 }
 
 /**
