@@ -29,6 +29,7 @@ import org.wso2.tg.jenkins.util.Common
 import org.wso2.tg.jenkins.util.RuntimeUtils
 import org.wso2.tg.jenkins.util.WorkSpaceUtils
 import org.wso2.tg.jenkins.util.ConfigUtils
+import org.wso2.tg.jenkins.util.JenkinsUtils
 
 
 // The pipeline should reside in a call block
