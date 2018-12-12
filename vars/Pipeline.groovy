@@ -204,7 +204,7 @@ def call() {
                     // Escalation
                     echo "Generating escalation mail"
                     def ju = new JenkinsUtils()
-                    echo "${ju.getJobByName(props.PRODUCT)}";
+                    echo "${ju.checkEscalation(props.PRODUCT)}"
 
                 }
             }
