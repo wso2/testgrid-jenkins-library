@@ -202,7 +202,8 @@ def call() {
 
                     // Escalation
                     echo "Generating escalation mail"
-                    echo "${getJobByName("Phase-1")}";
+                    def ju = new JenkinsUtils()
+                    echo "${ju.getJobByName(props.PRODUCT)}";
 
                 }
             }
@@ -210,15 +211,3 @@ def call() {
     }
 }
 
-/**
- * Get Jenkins job object
- * @param jobName job name
- * @return job object that matches jobName
- */
-def getJobByName(jobName){
-    for(item in Hudson.instance.items) {
-        if(item.name == jobName){
-            return item
-        }
-    }
-}
