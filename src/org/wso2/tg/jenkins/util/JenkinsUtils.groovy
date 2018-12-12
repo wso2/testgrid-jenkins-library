@@ -22,7 +22,7 @@ import hudson.model.Hudson
 // The current job name
 def checkEscalation(jobName) {
     def job = getJobByName(jobName)
-    echo "${job.getBuildStatusUrl()}"
+    echo "${job.getLastFailedBuild()}"
     getJobByName(jobName).builds.findAll{build ->
         echo "${build}"
     }
