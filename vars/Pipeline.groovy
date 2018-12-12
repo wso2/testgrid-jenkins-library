@@ -199,21 +199,26 @@ def call() {
                         alert.sendNotification(currentBuild.result, "completed", "#build_status")
                         alert.sendNotification(currentBuild.result, "completed", "#build_status_verbose")
                     }
+
+                    // Escalation
+                    echo "Generating escalation mail"
+                    echo "${getJobByName("Phase-1")}";
+
                 }
             }
         }
+    }
+}
 
-        post {
-            always {
-                script {
-                    try {
-
-                    } catch (e) {
-                        currentBuild.result = "FAILED"
-                    } finally {
-                    }
-                }
-            }
+/**
+ * Get Jenkins job object
+ * @param jobName job name
+ * @return job object that matches jobName
+ */
+def getJobByName(jobName){
+    for(item in Hudson.instance.items) {
+        if(item.name == jobName){
+            return item
         }
     }
 }
