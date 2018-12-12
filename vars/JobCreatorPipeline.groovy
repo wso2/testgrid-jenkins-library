@@ -254,7 +254,7 @@ ${JobCreatorProperties.TESTGRID_YAML_URL_KEY}="${testgridYamlURL}"
   Jenkins.instance.reload()
 
   //trigger the initial job
-  build job: "${jobName}", quietPeriod: 10, wait: false
+//  build job: "${jobName}", quietPeriod: 10, wait: false
 }
 
 private static void addJobProperty(String properties, WorkflowJob job) {
