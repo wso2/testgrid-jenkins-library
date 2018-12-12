@@ -17,6 +17,7 @@
  */
 
 import hudson.model.AbstractItem
+import hudson.model.Item
 import hudson.triggers.TimerTrigger
 import jenkins.model.Jenkins
 import org.jenkinsci.plugins.envinject.EnvInjectJobProperty
@@ -78,6 +79,8 @@ def call() {
             try {
               def changedFiles = getChangedFiles()
               process(changedFiles)
+
+              synchronizeJenkinsWithGitRepo()
             } catch (e) {
               handleException(e.getMessage(), e)
             }
@@ -292,6 +295,19 @@ def shelveJenkinsJob(String jobName) {
 
   if (!deleted) {
     echo "[ERROR] Could not delete job. A job does not exist with the given name: ${jobName}."
+  }
+}
+
+def synchronizeJenkinsWithGitRepo() {
+  echo "Synchronizing Jenkins with git repository ${env.GIT_REPO} - ${env.GIT_BRANCH}"
+  final yamls = findFiles(glob: '**/*yaml')
+  yamls.each { yaml ->
+    echo "Found file ${yaml.path}"
+    def job = Jenkins.instance.getItemByFullName(yaml.path)
+    if (!job) {
+      echo "Testgrid job missing for the file: ${yaml.path}. Creating one."
+      handleChange("add", yaml.path)
+    }
   }
 }
 
