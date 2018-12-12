@@ -18,6 +18,7 @@
 
 import hudson.model.AbstractItem
 import hudson.model.Item
+import hudson.model.TopLevelItem
 import hudson.triggers.TimerTrigger
 import jenkins.model.Jenkins
 import org.jenkinsci.plugins.envinject.EnvInjectJobProperty
@@ -80,6 +81,7 @@ def call() {
               process(changedFiles)
 
               synchronizeJenkinsWithGitRepo()
+              Jenkins.instance.reload()
             } catch (e) {
               handleException(e.getMessage(), e)
             }
@@ -297,14 +299,14 @@ def createIntermediateJobFolders(String filePath) {
  * @return
  */
 def shelveJenkinsJob(String jobName) {
-  boolean deleted = false;
-  Jenkins.instance.items.each { item ->
-    if (item.class.canonicalName != 'com.cloudbees.hudson.plugins.folder.Folder') {
-      if (jobName.contains(item.fullName)) {
-        echo "Deleting job: $item.fullName"
-        item.delete()
-        deleted = true
-      }
+  boolean deleted = false
+  Jenkins.instance.getAllItems(TopLevelItem.class).find {
+    if (it.fullName == jobName) {
+      echo "Deleting job: $it.fullName"
+      it.getParent().remove(it)
+      it.delete()
+      deleted = true
+      return true
     }
   }
 
