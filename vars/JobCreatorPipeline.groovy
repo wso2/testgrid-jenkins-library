@@ -302,7 +302,6 @@ def synchronizeJenkinsWithGitRepo() {
   echo "Synchronizing Jenkins with git repository ${env.GIT_REPO} - ${env.GIT_BRANCH}"
   final yamls = findFiles(glob: '**/*yaml')
   yamls.each { yaml ->
-    echo "Found file ${yaml.path}"
     def job = Jenkins.instance.getItemByFullName(yaml.path)
     if (!job) {
       echo "Testgrid job missing for the file: ${yaml.path}. Creating one."
