@@ -202,5 +202,18 @@ def call() {
                 }
             }
         }
+
+        post {
+            always {
+                script {
+                    try {
+
+                    } catch (e) {
+                        currentBuild.result = "FAILED"
+                    } finally {
+                    }
+                }
+            }
+        }
     }
 }
