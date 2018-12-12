@@ -19,6 +19,13 @@ package org.wso2.tg.jenkins.util
 
 import hudson.model.Hudson
 
+// The current job name
+def checkEscalation(jobName) {
+    job.builds.findAll{build ->
+        echo "${build}"
+    }
+}
+
 /**
  * Get Jenkins job object
  * @param jobName job name
