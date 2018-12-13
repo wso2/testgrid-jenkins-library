@@ -164,7 +164,7 @@ def handleChange(String instruction, String filePath) {
       }
 
       def jobConfigYaml = readYaml file: filePath
-      String jobName = filePath.replace("-testgrid.yaml", "").replaceAll(".yaml", "")
+      String jobName = filePath.replaceAll("-testgrid.yaml", "").replaceAll(".yaml", "")
       if ("add" == instruction && isJobExists(jobName)) {
         echo "Found an existing job with the name: " + jobName + ". Will update that instead."
       }
