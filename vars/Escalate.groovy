@@ -71,7 +71,13 @@ def call() {
                         executor.generateEscalationEmail(props.WORKSPACE, excludeList)
                         awsUtil.uploadCharts()
 
-                        // We need to get a list of Jobs that are configured
+                        if (fileExists("${props.WORKSPACE}/EscalationMail.html")) {
+                            def emailBody = readFile "${props.WORKSPACE}/EscalationMail.html"
+                            email.send("Build Failure Escalation! #(${env.BUILD_NUMBER})",
+                                    "${emailBody}")
+                        } else {
+                            log.warn("No EscalationMail.html file found!!")
+                        }
                     }
                 }
             }
