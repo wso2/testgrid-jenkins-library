@@ -69,9 +69,8 @@ def call() {
                         deleteDir()
                         def excludeList = ""
                         executor.generateEscalationEmail(props.WORKSPACE, excludeList)
-                        awsUtil.uploadCharts()
-
                         if (fileExists("${props.WORKSPACE}/EscalationMail.html")) {
+                            awsUtil.uploadCharts()
                             def emailBody = readFile "${props.WORKSPACE}/EscalationMail.html"
                             email.send("Build Failure Escalation! #(${env.BUILD_NUMBER})",
                                     "${emailBody}")
