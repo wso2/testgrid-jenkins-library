@@ -42,9 +42,8 @@ def runPlan(tPlan, testPlanId) {
 
     def execName = commonUtil.extractInfraCombination("${testPlanId}")
     def paralleId = getParalleId(execName)
-    def buildURL = "${env.BUILD_URL}"
-    def url = generateBluoceanLink("${buildURL}","${paralleId}")
-    echo "URL : " + "${url}"
+    def url = generateBluoceanLink("${paralleId}")
+    echo "Blueocean link URL : " + "${url}"
 
     scenarioConfigs = readRepositoryUrlsfromYaml("${props.WORKSPACE}/${tPlan}")
     log.info("Preparing workspace for testplan : " + testPlanId)
@@ -199,6 +198,10 @@ def getParalleId(name){
             }
         }
     }
+    /*
+    Its required to make these values null to inform Jenkins that these objects should not be serialized
+    during execution. @NonCPS annotation does not seem to work in this instance.
+     */
     build = null
     actions = null
     parallelname = null
@@ -276,16 +279,10 @@ static def getRepositoryBranch(def branch) {
  * Builds the bluocean console link for a given test plan
  *
  * @param buildURL Jenkins classic build URL
- * @param parallelId Parallel id of the test plan
  * @return Blueocean link
  */
-def generateBluoceanLink(def buildURL , def parallelId){
-    def split = buildURL.split('/')
-    def url = null
-    if (split.length > 0 ){
-        url = split[0] + "//" + split[2] + "/admin/blue/organizations/jenkins/" + split[5] +
-                "/detail/" + split[5] + "/" + split[6] + "/pipeline/" + "${parallelId}"
-    }
+def generateBluoceanLink(def parallelId){
+    def url = "${env.JENKINS_URL}" + "blue/organizations/jenkins/" + "${env.JOB_NAME}" +
+                "/detail/" + "${env.JOB_NAME}" + "/" + "${env.BUILD_ID}" + "/pipeline/" + "${parallelId}"
     return url
-
 }

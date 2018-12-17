@@ -46,6 +46,7 @@ def generateTesPlans(def product, def configYaml) {
  * @param product the product to be parsed
  * @param testPlanFilePath test plan location
  * @param workspace execution workspace
+ * @param url Jenkins build url for the test plan
  */
 def runTesPlans(def product, def testPlanFilePath, def workspace, def url) {
     def props = Properties.instance

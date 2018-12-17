@@ -19,7 +19,6 @@
 package org.wso2.tg.jenkins.util
 
 import org.wso2.tg.jenkins.Properties
-import org.wso2.tg.jenkins.Logger
 
 
 def getTimestamp(Date date = new Date()) {
