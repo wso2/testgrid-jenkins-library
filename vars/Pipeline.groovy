@@ -84,9 +84,13 @@ def call() {
                             // Get testgrid.yaml from jenkins managed files
                             if (props.TESTGRID_YAML_URL != null) {
                                 log.info("testgrid.yaml is retrieved from ${props.TESTGRID_YAML_URL}")
-                                sh """
-                                    curl -k -o ${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION} ${props.TESTGRID_YAML_URL}
-                                """
+                                withCredentials([string(credentialsId: "GIT_WUM_USERNAME", variable: 'user'),
+                                                 string(credentialsId: "GIT_WUM_PASSWORD", variable: 'user')]) {
+                                    sh """
+                                    curl -k -o --user $user:$pass ${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION} 
+${props.TESTGRID_YAML_URL}
+                                    """
+                                }
                             } else {
                                 sh """
                                 git clone ${props.TESTGRID_JOB_CONFIG_REPOSITORY}
