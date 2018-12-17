@@ -105,6 +105,7 @@ def generateEscalationEmail(def workspace, def excludeProduct) {
        export DISPLAY=:95.0
        export TESTGRID_HOME="${props.TESTGRID_HOME}"
        cd ${props.TESTGRID_DIST_LOCATION}/${props.TESTGRID_NAME}
+        export JAVA_OPTS="-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"
        ./testgrid generate-escalation-email \
             --exclude-products ${excludeProduct} \
                 --workspace ${workspace}
