@@ -91,9 +91,10 @@ def call() {
  */
 def uploadCharts() {
     def props = Properties.instance
+    def awsUtil = new AWSUtils()
     sh """
       aws s3 sync ${props.TESTGRID_HOME}/jobs/${props.PRODUCT}/ \
-        ${getS3WorkspaceURL()}/charts/escalations/ \
+        ${awsUtil.getS3WorkspaceURL()}/charts/escalations/ \
         --exclude "*" \
         --include "*.png" \
         --exclude 'workspace/*' \
