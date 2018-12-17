@@ -49,7 +49,6 @@ def call() {
 
     def log = new Logger()
     def executor = new TestGridExecutor()
-    def awsUtil = new AWSUtils()
     def email = new Email()
 
     pipeline {
@@ -73,7 +72,7 @@ def call() {
                         executor.generateEscalationEmail(props.WORKSPACE, excludeList)
                         log.info("Email generation completed")
                         if (fileExists("${props.WORKSPACE}/EscalationMail.html")) {
-                            awsUtil.uploadCharts()
+                            uploadCharts()
                             def emailBody = readFile "${props.WORKSPACE}/EscalationMail.html"
                             email.send("Build Failure Escalation! #(${env.BUILD_NUMBER})",
                                     "${emailBody}")
@@ -85,4 +84,20 @@ def call() {
             }
         }
     }
+}
+
+/**
+ * Uploads the generated images
+ */
+def uploadCharts() {
+    def props = Properties.instance
+    sh """
+      aws s3 sync ${props.TESTGRID_HOME}/jobs/${props.PRODUCT}/ \
+        ${getS3WorkspaceURL()}/charts/escalations/ \
+        --exclude "*" \
+        --include "*.png" \
+        --exclude 'workspace/*' \
+        --acl public-read \
+        --only-show-errors
+      """
 }
