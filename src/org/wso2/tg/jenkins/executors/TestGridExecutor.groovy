@@ -106,7 +106,7 @@ def generateEscalationEmail(def workspace, def excludeProduct) {
        export TESTGRID_HOME="${props.TESTGRID_HOME}"
        cd ${props.TESTGRID_DIST_LOCATION}/${props.TESTGRID_NAME}
        ./testgrid generate-escalation-email \
-            ----exclude-products ${excludeProduct} \
+            --exclude-products ${excludeProduct} \
                 --workspace ${workspace}
     """
 }
