@@ -85,7 +85,7 @@ def call() {
                             if (props.TESTGRID_YAML_URL != null) {
                                 log.info("testgrid.yaml is retrieved from ${props.TESTGRID_YAML_URL}")
                                 withCredentials([string(credentialsId: "GIT_WUM_USERNAME", variable: 'user'),
-                                                 string(credentialsId: "GIT_WUM_PASSWORD", variable: 'user')]) {
+                                                 string(credentialsId: "GIT_WUM_PASSWORD", variable: 'pass')]) {
                                     sh """
                                     curl -k -o --user $user:$pass ${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION} 
 ${props.TESTGRID_YAML_URL}
