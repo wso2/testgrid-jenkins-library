@@ -172,7 +172,7 @@ def handleChange(String instruction, String filePath) {
       createJenkinsJob(jobName, "", filePath, jobConfigYaml)
       break
     case "delete":
-      def jobName = filePath;
+      def jobName = filePath.replaceAll("-testgrid.yaml", "").replaceAll(".yaml", "")
       shelveJenkinsJob(jobName)
       break
     default:
@@ -256,7 +256,7 @@ ${JobCreatorProperties.TESTGRID_YAML_URL_KEY}="${testgridYamlURL}"
   Jenkins.instance.reload()
 
   //trigger the initial job
-//  build job: "${jobName}", quietPeriod: 10, wait: false
+  build job: "${jobName}", quietPeriod: 10, wait: false
 }
 
 private static void addJobProperty(String properties, WorkflowJob job) {
