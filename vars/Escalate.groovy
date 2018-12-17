@@ -35,6 +35,7 @@
 import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.PipelineContext
 import org.wso2.tg.jenkins.Properties
+import org.wso2.tg.jenkins.alert.Email
 import org.wso2.tg.jenkins.executors.TestGridExecutor
 import org.wso2.tg.jenkins.util.AWSUtils
 
@@ -49,6 +50,7 @@ def call() {
     def log = new Logger()
     def executor = new TestGridExecutor()
     def awsUtil = new AWSUtils()
+    def email = new Email()
 
     pipeline {
         agent {
