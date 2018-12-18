@@ -74,6 +74,7 @@ def call() {
             stage('Preparation') {
                 steps {
                     script {
+                        currentBuild.result = "SUCCESS"
                         try {
                             alert.sendNotification('STARTED', "Initiation", "#build_status_verbose")
                             alert.sendNotification('STARTED', "Initiation", "#build_status")
@@ -191,7 +192,7 @@ def call() {
                             def emailBody = readFile "${props.WORKSPACE}/SummarizedEmailReport.html"
                             def environment = configUtil.getPropertyFromTestgridConfig("TESTGRID_ENVIRONMENT").toUpperCase()
                             email.send(
-                                    "[${environment}] '${props.PRODUCT}' Test Results!" + " #(${env.BUILD_NUMBER})",
+                                    "[${environment}][${currentBuild.result}] '${props.PRODUCT}' Test Results!" + " #(${env.BUILD_NUMBER})",
                                     "${emailBody}")
                         } else {
                             log.warn("No SummarizedEmailReport.html file found!!")
