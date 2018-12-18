@@ -16,7 +16,6 @@
  * under the License.
  */
 
-
 import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.PipelineContext
 import org.wso2.tg.jenkins.alert.Slack
@@ -29,8 +28,6 @@ import org.wso2.tg.jenkins.util.Common
 import org.wso2.tg.jenkins.util.RuntimeUtils
 import org.wso2.tg.jenkins.util.WorkSpaceUtils
 import org.wso2.tg.jenkins.util.ConfigUtils
-import org.wso2.tg.jenkins.util.JenkinsUtils
-
 
 // The pipeline should reside in a call block
 def call() {
@@ -201,14 +198,8 @@ def call() {
                         alert.sendNotification(currentBuild.result, "completed", "#build_status_verbose")
                     }
 
-                    // Escalation
-                    echo "Generating escalation mail"
-                    def ju = new JenkinsUtils()
-                    echo "${ju.checkEscalation(props.PRODUCT)}"
-
                 }
             }
         }
     }
 }
-

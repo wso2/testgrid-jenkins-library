@@ -19,15 +19,6 @@ package org.wso2.tg.jenkins.util
 
 import hudson.model.Hudson
 
-// The current job name
-def checkEscalation(jobName) {
-    def job = getJobByName(jobName)
-    echo "${job.getLastFailedBuild()}"
-    getJobByName(jobName).builds.findAll{build ->
-        echo "${build}"
-    }
-}
-
 /**
  * Get Jenkins job object
  * @param jobName job name
