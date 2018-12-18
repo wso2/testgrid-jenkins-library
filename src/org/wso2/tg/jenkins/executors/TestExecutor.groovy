@@ -29,6 +29,8 @@ import org.wso2.tg.jenkins.util.Common
 import org.wso2.tg.jenkins.util.FileUtils
 import org.wso2.tg.jenkins.util.RuntimeUtils
 
+import java.nio.charset.StandardCharsets
+
 def runPlan(tPlan, testPlanId) {
     def commonUtil = new Common()
     def notifier = new Slack()
@@ -276,13 +278,18 @@ static def getRepositoryBranch(def branch) {
 }
 
 /**
- * Builds the bluocean console link for a given test plan
+ * Builds the blueocean console link for a given test plan
  *
  * @param buildURL Jenkins classic build URL
  * @return Blueocean link
  */
-def generateBluoceanLink(def parallelId){
-    def url = "${env.JENKINS_URL}" + "blue/organizations/jenkins/" + "${env.JOB_NAME}" +
-                "/detail/" + "${env.JOB_NAME}" + "/" + "${env.BUILD_ID}" + "/pipeline/" + "${parallelId}"
+def generateBluoceanLink(def parallelId) {
+    def completeJobName = "${env.JOB_NAME}"
+    def scapedURL = URLEncoder.encode(completeJobName, StandardCharsets.UTF_8.name())
+    def split = completeJobName.split("/")
+    def jobName = split[split.length-1]
+
+    def url = "${env.JENKINS_URL}" + "blue/organizations/jenkins/" + "${scapedURL}" +
+                "/detail/" + "${jobName}" + "/" + "${env.BUILD_ID}" + "/pipeline/" + "${parallelId}"
     return url
 }
