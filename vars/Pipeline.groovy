@@ -153,7 +153,7 @@ def call() {
                                 stash name: "test-plans", includes: "test-plans/**"
                             }
                         } catch (e) {
-                            currentBuild.result = "FAILED"
+                            currentBuild.result = "FAILURE"
                             echo e.toString()
                         } finally {
                             alert.sendNotification(currentBuild.result, "preparation", "#build_status_verbose")
@@ -171,7 +171,7 @@ def call() {
                             def tests = testExecutor.getTestExecutionMap(props.EXECUTOR_COUNT)
                             parallel tests
                         } catch (e) {
-                            currentBuild.result = "FAILED"
+                            currentBuild.result = "FAILURE"
                             alert.sendNotification(currentBuild.result, "Parallel", "#build_status_verbose")
                         }
                     }
@@ -201,7 +201,7 @@ def call() {
                                     "testgrid.")
                         }
                     } catch (e) {
-                        currentBuild.result = "FAILED"
+                        currentBuild.result = "FAILURE"
                     } finally {
                         alert.sendNotification(currentBuild.result, "completed", "#build_status")
                         alert.sendNotification(currentBuild.result, "completed", "#build_status_verbose")

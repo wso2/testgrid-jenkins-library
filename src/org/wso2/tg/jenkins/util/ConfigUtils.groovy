@@ -227,7 +227,7 @@ private def getPropertyFromTestgridConfig(String propName) {
     def properties = readProperties file: "${props.CONFIG_PROPERTY_FILE_PATH}"
     def prop = properties[propName]
     if ("${prop}" == "null") {
-        bucket = "unknown"
+        prop = "unknown"
     }
     return prop
 }
