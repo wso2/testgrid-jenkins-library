@@ -185,10 +185,13 @@ def call() {
                         tgExecutor.finalizeTestPlans(props.PRODUCT, props.WORKSPACE)
                         tgExecutor.generateEmail(props.PRODUCT, props.WORKSPACE)
                         awsHelper.uploadCharts()
+                        def configUtil = new ConfigUtils()
                         //Send email for failed results.
                         if (fileExists("${props.WORKSPACE}/SummarizedEmailReport.html")) {
                             def emailBody = readFile "${props.WORKSPACE}/SummarizedEmailReport.html"
-                            email.send("'${props.PRODUCT}' Test Results! #(${env.BUILD_NUMBER})",
+                            def environment = configUtil.getPropertyFromTestgridConfig("TESTGRID_ENVIRONMENT").toUpperCase()
+                            email.send(
+                                    "[${environment}] '${props.PRODUCT}' Test Results!" + " #(${env.BUILD_NUMBER})",
                                     "${emailBody}")
                         } else {
                             log.warn("No SummarizedEmailReport.html file found!!")
