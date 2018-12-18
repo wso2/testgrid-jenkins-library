@@ -94,9 +94,9 @@ def generateEmail(def product, def workspace) {
 }
 
 /**
- * Invokes generate email command of testgrid.
+ * Invokes escalation generate command of testgrid.
  *
- * @param product the product to be parsed
+ * @param excludeProduct product names to be excluded
  * @param workspace execution workspace
  */
 def generateEscalationEmail(def workspace, def excludeProduct) {
