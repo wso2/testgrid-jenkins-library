@@ -92,3 +92,21 @@ def generateEmail(def product, def workspace) {
                 --workspace ${workspace}
     """
 }
+
+/**
+ * Invokes escalation generate command of testgrid.
+ *
+ * @param excludeProduct product names to be excluded
+ * @param workspace execution workspace
+ */
+def generateEscalationEmail(def workspace, def excludeProduct) {
+    def props = Properties.instance
+    sh """
+       export DISPLAY=:95.0
+       export TESTGRID_HOME="${props.TESTGRID_HOME}"
+       cd ${props.TESTGRID_DIST_LOCATION}/${props.TESTGRID_NAME}
+       ./testgrid generate-escalation-email \
+            --exclude-products ${excludeProduct} \
+                --workspace ${workspace}
+    """
+}
