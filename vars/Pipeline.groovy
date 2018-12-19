@@ -74,6 +74,7 @@ def call() {
             stage('Preparation') {
                 steps {
                     script {
+                        currentBuild.result = "SUCCESS"
                         try {
                             alert.sendNotification('STARTED', "Initiation", "#build_status_verbose")
                             alert.sendNotification('STARTED', "Initiation", "#build_status")
@@ -152,7 +153,7 @@ def call() {
                                 stash name: "test-plans", includes: "test-plans/**"
                             }
                         } catch (e) {
-                            currentBuild.result = "FAILED"
+                            currentBuild.result = "FAILURE"
                             echo e.toString()
                         } finally {
                             alert.sendNotification(currentBuild.result, "preparation", "#build_status_verbose")
@@ -170,7 +171,7 @@ def call() {
                             def tests = testExecutor.getTestExecutionMap(props.EXECUTOR_COUNT)
                             parallel tests
                         } catch (e) {
-                            currentBuild.result = "FAILED"
+                            currentBuild.result = "FAILURE"
                             alert.sendNotification(currentBuild.result, "Parallel", "#build_status_verbose")
                         }
                     }
@@ -185,10 +186,13 @@ def call() {
                         tgExecutor.finalizeTestPlans(props.PRODUCT, props.WORKSPACE)
                         tgExecutor.generateEmail(props.PRODUCT, props.WORKSPACE)
                         awsHelper.uploadCharts()
+                        def configUtil = new ConfigUtils()
                         //Send email for failed results.
                         if (fileExists("${props.WORKSPACE}/SummarizedEmailReport.html")) {
                             def emailBody = readFile "${props.WORKSPACE}/SummarizedEmailReport.html"
-                            email.send("'${props.PRODUCT}' Test Results! #(${env.BUILD_NUMBER})",
+                            def environment = configUtil.getPropertyFromTestgridConfig("TESTGRID_ENVIRONMENT").toUpperCase()
+                            email.send(
+                                    "[${environment}][${currentBuild.result}] '${props.PRODUCT}' Test Results!" + " #(${env.BUILD_NUMBER})",
                                     "${emailBody}")
                         } else {
                             log.warn("No SummarizedEmailReport.html file found!!")
@@ -197,7 +201,7 @@ def call() {
                                     "testgrid.")
                         }
                     } catch (e) {
-                        currentBuild.result = "FAILED"
+                        currentBuild.result = "FAILURE"
                     } finally {
                         alert.sendNotification(currentBuild.result, "completed", "#build_status")
                         alert.sendNotification(currentBuild.result, "completed", "#build_status_verbose")

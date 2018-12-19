@@ -18,6 +18,8 @@
 
 package org.wso2.tg.jenkins.util
 
+import org.wso2.tg.jenkins.Properties
+
 /**
  * Populates the TestGrid yaml input parameters in infra,deployment,scenario sections
  * according to the config properties file definitions
@@ -213,4 +215,19 @@ def resolveCredentials(value){
     }else{
         return value
     }
+}
+
+/**
+ * Reads the config.properties file and return the value.
+ * @param propName
+ * @return property value
+ */
+private def getPropertyFromTestgridConfig(String propName) {
+    def props = Properties.instance
+    def properties = readProperties file: "${props.CONFIG_PROPERTY_FILE_PATH}"
+    def prop = properties[propName]
+    if ("${prop}" == "null") {
+        prop = "unknown"
+    }
+    return prop
 }
