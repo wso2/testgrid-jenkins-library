@@ -180,7 +180,7 @@ def handleChange(String instruction, String filePath) {
   }
 }
 
-def getJobNameFromFilePath(String filePath) {
+static String getJobNameFromFilePath(String filePath) {
   filePath.replaceAll("-testgrid.yaml", "").replaceAll(".yaml", "")
 }
 
@@ -330,7 +330,7 @@ void synchronizeJenkinsWithGitRepo() {
   echo "Synchronizing Jenkins with git repository ${env.GIT_REPO} - ${env.GIT_BRANCH}"
   final yamls = findFiles(glob: '**/*yaml')
   yamls.each { yaml ->
-    def jobName = getJobNameFromFilePath(yaml)
+    def jobName = getJobNameFromFilePath(yaml.getPath())
     def job = Jenkins.instance.getItemByFullName(jobName)
     if (!job) {
       echo "Testgrid job missing for the file: ${yaml.path}. Creating one."
