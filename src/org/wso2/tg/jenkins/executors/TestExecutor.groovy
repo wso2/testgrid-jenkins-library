@@ -64,7 +64,7 @@ def runPlan(tPlan, testPlanId) {
     try {
         tgExecutor.runTesPlans(props.PRODUCT,
                 "${props.WORKSPACE}/${tPlan}", "${props.WORKSPACE}/${testPlanId}","${url}")
-        commonUtil.truncateTestRunLog(testPlanId)
+        //commonUtil.truncateTestRunLog(testPlanId)
         echo "run test plan"
     } catch (Exception err) {
         log.error("Error : ${err}")
