@@ -46,8 +46,9 @@ def generateTesPlans(def product, def configYaml) {
  * @param product the product to be parsed
  * @param testPlanFilePath test plan location
  * @param workspace execution workspace
+ * @param url Jenkins build url for the test plan
  */
-def runTesPlans(def product, def testPlanFilePath, def workspace) {
+def runTesPlans(def product, def testPlanFilePath, def workspace, def url) {
     def props = Properties.instance
     def log = new Logger()
     log.info("Running Test-Plan: " + testPlanFilePath + " of product " + product + " in the workspace " + workspace)
@@ -55,7 +56,7 @@ def runTesPlans(def product, def testPlanFilePath, def workspace) {
         cd ${props.TESTGRID_DIST_LOCATION}/${props.TESTGRID_NAME}
         export TESTGRID_HOME="${props.TESTGRID_HOME}"
         ./testgrid run-testplan --product ${product} \
-            --file ${testPlanFilePath} --workspace ${workspace}        
+            --file ${testPlanFilePath} --workspace ${workspace} --url ${url}       
     """
 }
 
