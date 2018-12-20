@@ -180,7 +180,7 @@ def handleChange(String instruction, String filePath) {
   }
 }
 
-private static getJobNameFromFilePath(String filePath) {
+def getJobNameFromFilePath(String filePath) {
   filePath.replaceAll("-testgrid.yaml", "").replaceAll(".yaml", "")
 }
 
