@@ -164,7 +164,7 @@ def handleChange(String instruction, String filePath) {
       }
 
       def jobConfigYaml = readYaml file: filePath
-      String jobName = filePath.replaceAll("-testgrid.yaml", "").replaceAll(".yaml", "")
+      String jobName = getJobNameFromFilePath(filePath)
       if ("add" == instruction && isJobExists(jobName)) {
         echo "Found an existing job with the name: " + jobName + ". Will update that instead."
       }
@@ -172,12 +172,16 @@ def handleChange(String instruction, String filePath) {
       createJenkinsJob(jobName, "", filePath, jobConfigYaml)
       break
     case "delete":
-      def jobName = filePath.replaceAll("-testgrid.yaml", "").replaceAll(".yaml", "")
+      def jobName = getJobNameFromFilePath(filePath)
       shelveJenkinsJob(jobName)
       break
     default:
       echo "Instruction not supported: $instruction. file: $filePath"
   }
+}
+
+private static getJobNameFromFilePath(String filePath) {
+  filePath.replaceAll("-testgrid.yaml", "").replaceAll(".yaml", "")
 }
 
 /**
@@ -326,7 +330,8 @@ void synchronizeJenkinsWithGitRepo() {
   echo "Synchronizing Jenkins with git repository ${env.GIT_REPO} - ${env.GIT_BRANCH}"
   final yamls = findFiles(glob: '**/*yaml')
   yamls.each { yaml ->
-    def job = Jenkins.instance.getItemByFullName(yaml.path)
+    def jobName = getJobNameFromFilePath(yaml)
+    def job = Jenkins.instance.getItemByFullName(jobName)
     if (!job) {
       echo "Testgrid job missing for the file: ${yaml.path}. Creating one."
       handleChange("add", yaml.path)
