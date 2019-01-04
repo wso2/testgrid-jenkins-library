@@ -133,6 +133,10 @@ def call() {
                                     [configFile(fileId: "common-configs", targetLocation:
                                             "${props.WORKSPACE}/common-configs.properties")]) {
                             }
+                            configFileProvider(
+                                    [configFile(fileId: "uat-nexus-settings", targetLocation:
+                                            "${props.WORKSPACE}/uat-nexus-settings.xml")]) {
+                            }
 
                             def commonConfigs = readProperties file:"${props.WORKSPACE}/common-configs.properties"
                             tgYamlContent = config.addCommonConfigsToTestGridYaml(tgYamlContent,commonConfigs)
