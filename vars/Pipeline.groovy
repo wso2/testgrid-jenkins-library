@@ -133,6 +133,8 @@ def call() {
                                     [configFile(fileId: "common-configs", targetLocation:
                                             "${props.WORKSPACE}/common-configs.properties")]) {
                             }
+                            // Providing nexus settings xml as a config file provider through Jenkins. 
+                            // This is using only in WUM Test mode.
                             configFileProvider(
                                     [configFile(fileId: "uat-nexus-settings", targetLocation:
                                             "${props.WORKSPACE}/uat-nexus-settings.xml")]) {
