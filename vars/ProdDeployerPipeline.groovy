@@ -1,6 +1,9 @@
-import groovy.json.*
-import java.text.SimpleDateFormat
+import groovy.json.JsonSlurper
 
+/**
+ * CI/CD pipeline to push the testgrid latest changes into testgrid dev and prod.
+ * Note: this pipeline cannot be run inside groovy sandbox because of err.getCauses()[0] call.
+ */
 node('COMPONENT_ECS') {
     def MYSQL_DRIVER_LOCATION='http://central.maven.org/maven2/mysql/mysql-connector-java/6.0.6/mysql-connector-java-6.0.6.jar'
     stage('Deploy to Dev'){
@@ -20,7 +23,7 @@ node('COMPONENT_ECS') {
                     mv WSO2-TestGrid-unzipped/WSO2-TestGrid WSO2-TestGrid;
                     ls
                 """
-           }
+        }
     }
     def test_result = "FAIL"
     stage ('Test Dev Deployment'){
@@ -33,34 +36,34 @@ node('COMPONENT_ECS') {
             def json = new JsonSlurper().parseText(response)
             jobResult = json.result
         } // end while        
-         println("Phase1 test job completed with status: " + jobResult)
-         test_result = jobResult;
+        println("Phase1 test job completed with status: " + jobResult)
+        test_result = jobResult;
     }
     stage('Deploy to Prod'){
         if(test_result == "SUCCESS") {
             def userInput
             mail (
-                to: "${TEAM_MEMBERS},builder@wso2.org",
-                subject: "Job '${env.JOB_NAME}' (${env.BUILD_NUMBER}) is waiting for input",
-                body: "Hi folks,\nLatest TG distribution is deployed to TestGrid-DEV." +
-                    "\n Please check and verify if the existing slaves received the latest pack." +
-                    "\nPlease do a round of tests and visit ${env.BUILD_URL} to approve/decline deploying to TestGrid-PROD." +
-                    "\nYou have 1 hour left!\n\nThanks!");
+                    to: "${TEAM_MEMBERS},builder@wso2.org",
+                    subject: "Interrupt Testgrid (${env.BUILD_NUMBER}) production deployment?",
+                    body: "Hi folks,\nLatest TG distribution is deployed to TestGrid-DEV." +
+                            "\nPlease do a round of tests, and if unsuccessful, visit ${env.BUILD_URL}/input to ABORT prod deployment." +
+                            "\n Note: verify if the existing slaves received the latest pack." +
+                            "\nYou have 4 hours left!\n\nThanks!");
             try {
-                timeout(time: 1, unit: 'HOURS') {
+                timeout(time: 4, unit: 'HOURS') {
                     userInput = input (
                             message: 'Deploy to Prod environment?', parameters: [
                             [$class: 'BooleanParameterDefinition', defaultValue: true, description: '', name: 'Please confirm you agree with this.']
                     ])
                 }
             } catch(err) { // input false
-                userInput = false
                 def user = err.getCauses()[0].getUser()
-                echo ${user.toString}
                 if('SYSTEM' == user.toString()) { // SYSTEM means timeout.
-                    echo "Aborted due to time-out."
+                    echo "Waiting timeout exceeded. Going forward with PROD deployment."
+                    userInput = true
                 } else {
                     echo "Aborted by: [${user}]"
+                    userInput = false
                 }
             }
             if (userInput == true) {
@@ -83,10 +86,9 @@ node('COMPONENT_ECS') {
                 echo "Not proceeding with prod deployment."
             }
         } else {
-            echo 'Tests have failed. Please fix the tests in order for prod deployment'
+            echo 'Tests have failed. Please fix the tests in order to do the prod deployment.'
         }
-        
+
     }
 
 }
-
