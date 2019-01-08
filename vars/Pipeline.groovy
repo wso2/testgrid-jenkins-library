@@ -134,6 +134,12 @@ def call() {
                                             "${props.WORKSPACE}/common-configs.properties")]) {
                             }
 
+                            sh """
+                                echo path:::
+                                pwd
+                            
+                            """
+
                             if ("${props.TEST_MODE}" == 'WUM') {
                                 // Providing nexus settings xml as a config file provider through Jenkins. 
                                 // This is using only in WUM Test mode.
