@@ -159,6 +159,7 @@ def createJenkinsJob(def jobName, def timerConfig, def file) {
 String gennerateJobName() {
     def props = LocalProperties.instance
     def jobName = props.GIT_REPOSITORY + "-" + props.GIT_BRANCH
+    echo "${jobName}"
     return jobName
 }
 
@@ -248,9 +249,13 @@ class LocalProperties {
         GIT_SSH_URL = getJobProperty("sshUrl")
         GIT_BRANCH = getJobProperty("branch")
         TG_ENV = getJobProperty("TG_ENV")
+
+        log.info("GIT_SSH_URL: ${GIT_SSH_URL}")
+        log.info("GIT_BRANCH: ${GIT_BRANCH}")
     }
 
     private def getJobProperty(def property, boolean isMandatory = true) {
+
         def ctx = PipelineContext.getContext()
         def propertyMap = ctx.currentBuild.getRawBuild().getEnvironment()
         def prop = propertyMap.get(property)
@@ -261,4 +266,6 @@ class LocalProperties {
         ctx.echo "Property : " + property + " value is set as " + prop
         return prop
     }
+
+
 }
