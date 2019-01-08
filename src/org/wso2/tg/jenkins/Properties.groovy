@@ -72,7 +72,6 @@ class Properties {
 
     static def EMAIL_TO_LIST
     
-    static def JOB_NAME
 
     /**
      * Initializing the properties
@@ -104,8 +103,6 @@ class Properties {
         DEPLOYMENT_REPOSITORY_URL = getJobProperty("DEPLOYMENT_REPOSITORY", false)
         EMAIL_TO_LIST = getJobProperty("EMAIL_TO_LIST", false)
         TESTGRID_YAML_URL = getJobProperty("TESTGRID_YAML_URL", false)
-        
-        JOB_NAME = gennerateJobName()
     }
 
     /**
@@ -173,3 +170,4 @@ class Properties {
         return jobName
     }
 }
+

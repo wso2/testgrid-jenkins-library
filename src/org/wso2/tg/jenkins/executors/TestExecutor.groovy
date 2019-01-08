@@ -147,6 +147,22 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
         ls ${props.WORKSPACE}/${testPlanId}/
     """
 
+
+    if ("${props.TEST_MODE}" == 'WUM') {
+        for (repo in scenarioConfigs) {
+
+            echo "dir --------->>>>>>>>>>>>   =========>>>>>    : ${repo.get("dir")}"
+            echo "PATH --------->>>>>>>>>>>>   =========>>>>>    : ${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}"
+            // Providing nexus settings xml as a config file provider through Jenkins.
+            // This is using only in WUM Test mode.
+
+            configFileProvider(
+                    [configFile(fileId: "uat-nexus-settings", targetLocation:
+                            "${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/uat-nexus-settings.xml")]) {
+            }
+        }
+    }
+
     tryAddKnownHost("github.com")
     cloneRepo(props.INFRASTRUCTURE_REPOSITORY_URL, props.INFRASTRUCTURE_REPOSITORY_BRANCH, props.WORKSPACE + '/' +
             testPlanId + '/workspace/' + props.INFRA_LOCATION)

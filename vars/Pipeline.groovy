@@ -134,22 +134,6 @@ def call() {
                                             "${props.WORKSPACE}/common-configs.properties")]) {
                             }
 
-                            sh """
-                                echo path:::
-                                pwd
-                            
-                            """
-
-                            if ("${props.TEST_MODE}" == 'WUM') {
-                                log.info("jobname" + props.JOB_NAME)
-                                // Providing nexus settings xml as a config file provider through Jenkins. 
-                                // This is using only in WUM Test mode.
-                                configFileProvider(
-                                        [configFile(fileId: "uat-nexus-settings", targetLocation:
-                                                "${props.WORKSPACE}/uat-nexus-settings.xml")]) {
-                                }
-                            }
-
                             def commonConfigs = readProperties file:"${props.WORKSPACE}/common-configs.properties"
                             tgYamlContent = config.addCommonConfigsToTestGridYaml(tgYamlContent,commonConfigs)
 
