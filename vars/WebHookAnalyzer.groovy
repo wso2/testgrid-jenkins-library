@@ -69,6 +69,7 @@ def call() {
                         cloneRepo(LocalProperties.GIT_SSH_URL, LocalProperties.GIT_BRANCH)
                         def tgYamls = findTestGridYamls(props.WORKSPACE + "/" + LocalProperties.GIT_REPOSITORY)
                         processTgConfigs(tgYamls)
+                        gennerateJobName()
                         // We need to get a list of Jobs that are configured
                     }
                 }
@@ -159,6 +160,7 @@ def createJenkinsJob(def jobName, def timerConfig, def file) {
 String gennerateJobName() {
     def props = LocalProperties.instance
     def jobName = props.GIT_REPOSITORY + "-" + props.GIT_BRANCH
+    echo "${jobName}"
     return jobName
 }
 
