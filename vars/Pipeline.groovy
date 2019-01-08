@@ -141,6 +141,7 @@ def call() {
                             """
 
                             if ("${props.TEST_MODE}" == 'WUM') {
+                                log.info("jobname" + props.JOB_NAME)
                                 // Providing nexus settings xml as a config file provider through Jenkins. 
                                 // This is using only in WUM Test mode.
                                 configFileProvider(

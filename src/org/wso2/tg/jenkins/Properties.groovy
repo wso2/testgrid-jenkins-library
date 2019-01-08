@@ -71,6 +71,8 @@ class Properties {
     static def DEPLOYMENT_REPOSITORY_BRANCH
 
     static def EMAIL_TO_LIST
+    
+    static def JOB_NAME
 
     /**
      * Initializing the properties
@@ -102,6 +104,8 @@ class Properties {
         DEPLOYMENT_REPOSITORY_URL = getJobProperty("DEPLOYMENT_REPOSITORY", false)
         EMAIL_TO_LIST = getJobProperty("EMAIL_TO_LIST", false)
         TESTGRID_YAML_URL = getJobProperty("TESTGRID_YAML_URL", false)
+        
+        JOB_NAME = gennerateJobName()
     }
 
     /**
@@ -160,5 +164,12 @@ class Properties {
         }
         ctx.echo "Credential for key : " + key + " is found."
         return cred
+    }
+    
+    private def gennerateJobName() {
+        def props = LocalProperties.instance
+        def jobName = props.GIT_REPOSITORY + "-" + props.GIT_BRANCH
+        echo "${jobName}"
+        return jobName
     }
 }
