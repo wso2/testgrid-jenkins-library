@@ -145,10 +145,12 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
         cd ${props.WORKSPACE}/${testPlanId}/workspace
         echo Workspace directory content:
         ls ${props.WORKSPACE}/${testPlanId}/
+
+        echo "PATH --------->>>>>>>>>>>>   =========>>>>>    : ${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}"
     """
 
 
-    if ("${props.TEST_MODE}" == 'WUM') {
+//    if ("${props.TEST_MODE}" == 'WUM') {
         for (repo in scenarioConfigs) {
 
             echo "dir --------->>>>>>>>>>>>   =========>>>>>    : ${repo.get("dir")}"
@@ -161,7 +163,7 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
                             "${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/uat-nexus-settings.xml")]) {
             }
         }
-    }
+//    }
 
     tryAddKnownHost("github.com")
     cloneRepo(props.INFRASTRUCTURE_REPOSITORY_URL, props.INFRASTRUCTURE_REPOSITORY_BRANCH, props.WORKSPACE + '/' +
