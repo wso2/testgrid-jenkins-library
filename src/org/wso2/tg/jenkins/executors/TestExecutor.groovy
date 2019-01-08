@@ -161,10 +161,10 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
                     [configFile(fileId: "uat-nexus-settings", targetLocation:
                             "${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}/uat-nexus-settings.xml")]) {
             }
-            sh """
-                ls ${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}
-             
-            """
+//            sh """
+//                ls ${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}
+//
+//            """
         }
 
     }
