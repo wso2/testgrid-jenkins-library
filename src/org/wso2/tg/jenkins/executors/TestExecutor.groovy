@@ -158,12 +158,6 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
                         "${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}/uat-nexus-settings.xml")]) {
         }
 
-        sh """
-            echo cd.......>>>
-            cd ${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}
-            ls
-        """
-
     }
 
 
