@@ -147,21 +147,6 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
         ls ${props.WORKSPACE}/${testPlanId}/
     """
 
-    for (repo in scenarioConfigs) {
-
-        sh """
-            echo "PATH --------->>>>>>>>>>>>=========>>>>>    : ${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}"
-        """
-
-        configFileProvider(
-                [configFile(fileId: "uat-nexus-settings", targetLocation:
-                        "${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}/uat-nexus-settings.xml")]) {
-        }
-
-    }
-
-
-
     tryAddKnownHost("github.com")
     cloneRepo(props.INFRASTRUCTURE_REPOSITORY_URL, props.INFRASTRUCTURE_REPOSITORY_BRANCH, props.WORKSPACE + '/' +
             testPlanId + '/workspace/' + props.INFRA_LOCATION)
@@ -185,6 +170,19 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
             chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.SSH_KEY_FILE_PATH}
             chmod 400 ${props.TESTGRID_HOME}/${props.SSH_KEY_FILE_PATH_INTG}
         """
+    }
+
+    for (repo in scenarioConfigs) {
+
+        sh """
+            echo "PATH --------->>>>>>>>>>>>=========>>>>>    : ${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}"
+        """
+
+        configFileProvider(
+                [configFile(fileId: "uat-nexus-settings", targetLocation:
+                        "${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}/uat-nexus-settings.xml")]) {
+        }
+
     }
 }
 
