@@ -174,8 +174,11 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
 
     for (repo in scenarioConfigs) {
 
+        log.info("TEST_MODE ----->>>>>>>>>: ${props.TEST_MODE}")
+        log.info("PRODUCT ----->>>>>>>>>: ${props.PRODUCT}")
+        log.info("PRODUCT_GIT_BRANCH ----->>>>>>>>>: ${props.PRODUCT_GIT_BRANCH}")
+
         sh """
-            echo "TEST_MODE ----->>>>>>>>>     : ${props.TEST_MODE} "
             echo "Copying uat-nexus setting file into  : ${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}"
         """
 
