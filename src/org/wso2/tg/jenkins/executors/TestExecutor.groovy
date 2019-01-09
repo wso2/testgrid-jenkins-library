@@ -147,6 +147,16 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
         ls ${props.WORKSPACE}/${testPlanId}/
     """
 
+    for (repo in scenarioConfigs) {
+
+        sh """
+            echo "PATH --------->>>>>>>>>>>>=========>>>>>    : ${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}"
+        """
+
+    }
+
+    
+
     tryAddKnownHost("github.com")
     cloneRepo(props.INFRASTRUCTURE_REPOSITORY_URL, props.INFRASTRUCTURE_REPOSITORY_BRANCH, props.WORKSPACE + '/' +
             testPlanId + '/workspace/' + props.INFRA_LOCATION)
