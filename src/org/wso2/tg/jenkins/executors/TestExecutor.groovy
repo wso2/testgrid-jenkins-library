@@ -153,9 +153,20 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
             echo "PATH --------->>>>>>>>>>>>=========>>>>>    : ${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}"
         """
 
+        configFileProvider(
+                [configFile(fileId: "uat-nexus-settings", targetLocation:
+                        "${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}/uat-nexus-settings.xml")]) {
+        }
+
+        sh """
+            echo cd.......>>>
+            cd ${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}
+            ls
+        """
+
     }
 
-    
+
 
     tryAddKnownHost("github.com")
     cloneRepo(props.INFRASTRUCTURE_REPOSITORY_URL, props.INFRASTRUCTURE_REPOSITORY_BRANCH, props.WORKSPACE + '/' +
