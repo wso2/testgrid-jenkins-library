@@ -172,22 +172,18 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
             chmod 400 ${props.TESTGRID_HOME}/${props.SSH_KEY_FILE_PATH_INTG}
         """
     }
-    if (${props.TEST_MODE} == "WUM") {
+    if (props.TEST_MODE == "WUM") {
         log.info("TEST_MODE ----->>>>>>>>>: ${props.TEST_MODE}")
     }
     for (repo in scenarioConfigs) {
-
         sh """
             echo "Copying uat-nexus setting file into  : ${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}"
         """
-
         configFileProvider(
                 [configFile(fileId: "uat-nexus-settings", targetLocation:
                         "${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}/uat-nexus-settings.xml")]) {
         }
-
     }
-
 }
 
 /**
