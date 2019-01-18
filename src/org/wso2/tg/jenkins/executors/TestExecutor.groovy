@@ -173,15 +173,14 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
         """
     }
     if (props.TEST_MODE == "WUM") {
-        log.info("TEST_MODE ----->>>>>>>>>: ${props.TEST_MODE}")
-    }
-    for (repo in scenarioConfigs) {
-        sh """
+        for (repo in scenarioConfigs) {tg
+            sh """
             echo "Copying uat-nexus setting file into  : ${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}"
-        """
-        configFileProvider(
-                [configFile(fileId: "uat-nexus-settings", targetLocation:
-                        "${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}/uat-nexus-settings.xml")]) {
+            """
+            configFileProvider(
+                    [configFile(fileId: "uat-nexus-settings", targetLocation:
+                            "${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}/uat-nexus-settings.xml")]) {
+            }
         }
     }
 }
