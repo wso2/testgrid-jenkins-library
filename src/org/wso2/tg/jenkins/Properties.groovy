@@ -71,7 +71,6 @@ class Properties {
     static def DEPLOYMENT_REPOSITORY_BRANCH
 
     static def EMAIL_TO_LIST
-    
 
     /**
      * Initializing the properties
@@ -162,12 +161,4 @@ class Properties {
         ctx.echo "Credential for key : " + key + " is found."
         return cred
     }
-    
-    private def gennerateJobName() {
-        def props = LocalProperties.instance
-        def jobName = props.GIT_REPOSITORY + "-" + props.GIT_BRANCH
-        echo "${jobName}"
-        return jobName
-    }
 }
-
