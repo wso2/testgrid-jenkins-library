@@ -37,6 +37,7 @@ def runPlan(tPlan, testPlanId) {
     def awsHelper = new AWSUtils()
     def fileUtil = new FileUtils()
     def props = Properties.instance
+    props.instance.initProperties()
     def tgExecutor = new TestGridExecutor()
     def runtime = new RuntimeUtils()
     def log = new Logger()
@@ -170,6 +171,17 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
             chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.SSH_KEY_FILE_PATH}
             chmod 400 ${props.TESTGRID_HOME}/${props.SSH_KEY_FILE_PATH_INTG}
         """
+    }
+    if (props.TEST_MODE == "WUM") {
+        for (repo in scenarioConfigs) {
+            sh """
+            echo "Copying uat-nexus setting file into  : ${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}"
+            """
+            configFileProvider(
+                    [configFile(fileId: "uat-nexus-settings", targetLocation:
+                            "${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}/uat-nexus-settings.xml")]) {
+            }
+        }
     }
 }
 
