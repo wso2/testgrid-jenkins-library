@@ -37,7 +37,6 @@ def runPlan(tPlan, testPlanId) {
     def awsHelper = new AWSUtils()
     def fileUtil = new FileUtils()
     def props = Properties.instance
-    props.instance.initProperties()
     def tgExecutor = new TestGridExecutor()
     def runtime = new RuntimeUtils()
     def log = new Logger()
