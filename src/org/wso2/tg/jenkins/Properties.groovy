@@ -71,6 +71,7 @@ class Properties {
     static def DEPLOYMENT_REPOSITORY_BRANCH
 
     static def EMAIL_TO_LIST
+    static def EMAIL_TO_LIST_INFRA
 
     /**
      * Initializing the properties

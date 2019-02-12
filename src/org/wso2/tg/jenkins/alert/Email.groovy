@@ -26,12 +26,13 @@ import org.wso2.tg.jenkins.Properties
  *
  * @param subject subject of the Email
  * @param content body of the Email
+ * @param comma separated list of Email addresses
  */
-def send(subject,  content) {
+def send(subject,  content , recipients) {
     def log = new Logger()
     def props = Properties.instance
-    log.info("Sending mail to " + props.EMAIL_TO_LIST + " with the subject " + subject)
-    emailext(to: "${props.EMAIL_TO_LIST}",
+    log.info("Sending mail to " + recipients + " with the subject " + subject)
+    emailext(to: "${recipients}",
             subject: subject,
             body: content, mimeType: 'text/html')
 }
