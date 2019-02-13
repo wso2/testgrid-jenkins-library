@@ -42,26 +42,26 @@ def runPlan(tPlan, testPlanId) {
     def log = new Logger()
     def scenarioConfigs = []
 
-    def execName = commonUtil.extractInfraCombination("${testPlanId}")
-    def paralleId = getParalleId(execName)
-    def url = generateBluoceanLink("${paralleId}")
-    echo "Blueocean link URL : " + "${url}"
-
-    scenarioConfigs = readRepositoryUrlsfromYaml("${props.WORKSPACE}/${tPlan}")
-    log.info("Preparing workspace for testplan : " + testPlanId)
-    prepareWorkspace(testPlanId, scenarioConfigs)
-    //sleep(time:commonUtil.getRandomNumber(10),unit:"SECONDS")
-    log.info("Unstashing test-plans and testgrid.yaml to ${props.WORKSPACE}/${testPlanId}")
-    runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
-
-    log.info("Downloading default deploy.sh...")
-    sh """
-    mkdir -p ${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}
-    curl --max-time 6 --retry 6 -o ${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}/deploy.sh https://raw.githubusercontent.com/wso2/testgrid/master/jobs/test-resources/deploy.sh
-    """
-    def name = commonUtil.extractInfraCombination(testplanId)
-    notifier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
     try {
+        def execName = commonUtil.extractInfraCombination("${testPlanId}")
+        def paralleId = getParalleId(execName)
+        def url = generateBluoceanLink("${paralleId}")
+        echo "Blueocean link URL : " + "${url}"
+
+        scenarioConfigs = readRepositoryUrlsfromYaml("${props.WORKSPACE}/${tPlan}")
+        log.info("Preparing workspace for testplan : " + testPlanId)
+        prepareWorkspace(testPlanId, scenarioConfigs)
+        //sleep(time:commonUtil.getRandomNumber(10),unit:"SECONDS")
+        log.info("Unstashing test-plans and testgrid.yaml to ${props.WORKSPACE}/${testPlanId}")
+        runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
+
+        log.info("Downloading default deploy.sh...")
+        sh """
+        mkdir -p ${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}
+        curl --max-time 6 --retry 6 -o ${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}/deploy.sh https://raw.githubusercontent.com/wso2/testgrid/master/jobs/test-resources/deploy.sh
+        """
+        def name = commonUtil.extractInfraCombination(testplanId)
+        notifier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
         tgExecutor.runTesPlans(props.PRODUCT,
                 "${props.WORKSPACE}/${tPlan}", "${props.WORKSPACE}/${testPlanId}","${url}")
         //commonUtil.truncateTestRunLog(testPlanId)
