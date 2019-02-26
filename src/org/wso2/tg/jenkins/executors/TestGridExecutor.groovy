@@ -102,12 +102,14 @@ def generateEmail(def product, def workspace) {
  */
 def generateEscalationEmail(def workspace, def excludeProduct) {
     def props = Properties.instance
+    def includeWUMScenarioRegEx = "^wum-sce.*\$"
     sh """
        export DISPLAY=:95.0
        export TESTGRID_HOME="${props.TESTGRID_HOME}"
        cd ${props.TESTGRID_DIST_LOCATION}/${props.TESTGRID_NAME}
        ./testgrid generate-escalation-email \
             --exclude-products ${excludeProduct} \
+            --product-include-pattern ${includeWUMScenarioRegEx} \
                 --workspace ${workspace}
     """
 }

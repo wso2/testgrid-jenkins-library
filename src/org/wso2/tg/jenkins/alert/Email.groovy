@@ -30,8 +30,14 @@ import org.wso2.tg.jenkins.Properties
 def send(subject,  content) {
     def log = new Logger()
     def props = Properties.instance
-    log.info("Sending mail to " + props.EMAIL_TO_LIST + " with the subject " + subject)
-    emailext(to: "${props.EMAIL_TO_LIST}",
-            subject: subject,
-            body: content, mimeType: 'text/html')
+    if (props.EMAIL_REPLY_TO != null) {
+        emailext(to: "${props.EMAIL_TO_LIST}",
+                subject: subject,
+                replyTo: "${props.EMAIL_REPLY_TO}",
+                body: content, mimeType: 'text/html')
+    } else {
+        emailext(to: "${props.EMAIL_TO_LIST}",
+                subject: subject,
+                body: content, mimeType: 'text/html')
+    }
 }
