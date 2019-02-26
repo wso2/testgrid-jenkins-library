@@ -58,7 +58,8 @@ def call() {
                         if (fileExists("${props.WORKSPACE}/EscalationMail.html")) {
                             uploadCharts()
                             def emailBody = readFile "${props.WORKSPACE}/EscalationMail.html"
-                            email.send("Build Failure Escalation! #(${env.BUILD_NUMBER})",
+                            email.send("[Escalation] TestGrid WUM builds failing for more than" +
+                                    " 7 days (#${env.BUILD_NUMBER})",
                                     "${emailBody}")
                         } else {
                             log.warn("No EscalationMail.html file found!!")
