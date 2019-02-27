@@ -72,18 +72,17 @@ def call() {
           steps {
             script {
               sh """
-				            echo ${JOB_CONFIG_YAML_PATH}
-					        echo '  TEST_TYPE: ${TEST_TYPE}' >> ${JOB_CONFIG_YAML_PATH}
-						        
-					        cd ${WORKSPACE}
-                            rm -rf WUM_LOGS
-                            mkdir WUM_LOGS
-                            cd ${WORKSPACE}/WUM_LOGS
-					        git clone ${SCENARIOS_REPOSITORY}
+                echo ${JOB_CONFIG_YAML_PATH}
+                echo '  TEST_TYPE: ${TEST_TYPE}' >> ${JOB_CONFIG_YAML_PATH}
+                cd ${WORKSPACE}
+                rm -rf WUM_LOGS
+                mkdir WUM_LOGS
+                cd ${WORKSPACE}/WUM_LOGS
+                git clone ${SCENARIOS_REPOSITORY}
 
-					        cd ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner
-					        sh get-wum-uat-products.sh
-                        """
+                cd ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner
+                sh get-wum-uat-products.sh
+              """
             }
           }
         }
@@ -95,26 +94,26 @@ def call() {
                 def wumJobs = [:]
                 FILECONTENT = readFile "${JOB_LIST}"
                 sh """
-                                cd ${WORKSPACE}
-                                rm -rf sucessresult.txt failresult.txt
-                                touch sucessresult.txt failresult.txt
-                             """
+                  cd ${WORKSPACE}
+                  rm -rf sucessresult.html failresult.html
+                  touch sucessresult.html failresult.html
+                """
                 def jobNamesArray = FILECONTENT.split('\n')
                 for (line in jobNamesArray) {
                   String jobName = line;
                   wumJobs["job:" + jobName] = {
                     def result = build(job: jobName, propagate: false).result
                     if (result == 'SUCCESS') {
-                      def output = jobName + " - " + result
-                      sh "echo $output >> ${WORKSPACE}/sucessresult.txt "
+                      def output = jobName + " - " + result + "<br/>"
+                      sh "echo $output >> ${WORKSPACE}/sucessresult.html "
 
                     } else if (result == 'FAILURE') {
-                      def output = jobName + " - " + result
-                      sh "echo $output >> ${WORKSPACE}/failresult.txt "
+                      def output = jobName + " - " + result + "<br/>"
+                      sh "echo $output >> ${WORKSPACE}/failresult.html "
 
                     } else if (result == 'UNSTABLE') {
-                      def output = jobName + " - " + result
-                      sh "echo $output >> ${WORKSPACE}/failresult.txt "
+                      def output = jobName + " - " + result + "<br/>"
+                      sh "echo $output >> ${WORKSPACE}/failresult.html "
                     }
 
                   };
@@ -122,7 +121,7 @@ def call() {
                 parallel wumJobs
 
               } catch (e) {
-                echo "Few of the builds are not found to trigger."
+                echo "Few of the builds are not found to trigger. " + e
               }
             }
           }
@@ -133,56 +132,74 @@ def call() {
             script {
               try {
                 sh """
-                          cd ${WORKSPACE}
-                          cat sucessresult.txt
-                          cat failresult.txt
-                          cd ${WORKSPACE}/WUM_LOGS/
-                         
-                        """
+                    cd ${WORKSPACE}
+                    cat sucessresult.html
+                    cat failresult.html
+                    cd ${WORKSPACE}/WUM_LOGS/
+                """
 
-                if (fileExists("${WORKSPACE}/sucessresult.txt")) {
-                  def emailBodySuccess = readFile "${WORKSPACE}/sucessresult.txt"
-                  def emailBodyFail = readFile "${WORKSPACE}/failresult.txt"
+                if (fileExists("${WORKSPACE}/sucessresult.html")) {
+                  def emailBodySuccess = readFile "${WORKSPACE}/sucessresult.html"
+                  def emailBodyFail = readFile "${WORKSPACE}/failresult.html"
                   def productList = readFile "${WORKSPACE}/WUM_LOGS/product-list.txt"
                   def updateNo = readFile "${WORKSPACE}/WUM_LOGS/product-id-list.txt"
 
-                  send("WSO2 TestGrid - Test Results for WUM Updates! #(${env.BUILD_NUMBER})", """ <table width="800" border="0" cellspacing="0" cellpadding="0" valign='top'>
-                                <td><img src="http://cdn.wso2.com/wso2/newsletter/images/nl-2017/nl2017-wso2-logo-wb.png"></td>
-                                <td><h1>TestGrid <span style="color: #e46226;">: Test Execution Job Status</span></h1></td>
-                                </table><div style="margin: auto; background-color: #ffffff;"> 
-                       
-                                <p style="height:10px;font-family: Lucida Grande;font-size: 20px;"><font color="black"><b> Testgrid Job Status </b></font> </p>
-
-                                <table width="70%" cellspacing="0" cellpadding="1" border="1" align="left" bgcolor="#f0f0f0">
-                                <col width="130">
-                                <col width="130">
-                                <tr style="border: 1px solid black;">
-                                <th bgcolor="#33cc33">Job Name with Success Result</th>
-                                <th bgcolor="#cc3300">Job Name with Fail Result</th>
-                                </tr>
-                                <tr>
-                                <td>${emailBodySuccess}</td>
-                                <td>${emailBodyFail}</td>
-                                </tr>
-                                </table>
-                                <br /><br /><br /><br /><br /><br /><br /><br />
-                                  
-                                <p style="height:10px;font-family:Lucida Grande;font-size: 20px;"><font color="black"><b>Product Informations </b></font> </p>
-                                <table width="70%" cellspacing="0" cellpadding="1" border="1" align="left" bgcolor="#f0f0f0">
-                                <col width="130">
-                                <col width="130">
-                                <tr style="border: 1px solid black;">
-                                <th bgcolor="#ffb84d">Product List with Version</th>
-                                <th bgcolor="#ffb84d">Product Updated No</th>
-                                </tr>
-                                <tr>
-                                <td>${productList}</td>
-                                <td>${updateNo}</td>
-                                </tr>
-                                </table>
-                                <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
-
-                                <em>Tested by WSO2 TestGrid.</em>""")
+                  send("Scenario Test Results for WUM Updates! #(${env.BUILD_NUMBER}) - WSO2 TestGrid", """
+<div>
+  <table border="0" cellspacing="0" cellpadding="0" valign='top' width="80%">
+    <td>
+      <img src="http://cdn.wso2.com/wso2/newsletter/images/nl-2017/nl2017-wso2-logo-wb.png"/>
+    </td>
+    <td>
+      <h1>Scenario Test <span style="color: #e46226;"> Results for WUM Updates</span>
+    </h1>
+  </td>
+</table>
+<div style="margin: auto; background-color: #ffffff;">
+  <p style="height:10px;font-family: Lucida Grande;font-size: 20px;">
+    <font color="black">
+      <b> Testgrid Job Status </b>
+    </font>
+  </p>
+  <table cellspacing="0" cellpadding="1" border="1" bgcolor="#f0f0f0" width="80%">
+    <colgroup>
+      <col width="130"/>
+      <col width="130"/>
+    </colgroup>
+    <tr style="border: 1px solid black;">
+      <th bgcolor="#33cc33">Success Jobs</th>
+      <th bgcolor="#cc3300">Failed/Unstable Jobs</th>
+    </tr>
+    <tr>
+      <td>${emailBodySuccess}</td>
+      <td>${emailBodyFail}</td>
+    </tr>
+  </table>
+  <br />
+  <p style="height:10px;font-family:Lucida Grande;font-size: 20px;">
+    <font color="black">
+      <b>Product Information</b>
+    </font>
+  </p>
+  <table cellspacing="0" cellpadding="1" border="1" bgcolor="#f0f0f0">
+    <colgroup>
+      <col width="130"/>
+      <col width="130"/>
+    </colgroup>
+    <tr style="border: 1px solid black;">
+      <th bgcolor="#ffb84d">Product List with Version</th>
+      <th bgcolor="#ffb84d">Product Updated No</th>
+    </tr>
+    <tr>
+      <td>${productList}</td>
+      <td>${updateNo}</td>
+    </tr>
+  </table>
+  <br />
+  <em>Tested by WSO2 TestGrid.</em>
+</div>
+</div>
+                            """)
 
                 } else {
                   log.info("No WUM Update found..!")
