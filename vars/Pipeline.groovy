@@ -175,6 +175,7 @@ def call() {
                             def tests = testExecutor.getTestExecutionMap(props.EXECUTOR_COUNT)
                             parallel tests
                         } catch (e) {
+                            echo "Parallel test plan execution error: " + e.toString()
                             currentBuild.result = "FAILURE"
                             alert.sendNotification(currentBuild.result, "Parallel", "#build_status_verbose")
                         }
@@ -205,6 +206,7 @@ def call() {
                                     "testgrid.")
                         }
                     } catch (e) {
+                        log.warn("Error during post step execution: " + e.getMessage())
                         currentBuild.result = "FAILURE"
                     } finally {
                         alert.sendNotification(currentBuild.result, "completed", "#build_status")

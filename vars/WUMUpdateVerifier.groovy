@@ -211,6 +211,7 @@ def call() {
                 }
 
               } catch (e) {
+                echo "Error while sending mail: " + e.getMessage()
                 currentBuild.result = "FAILED"
               }
             }

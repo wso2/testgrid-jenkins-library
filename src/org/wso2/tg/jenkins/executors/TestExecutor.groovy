@@ -40,6 +40,7 @@ def runPlan(tPlan, testPlanId) {
     def tgExecutor = new TestGridExecutor()
     def log = new Logger()
     def scenarioConfigs = []
+    def name = testPlanId
 
     try {
         def execName = commonUtil.extractInfraCombination("${testPlanId}")
@@ -55,12 +56,12 @@ def runPlan(tPlan, testPlanId) {
         mkdir -p ${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}
         curl --max-time 6 --retry 6 -o ${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}/deploy.sh https://raw.githubusercontent.com/wso2/testgrid/master/jobs/test-resources/deploy.sh
         """
-        def name = commonUtil.extractInfraCombination(testplanId)
+        name = commonUtil.extractInfraCombination(testplanId)
         notifier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
         tgExecutor.runTesPlans(props.PRODUCT,
                 "${props.WORKSPACE}/${tPlan}", "${props.WORKSPACE}/${testPlanId}","${url}")
         //commonUtil.truncateTestRunLog(testPlanId)
-        echo "run test plan"
+        echo "Test plan execution completed."
     } catch (Exception err) {
         handleException(err, testPlanId)
     } finally {
