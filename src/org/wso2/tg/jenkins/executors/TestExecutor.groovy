@@ -309,17 +309,12 @@ def generateBluoceanLink(def parallelId) {
 def handleException(Exception e, def testPlanId) {
     def log = new Logger()
     def props = Properties.instance
+    def runtime = new RuntimeUtils()
     def errorMsg = "Error while running test-plan ${testPlanId} : ${e}"
     log.error(errorMsg)
     currentBuild.result = 'UNSTABLE'
 
-    if (!fileExists(testplanDirectory)) {
-        dir("${props.WORKSPACE}") {
-            unstash name: "test-plans"
-        }
-    } else {
-        log.info("Test-plans directory already exist, not unstashing the test-plans.")
-    }
+    runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
 
     sh """
         set -o xtrace
