@@ -318,8 +318,12 @@ def handleException(Exception e, def testPlanId) {
 
     sh """
         set -o xtrace
-        echo "I'm writing to ${props.WORKSPACE}/${testPlanId}/builds/test-run.log"
-        echo '${errorMsg}' >> ${props.WORKSPACE}/${testPlanId}/builds/test-run.log
+        if [ -d ${props.WORKSPACE}/${testPlanId}/builds/test-run.log ]; then
+            echo "I'm writing to ${props.WORKSPACE}/${testPlanId}/builds/test-run.log"
+            echo '${errorMsg}' >> ${props.WORKSPACE}/${testPlanId}/builds/test-run.log
+        else
+            echo "Can not find ${props.WORKSPACE}/${testPlanId}/builds/test-run.log"
+        fi
     """
 
 }
