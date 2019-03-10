@@ -41,12 +41,14 @@ def increaseTestGridRuntimeMemory(min, max) {
  * @param testplanDirectory directory check whether testplans are available
  */
 def unstashTestPlansIfNotAvailable(def testplanDirectory) {
-    def props = Properties.instance
     def log = new Logger()
+    def props = Properties.instance
+    log.info("Unstashing test-plans and testgrid.yaml to ${props.WORKSPACE}")
     if (!fileExists(testplanDirectory)) {
-        log.info("test-plans directory not found, unstashing the testplans to ${props.WORKSPACE}")
         dir("${props.WORKSPACE}") {
             unstash name: "test-plans"
         }
+    } else {
+        log.info("Test-plans directory already exist, not unstashing the test-plans.")
     }
 }

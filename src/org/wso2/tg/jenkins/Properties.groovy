@@ -72,6 +72,7 @@ class Properties {
 
     static def EMAIL_TO_LIST
     static def EMAIL_TO_LIST_INFRA
+    static def EMAIL_REPLY_TO
 
     /**
      * Initializing the properties
@@ -102,6 +103,8 @@ class Properties {
         INFRASTRUCTURE_REPOSITORY_URL = getJobProperty("INFRASTRUCTURE_REPOSITORY", false)
         DEPLOYMENT_REPOSITORY_URL = getJobProperty("DEPLOYMENT_REPOSITORY", false)
         EMAIL_TO_LIST = getJobProperty("EMAIL_TO_LIST", false)
+        EMAIL_TO_LIST_INFRA = getJobProperty("EMAIL_TO_LIST_INFRA", false)
+        EMAIL_REPLY_TO = getJobProperty("EMAIL_REPLY_TO", false);
         TESTGRID_YAML_URL = getJobProperty("TESTGRID_YAML_URL", false)
     }
 

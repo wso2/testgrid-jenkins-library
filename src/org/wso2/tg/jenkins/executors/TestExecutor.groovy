@@ -38,37 +38,32 @@ def runPlan(tPlan, testPlanId) {
     def fileUtil = new FileUtils()
     def props = Properties.instance
     def tgExecutor = new TestGridExecutor()
-    def runtime = new RuntimeUtils()
     def log = new Logger()
     def scenarioConfigs = []
+    def name = testPlanId
 
-    def execName = commonUtil.extractInfraCombination("${testPlanId}")
-    def paralleId = getParalleId(execName)
-    def url = generateBluoceanLink("${paralleId}")
-    echo "Blueocean link URL : " + "${url}"
-
-    scenarioConfigs = readRepositoryUrlsfromYaml("${props.WORKSPACE}/${tPlan}")
-    log.info("Preparing workspace for testplan : " + testPlanId)
-    prepareWorkspace(testPlanId, scenarioConfigs)
-    //sleep(time:commonUtil.getRandomNumber(10),unit:"SECONDS")
-    log.info("Unstashing test-plans and testgrid.yaml to ${props.WORKSPACE}/${testPlanId}")
-    runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
-
-    log.info("Downloading default deploy.sh...")
-    sh """
-    mkdir -p ${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}
-    curl --max-time 6 --retry 6 -o ${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}/deploy.sh https://raw.githubusercontent.com/wso2/testgrid/master/jobs/test-resources/deploy.sh
-    """
-    def name = commonUtil.extractInfraCombination(testplanId)
-    notifier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
     try {
+        def execName = commonUtil.extractInfraCombination("${testPlanId}")
+        def paralleId = getParalleId(execName)
+        def url = generateBluoceanLink("${paralleId}")
+        echo "Blueocean link URL : " + "${url}"
+
+        scenarioConfigs = readRepositoryUrlsfromYaml("${props.WORKSPACE}/${tPlan}")
+        prepareWorkspace(testPlanId, scenarioConfigs)
+
+        log.info("Setting up default deploy.sh...")
+        sh """
+        mkdir -p ${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}
+        curl --max-time 6 --retry 6 -o ${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}/deploy.sh https://raw.githubusercontent.com/wso2/testgrid/master/jobs/test-resources/deploy.sh
+        """
+        name = commonUtil.extractInfraCombination(testplanId)
+        notifier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
         tgExecutor.runTesPlans(props.PRODUCT,
                 "${props.WORKSPACE}/${tPlan}", "${props.WORKSPACE}/${testPlanId}","${url}")
         //commonUtil.truncateTestRunLog(testPlanId)
-        echo "run test plan"
+        echo "Test plan execution completed."
     } catch (Exception err) {
-        log.error("Error : ${err}")
-        currentBuild.result = 'UNSTABLE'
+        handleException(err, testPlanId)
     } finally {
         notifier.sendNotification(currentBuild.result, "Parallel \n Infra : " + name, "#build_status_verbose")
     }
@@ -132,55 +127,61 @@ def getTestExecutionMap(parallel_executor_count) {
 
 def prepareWorkspace(testPlanId, scenarioConfigs) {
     def props = Properties.instance
-    def log = new Logger()
-    log.info(" Creating workspace and builds sub-directories")
+    def runtime = new RuntimeUtils()
+    try {
+        def log = new Logger()
+        log.info("Preparing workspace for testplan : ${testPlanId}")
 
-    sh """
-        rm -r -f ${props.WORKSPACE}/${testPlanId}/
-        mkdir -p ${props.WORKSPACE}/${testPlanId}
-        mkdir -p ${props.WORKSPACE}/${testPlanId}/builds
-        mkdir -p ${props.WORKSPACE}/${testPlanId}/workspace
-        #Cloning should be done before unstashing TestGridYaml since its going to be injected
-        #inside the cloned repository
-        cd ${props.WORKSPACE}/${testPlanId}/workspace
-        echo Workspace directory content:
-        ls ${props.WORKSPACE}/${testPlanId}/
-    """
-
-    tryAddKnownHost("github.com")
-    cloneRepo(props.INFRASTRUCTURE_REPOSITORY_URL, props.INFRASTRUCTURE_REPOSITORY_BRANCH, props.WORKSPACE + '/' +
-            testPlanId + '/workspace/' + props.INFRA_LOCATION)
-
-    if (props.DEPLOYMENT_REPOSITORY_URL != null) {
-        cloneRepo(props.DEPLOYMENT_REPOSITORY_URL, props.DEPLOYMENT_REPOSITORY_BRANCH, props.WORKSPACE + '/' + testPlanId +
-                '/workspace/' + props.DEPLOYMENT_LOCATION );
-    } else {
-        log.info("Deployment repository not specified")
-    }
-
-    for (repo in scenarioConfigs) {
-        cloneRepo(repo.get("url"), repo.get("branch"), props.WORKSPACE + '/' +
-                testPlanId + '/workspace/' + props.SCENARIOS_LOCATION + '/' + repo.get("dir"))
-    }
-    log.info("Copying the ssh key file to workspace : ${props.WORKSPACE}/${testPlanId}/${props.SSH_KEY_FILE_PATH}")
-    withCredentials([file(credentialsId: 'DEPLOYMENT_KEY', variable: 'keyLocation')]) {
+        log.info("Creating workspace and builds sub-directories")
         sh """
+            rm -r -f ${props.WORKSPACE}/${testPlanId}/
+            mkdir -p ${props.WORKSPACE}/${testPlanId}
+            mkdir -p ${props.WORKSPACE}/${testPlanId}/builds
+            mkdir -p ${props.WORKSPACE}/${testPlanId}/workspace
+            #Cloning should be done before unstashing TestGridYaml since its going to be injected
+            #inside the cloned repository
+            cd ${props.WORKSPACE}/${testPlanId}/workspace
+            echo Workspace directory content:
+            ls ${props.WORKSPACE}/${testPlanId}/
+        """
+
+        tryAddKnownHost("github.com")
+        cloneRepo(props.INFRASTRUCTURE_REPOSITORY_URL, props.INFRASTRUCTURE_REPOSITORY_BRANCH, props.WORKSPACE + '/' +
+                testPlanId + '/workspace/' + props.INFRA_LOCATION)
+
+        if (props.DEPLOYMENT_REPOSITORY_URL != null) {
+            cloneRepo(props.DEPLOYMENT_REPOSITORY_URL, props.DEPLOYMENT_REPOSITORY_BRANCH, props.WORKSPACE + '/' +
+                    testPlanId + '/workspace/' + props.DEPLOYMENT_LOCATION);
+        } else {
+            log.info("Deployment repository not specified")
+        }
+
+        for (repo in scenarioConfigs) {
+            cloneRepo(repo.get("url"), repo.get("branch"), props.WORKSPACE + '/' +
+                    testPlanId + '/workspace/' + props.SCENARIOS_LOCATION + '/' + repo.get("dir"))
+        }
+        log.info("Copying the ssh key file to workspace : ${props.WORKSPACE}/${testPlanId}/${props.SSH_KEY_FILE_PATH}")
+        withCredentials([file(credentialsId: 'DEPLOYMENT_KEY', variable: 'keyLocation')]) {
+            sh """
             cp ${keyLocation} ${props.WORKSPACE}/${testPlanId}/${props.SSH_KEY_FILE_PATH}
             cp -n ${keyLocation} ${props.TESTGRID_HOME}/${props.SSH_KEY_FILE_PATH_INTG}
             chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.SSH_KEY_FILE_PATH}
             chmod 400 ${props.TESTGRID_HOME}/${props.SSH_KEY_FILE_PATH_INTG}
         """
-    }
-    if (props.TEST_MODE == "WUM") {
-        for (repo in scenarioConfigs) {
-            sh """
+        }
+        if (props.TEST_MODE == "WUM") {
+            for (repo in scenarioConfigs) {
+                sh """
             echo "Copying uat-nexus setting file into  : ${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}"
             """
-            configFileProvider(
-                    [configFile(fileId: "uat-nexus-settings", targetLocation:
-                            "${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}/uat-nexus-settings.xml")]) {
+                configFileProvider(
+                        [configFile(fileId: "uat-nexus-settings", targetLocation:
+                                "${props.WORKSPACE}/${testPlanId}/workspace/${props.SCENARIOS_LOCATION}/${repo.get("dir")}/${repo.get("dir")}/uat-nexus-settings.xml")]) {
+                }
             }
         }
+    } finally {
+        runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
     }
 }
 
@@ -303,4 +304,26 @@ def generateBluoceanLink(def parallelId) {
     def url = "${env.JENKINS_URL}" + "blue/organizations/jenkins/" + "${scapedURL}" +
                 "/detail/" + "${jobName}" + "/" + "${env.BUILD_ID}" + "/pipeline/" + "${parallelId}"
     return url
+}
+
+def handleException(Exception e, def testPlanId) {
+    def log = new Logger()
+    def props = Properties.instance
+    def runtime = new RuntimeUtils()
+    def errorMsg = "Error while running test-plan ${testPlanId} : ${e}"
+    log.error(errorMsg)
+    currentBuild.result = 'UNSTABLE'
+
+    runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
+
+    sh """
+        set -o xtrace
+        if [ -d ${props.WORKSPACE}/${testPlanId}/builds/test-run.log ]; then
+            echo "I'm writing to ${props.WORKSPACE}/${testPlanId}/builds/test-run.log"
+            echo '${errorMsg}' >> ${props.WORKSPACE}/${testPlanId}/builds/test-run.log
+        else
+            echo "Can not find ${props.WORKSPACE}/${testPlanId}/builds/test-run.log"
+        fi
+    """
+
 }

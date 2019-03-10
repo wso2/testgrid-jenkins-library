@@ -173,6 +173,7 @@ def call() {
                             def tests = testExecutor.getTestExecutionMap(props.EXECUTOR_COUNT)
                             parallel tests
                         } catch (e) {
+                            echo "Parallel test plan execution error: " + e.toString()
                             currentBuild.result = "FAILURE"
                             alert.sendNotification(currentBuild.result, "Parallel", "#build_status_verbose")
                         }
@@ -195,15 +196,15 @@ def call() {
                             def environment = configUtil.getPropertyFromTestgridConfig("TESTGRID_ENVIRONMENT").toUpperCase()
                             email.send(
                                     "[${environment}][${currentBuild.result}] '${props.PRODUCT}' Test Results!" + " #(${env.BUILD_NUMBER})",
-                                    "${emailBody}","${props.EMAIL_TO_LIST}" );
+                                    "${emailBody}");
 
                             //If there is an infra error email generated send it to infra email List recipients
                             if (fileExists("${props.WORKSPACE}/InfraErrorEmail.html")) {
                                 echo "Infra Email to List : ${props.EMAIL_TO_LIST_INFRA}"
                                 def infraErrorEmailBody = readFile "${props.WORKSPACE}/InfraErrorEmail.html"
-                                email.send(
+                                email.sendInfraEmail(
                                         "[${environment}][${currentBuild.result}] '${props.PRODUCT}' Infra Failure!" + " #(${env.BUILD_NUMBER})",
-                                        "${infraErrorEmailBody}", "${props.EMAIL_TO_LIST_INFRA}");
+                                        "${infraErrorEmailBody}");
                             }else{
                                 log.warn("InfraErrorEmail not found !")
                             }
@@ -212,9 +213,10 @@ def call() {
                             log.warn("No SummarizedEmailReport.html file found!!")
                             email.send("'${props.PRODUCT}'#(${env.BUILD_NUMBER}) - SummarizedEmailReport.html " +
                                     "file not found", "Could not find the summarized email report ${env.BUILD_URL}. This is an error in " +
-                                    "testgrid.","${props.EMAIL_TO_LIST}")
+                                    "testgrid.")
                         }
                     } catch (e) {
+                        log.warn("Error during post step execution: " + e.getMessage())
                         currentBuild.result = "FAILURE"
                     } finally {
                         alert.sendNotification(currentBuild.result, "completed", "#build_status")
