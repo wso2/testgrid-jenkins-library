@@ -28,8 +28,8 @@ import org.wso2.tg.jenkins.Properties
  * @param content body of the Email
  */
 def send(subject,  content) {
-    def log = new Logger()
     def props = Properties.instance
+
     if (props.EMAIL_REPLY_TO != null) {
         emailext(to: "${props.EMAIL_TO_LIST}",
                 subject: subject,
@@ -37,6 +37,21 @@ def send(subject,  content) {
                 body: content, mimeType: 'text/html')
     } else {
         emailext(to: "${props.EMAIL_TO_LIST}",
+                subject: subject,
+                body: content, mimeType: 'text/html')
+    }
+}
+
+/**
+ * This method sends and email to infra team members specified in tg yaml
+ * @param subject mail subject
+ * @param content mail content
+ */
+def sendInfraEmail(subject,  content){
+    if (props.EMAIL_TO_LIST_INFRA != null) {
+        Logger logger = new Logger();
+        logger.info("sending infra failure report to :" + "${props.EMAIL_TO_LIST_INFRA}")
+        emailext(to: "${props.EMAIL_TO_LIST_INFRA}",
                 subject: subject,
                 body: content, mimeType: 'text/html')
     }

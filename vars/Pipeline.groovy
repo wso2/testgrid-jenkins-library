@@ -16,18 +16,15 @@
  * under the License.
  */
 
+
 import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.PipelineContext
-import org.wso2.tg.jenkins.alert.Slack
-import org.wso2.tg.jenkins.alert.Email
-import org.wso2.tg.jenkins.executors.TestGridExecutor
-import org.wso2.tg.jenkins.util.AWSUtils
-import org.wso2.tg.jenkins.executors.TestExecutor
 import org.wso2.tg.jenkins.Properties
-import org.wso2.tg.jenkins.util.Common
-import org.wso2.tg.jenkins.util.RuntimeUtils
-import org.wso2.tg.jenkins.util.WorkSpaceUtils
-import org.wso2.tg.jenkins.util.ConfigUtils
+import org.wso2.tg.jenkins.alert.Email
+import org.wso2.tg.jenkins.alert.Slack
+import org.wso2.tg.jenkins.executors.TestExecutor
+import org.wso2.tg.jenkins.executors.TestGridExecutor
+import org.wso2.tg.jenkins.util.*
 
 // The pipeline should reside in a call block
 def call() {
@@ -118,6 +115,7 @@ def call() {
                             }
                             // We need to set the repository properties
                             props.EMAIL_TO_LIST = tgYamlContent.emailToList
+                            props.EMAIL_TO_LIST_INFRA = tgYamlContent.infraFailureEmailToList
                             if(props.EMAIL_TO_LIST == null) {
                                 throw new Exception("emailToList property is not found in testgrid.yaml file")
                             }
@@ -198,7 +196,19 @@ def call() {
                             def environment = configUtil.getPropertyFromTestgridConfig("TESTGRID_ENVIRONMENT").toUpperCase()
                             email.send(
                                     "[${environment}][${currentBuild.result}] '${props.PRODUCT}' Test Results!" + " #(${env.BUILD_NUMBER})",
-                                    "${emailBody}")
+                                    "${emailBody}");
+
+                            //If there is an infra error email generated send it to infra email List recipients
+                            if (fileExists("${props.WORKSPACE}/InfraErrorEmail.html")) {
+                                echo "Infra Email to List : ${props.EMAIL_TO_LIST_INFRA}"
+                                def infraErrorEmailBody = readFile "${props.WORKSPACE}/InfraErrorEmail.html"
+                                email.sendInfraEmail(
+                                        "[${environment}][${currentBuild.result}] '${props.PRODUCT}' Infra Failure!" + " #(${env.BUILD_NUMBER})",
+                                        "${infraErrorEmailBody}");
+                            }else{
+                                log.warn("InfraErrorEmail not found !")
+                            }
+
                         } else {
                             log.warn("No SummarizedEmailReport.html file found!!")
                             email.send("'${props.PRODUCT}'#(${env.BUILD_NUMBER}) - SummarizedEmailReport.html " +
