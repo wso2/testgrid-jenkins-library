@@ -108,15 +108,15 @@ def call() {
                                     def result = build(job: jobName, propagate: false).result
                                     if (result == 'SUCCESS') {
                                         def output = jobName + " - " + result + "<br/>"
-                                        sh "echo $output >> ${WORKSPACE}/sucessresult.html "
+                                        sh "echo '$output' >> ${WORKSPACE}/sucessresult.html "
 
                                     } else if (result == 'FAILURE') {
                                         def output = jobName + " - " + result + "<br/>"
-                                        sh "echo $output >> ${WORKSPACE}/failresult.html "
+                                        sh "echo '$output' >> ${WORKSPACE}/failresult.html "
 
                                     } else if (result == 'UNSTABLE') {
                                         def output = jobName + " - " + result + "<br/>"
-                                        sh "echo $output >> ${WORKSPACE}/failresult.html "
+                                        sh "echo '$output' >> ${WORKSPACE}/failresult.html "
                                     }
 
                                 };
@@ -146,63 +146,68 @@ def call() {
                             if (fileExists("${WORKSPACE}/sucessresult.html")) {
                                 def emailBodySuccess = readFile "${WORKSPACE}/sucessresult.html"
                                 def emailBodyFail = readFile "${WORKSPACE}/failresult.html"
-                                def productList = readFile "${WORKSPACE}/WUM_LOGS/product-list.txt"
+                                String productList = readFile "${PRODUCT_LIST}"
+                                productList = convertToHtml(productList);
                                 def updateNo = readFile "${WORKSPACE}/WUM_LOGS/product-id-list.txt"
 
-                                send("Scenario Test Results for WUM Updates! #(${env.BUILD_NUMBER}) - WSO2 TestGrid", """
-<div>
-  <table border="0" cellspacing="0" cellpadding="0" valign='top' width="80%">
+                  send("Scenario Test Results for WUM Updates! #(${env.BUILD_NUMBER}) - WSO2 TestGrid", """
+<div style="padding-left: 10px">
+  <div style="height: 4px; background-image: linear-gradient(to right, orange, black);">
+
+  </div>
+  <table border="0" cellspacing="0" cellpadding="0" valign='top'>
+    <td>
+      <h1>Scenario test results for <span style="color: #e46226;">WUM updates</span>
+      </h1>
+    </td>
+
     <td>
       <img src="http://cdn.wso2.com/wso2/newsletter/images/nl-2017/nl2017-wso2-logo-wb.png"/>
     </td>
-    <td>
-      <h1>Scenario Test <span style="color: #e46226;"> Results for WUM Updates</span>
-    </h1>
-  </td>
-</table>
-<div style="margin: auto; background-color: #ffffff;">
-  <p style="height:10px;font-family: Lucida Grande;font-size: 20px;">
-    <font color="black">
-      <b> Testgrid Job Status </b>
-    </font>
-  </p>
-  <table cellspacing="0" cellpadding="1" border="1" bgcolor="#f0f0f0" width="80%">
-    <colgroup>
-      <col width="130"/>
-      <col width="130"/>
-    </colgroup>
-    <tr style="border: 1px solid black;">
-      <th bgcolor="#33cc33">Success Jobs</th>
-      <th bgcolor="#cc3300">Failed/Unstable Jobs</th>
-    </tr>
-    <tr>
-      <td>${emailBodySuccess}</td>
-      <td>${emailBodyFail}</td>
-    </tr>
   </table>
-  <br />
-  <p style="height:10px;font-family:Lucida Grande;font-size: 20px;">
-    <font color="black">
-      <b>Product Information</b>
-    </font>
-  </p>
-  <table cellspacing="0" cellpadding="1" border="1" bgcolor="#f0f0f0">
-    <colgroup>
-      <col width="130"/>
-      <col width="130"/>
-    </colgroup>
-    <tr style="border: 1px solid black;">
-      <th bgcolor="#ffb84d">Product List with Version</th>
-      <th bgcolor="#ffb84d">Product Updated No</th>
-    </tr>
-    <tr>
-      <td>${productList}</td>
-      <td>${updateNo}</td>
-    </tr>
-  </table>
-  <br />
-  <em>Tested by WSO2 TestGrid.</em>
-</div>
+  <div style="margin: auto; background-color: #ffffff;">
+    <p style="height:10px;font-family: Lucida Grande;font-size: 20px;">
+      <font color="black">
+        <b> Testgrid job status </b>
+      </font>
+    </p>
+    <table cellspacing="0" cellpadding="0" border="2" bgcolor="#f0f0f0" width="80%">
+      <colgroup>
+        <col width="150"/>
+        <col width="150"/>
+      </colgroup>
+      <tr style="border: 1px solid black; font-size: 16px;">
+        <th bgcolor="#05B349" style="padding-top: 3px; padding-bottom: 3px">Success jobs</th>
+        <th bgcolor="#F44336" style="black">Failed/Unstable jobs</th>
+      </tr>
+      <tr>
+        <td>${emailBodySuccess}</td>
+        <td>${emailBodyFail}</td>
+      </tr>
+    </table>
+    <br/>
+    <p style="height:10px;font-family:Lucida Grande;font-size: 20px;">
+      <font color="black">
+        <b>Product information</b>
+      </font>
+    </p>
+    <table cellspacing="0" cellpadding="1" border="1" width="80%" style="font-size: 16px; background-color: #f0f0f0">
+      <colgroup>
+        <col width="150"/>
+        <col width="150"/>
+      </colgroup>
+      <tr style="border: 1px solid black; padding-top: 3px; padding-bottom: 3px; background-color: #9E9E9E;">
+        <th>Product version</th>
+        <th>Update no.</th>
+      </tr>
+      <tr>
+        <td>${productList}</td>
+        <td>${updateNo}</td>
+      </tr>
+    </table>
+    <br/>
+    <em>Tested by WSO2 TestGrid.</em>
+  </div>
 </div>
                             """)
 
@@ -234,4 +239,13 @@ def send(subject, content) {
   emailext(to: "${EMAIL_TO_LIST}",
           subject: subject,
           body: content, mimeType: 'text/html')
+}
+
+static def convertToHtml(String productList) {
+  StringBuilder sb = new StringBuilder("<div>");
+  for (String p : productList.split("\n")) {
+    sb.append(p).append("<br/>")
+  }
+  sb.append("</div>")
+  return sb.toString()
 }
