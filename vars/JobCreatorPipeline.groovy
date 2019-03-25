@@ -71,22 +71,24 @@ def call() {
 
     stages {
       stage('Create Testgrid Jobs') {
-        steps {
-          deleteDir()
-          git url: "https://github.com/${env.GIT_REPO}", branch: "${env.GIT_BRANCH}"
+              steps {
+                  wrap([$class: 'MaskPasswordsBuildWrapper']) { // to enable mask-password plugin
+                  deleteDir()
+                  git url: "https://github.com/${env.GIT_REPO}", branch: "${env.GIT_BRANCH}"
 
-          script {
-            try {
-              def changedFiles = getChangedFiles()
-              process(changedFiles)
+                  script {
+                      try {
+                          def changedFiles = getChangedFiles()
+                          process(changedFiles)
 
-              synchronizeJenkinsWithGitRepo()
-              Jenkins.instance.reload()
-            } catch (e) {
-              handleException(e.getMessage(), e)
-            }
+                          synchronizeJenkinsWithGitRepo()
+                          Jenkins.instance.reload()
+                      } catch (e) {
+                          handleException(e.getMessage(), e)
+                      }
+                  }
+              }
           }
-        }
       }
     }
   }
