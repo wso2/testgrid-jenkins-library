@@ -69,82 +69,87 @@ def call() {
 
       stages {
         stage('Preparation') {
-          steps {
-            script {
-              sh """
-                echo ${JOB_CONFIG_YAML_PATH}
-                echo '  TEST_TYPE: ${TEST_TYPE}' >> ${JOB_CONFIG_YAML_PATH}
-                cd ${WORKSPACE}
-                rm -rf WUM_LOGS
-                mkdir WUM_LOGS
-                cd ${WORKSPACE}/WUM_LOGS
-                git clone ${SCENARIOS_REPOSITORY}
-
-                cd ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner
-                sh get-wum-uat-products.sh
-              """
+            steps {
+                wrap([$class: 'MaskPasswordsBuildWrapper']) { // to enable mask-password plugin
+                    script {
+                    sh """
+                        echo ${JOB_CONFIG_YAML_PATH}
+                        echo '  TEST_TYPE: ${TEST_TYPE}' >> ${JOB_CONFIG_YAML_PATH}
+                        cd ${WORKSPACE}
+                        rm -rf WUM_LOGS
+                        mkdir WUM_LOGS
+                        cd ${WORKSPACE}/WUM_LOGS
+                        git clone ${SCENARIOS_REPOSITORY}
+        
+                        cd ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner
+                        sh get-wum-uat-products.sh
+                      """
+                    }
+                }
             }
-          }
         }
 
         stage('parallel-run') {
-          steps {
-            script {
-              try {
-                def wumJobs = [:]
-                FILECONTENT = readFile "${JOB_LIST}"
-                sh """
-                  cd ${WORKSPACE}
-                  rm -rf sucessresult.html failresult.html
-                  touch sucessresult.html failresult.html
-                """
-                def jobNamesArray = FILECONTENT.split('\n')
-                for (line in jobNamesArray) {
-                  String jobName = line;
-                  wumJobs["job:" + jobName] = {
-                    def result = build(job: jobName, propagate: false).result
-                    if (result == 'SUCCESS') {
-                      def output = jobName + " - " + result + "<br/>"
-                      sh "echo $output >> ${WORKSPACE}/sucessresult.html "
+            steps {
+                wrap([$class: 'MaskPasswordsBuildWrapper']) {
+                    script {
+                        try {
+                            def wumJobs = [:]
+                            FILECONTENT = readFile "${JOB_LIST}"
+                            sh """
+                              cd ${WORKSPACE}
+                              rm -rf sucessresult.html failresult.html
+                              touch sucessresult.html failresult.html
+                            """
+                            def jobNamesArray = FILECONTENT.split('\n')
+                            for (line in jobNamesArray) {
+                                String jobName = line;
+                                wumJobs["job:" + jobName] = {
+                                    def result = build(job: jobName, propagate: false).result
+                                    if (result == 'SUCCESS') {
+                                        def output = jobName + " - " + result + "<br/>"
+                                        sh "echo $output >> ${WORKSPACE}/sucessresult.html "
 
-                    } else if (result == 'FAILURE') {
-                      def output = jobName + " - " + result + "<br/>"
-                      sh "echo $output >> ${WORKSPACE}/failresult.html "
+                                    } else if (result == 'FAILURE') {
+                                        def output = jobName + " - " + result + "<br/>"
+                                        sh "echo $output >> ${WORKSPACE}/failresult.html "
 
-                    } else if (result == 'UNSTABLE') {
-                      def output = jobName + " - " + result + "<br/>"
-                      sh "echo $output >> ${WORKSPACE}/failresult.html "
+                                    } else if (result == 'UNSTABLE') {
+                                        def output = jobName + " - " + result + "<br/>"
+                                        sh "echo $output >> ${WORKSPACE}/failresult.html "
+                                    }
+
+                                };
+                            }
+                            parallel wumJobs
+
+                        } catch (e) {
+                            echo "Few of the builds are not found to trigger. " + e
+                        }
                     }
-
-                  };
                 }
-                parallel wumJobs
-
-              } catch (e) {
-                echo "Few of the builds are not found to trigger. " + e
-              }
             }
-          }
         }
 
         stage('result') {
-          steps {
-            script {
-              try {
-                sh """
+                steps {
+                    wrap([$class: 'MaskPasswordsBuildWrapper']) {
+                        script {
+                        try {
+                            sh """
                     cd ${WORKSPACE}
                     cat sucessresult.html
                     cat failresult.html
                     cd ${WORKSPACE}/WUM_LOGS/
                 """
 
-                if (fileExists("${WORKSPACE}/sucessresult.html")) {
-                  def emailBodySuccess = readFile "${WORKSPACE}/sucessresult.html"
-                  def emailBodyFail = readFile "${WORKSPACE}/failresult.html"
-                  def productList = readFile "${WORKSPACE}/WUM_LOGS/product-list.txt"
-                  def updateNo = readFile "${WORKSPACE}/WUM_LOGS/product-id-list.txt"
+                            if (fileExists("${WORKSPACE}/sucessresult.html")) {
+                                def emailBodySuccess = readFile "${WORKSPACE}/sucessresult.html"
+                                def emailBodyFail = readFile "${WORKSPACE}/failresult.html"
+                                def productList = readFile "${WORKSPACE}/WUM_LOGS/product-list.txt"
+                                def updateNo = readFile "${WORKSPACE}/WUM_LOGS/product-id-list.txt"
 
-                  send("Scenario Test Results for WUM Updates! #(${env.BUILD_NUMBER}) - WSO2 TestGrid", """
+                                send("Scenario Test Results for WUM Updates! #(${env.BUILD_NUMBER}) - WSO2 TestGrid", """
 <div>
   <table border="0" cellspacing="0" cellpadding="0" valign='top' width="80%">
     <td>
@@ -201,21 +206,22 @@ def call() {
 </div>
                             """)
 
-                } else {
-                  log.info("No WUM Update found..!")
-                  send("Testgrid Test Results Summary for WUM Updates!", "No WUM Update found..!")
-                }
-                //Delete the WUM_LOGS
-                dir("${WORKSPACE}/WUM_LOGS") {
-                  deleteDir()
-                }
+                            } else {
+                                log.info("No WUM Update found..!")
+                                send("Testgrid Test Results Summary for WUM Updates!", "No WUM Update found..!")
+                            }
+                            //Delete the WUM_LOGS
+                            dir("${WORKSPACE}/WUM_LOGS") {
+                                deleteDir()
+                            }
 
-              } catch (e) {
-                echo "Error while sending mail: " + e.getMessage()
-                currentBuild.result = "FAILED"
-              }
+                        } catch (e) {
+                            echo "Error while sending mail: " + e.getMessage()
+                            currentBuild.result = "FAILED"
+                        }
+                    }
+                }
             }
-          }
         }
       }
 

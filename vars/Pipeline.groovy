@@ -67,115 +67,124 @@ def call() {
 
         stages {
             stage('Preparation') {
-                steps {
-                    script {
-                        currentBuild.result = "SUCCESS"
-                        try {
-                            alert.sendNotification('STARTED', "Initiation", "#build_status_verbose")
-                            alert.sendNotification('STARTED', "Initiation", "#build_status")
-                            deleteDir()
-                            pwd()
-                            // Increasing the TG JVM memory params
-                            runtime.increaseTestGridRuntimeMemory("2G", "2G")
-                            // Get testgrid.yaml from jenkins managed files
-                            if (props.TESTGRID_YAML_URL != null) {
-                                log.info("testgrid.yaml is retrieved from ${props.TESTGRID_YAML_URL}")
-                                withCredentials([string(credentialsId: "GIT_WUM_USERNAME", variable: 'user'),
-                                                 string(credentialsId: "GIT_WUM_PASSWORD", variable: 'pass')]) {
-                                    sh """
-                                        curl --user $user:$pass -k -o ${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION} ${props.TESTGRID_YAML_URL}
+                    steps {
+                        wrap([$class: 'MaskPasswordsBuildWrapper']) { // to enable mask-password plugin
+                            script {
+                            currentBuild.result = "SUCCESS"
+                            try {
+                                alert.sendNotification('STARTED', "Initiation", "#build_status_verbose")
+                                alert.sendNotification('STARTED', "Initiation", "#build_status")
+                                deleteDir()
+                                pwd()
+                                // Increasing the TG JVM memory params
+                                runtime.increaseTestGridRuntimeMemory("2G", "2G")
+                                // Get testgrid.yaml from jenkins managed files
+                                if (props.TESTGRID_YAML_URL != null) {
+                                    log.info("testgrid.yaml is retrieved from ${props.TESTGRID_YAML_URL}")
+                                    withCredentials([string(credentialsId: "GIT_WUM_USERNAME", variable: 'user'),
+                                                     string(credentialsId: "GIT_WUM_PASSWORD", variable: 'pass')]) {
+                                        sh """
+                                        curl --user $user:$pass -k -o ${props.WORKSPACE}/${
+                                            props.TESTGRID_YAML_LOCATION
+                                        } ${props.TESTGRID_YAML_URL}
                                     """
-                                }
-                            } else {
-                                sh """
+                                    }
+                                } else {
+                                    sh """
                                 git clone ${props.TESTGRID_JOB_CONFIG_REPOSITORY}
                                 """
-                                def jobConfigExists = fileExists "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml"
-                                log.info("The file location is set as " +
-                                        "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml and the exist flag is set to "
-                                        + jobConfigExists)
-                                if (jobConfigExists) {
-                                    log.info("The testgrid yaml is found in remote repository " +
-                                            "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml")
-                                    sh """
-                                    cp "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml" ${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}
+                                    def jobConfigExists = fileExists "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml"
+                                    log.info("The file location is set as " +
+                                            "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml and the exist flag is set to "
+                                            + jobConfigExists)
+                                    if (jobConfigExists) {
+                                        log.info("The testgrid yaml is found in remote repository " +
+                                                "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml")
+                                        sh """
+                                    cp "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml" ${props.WORKSPACE}/${
+                                            props.TESTGRID_YAML_LOCATION
+                                        }
                                 """
-                                } else {
-                                    log.info("The testgrid yaml is copied from the configFile provider.")
-                                    configFileProvider(
-                                            [configFile(fileId: "${props.PRODUCT}-testgrid-yaml", targetLocation:
-                                                    "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}")]) {
+                                    } else {
+                                        log.info("The testgrid yaml is copied from the configFile provider.")
+                                        configFileProvider(
+                                                [configFile(fileId: "${props.PRODUCT}-testgrid-yaml", targetLocation:
+                                                        "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}")]) {
+                                        }
                                     }
                                 }
-                            }
 
-                            def tgYamlContent = readYaml file: "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}"
-                            if (tgYamlContent.isEmpty()) {
-                                throw new Exception("Testgrid Yaml content is Empty")
-                            }
-                            // We need to set the repository properties
-                            props.EMAIL_TO_LIST = tgYamlContent.emailToList
-                            props.EMAIL_TO_LIST_INFRA = tgYamlContent.infraFailureEmailToList
-                            if(props.EMAIL_TO_LIST == null) {
-                                throw new Exception("emailToList property is not found in testgrid.yaml file")
-                            }
-                            log.info("Creating Job config in " + props.JOB_CONFIG_YAML_PATH)
-                            // Creating the job config file
-                            ws.createJobConfigYamlFile("${props.JOB_CONFIG_YAML_PATH}")
-                            sh """
+                                def tgYamlContent = readYaml file: "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}"
+                                if (tgYamlContent.isEmpty()) {
+                                    throw new Exception("Testgrid Yaml content is Empty")
+                                }
+                                // We need to set the repository properties
+                                props.EMAIL_TO_LIST = tgYamlContent.emailToList
+                                props.EMAIL_TO_LIST_INFRA = tgYamlContent.infraFailureEmailToList
+                                if (props.EMAIL_TO_LIST == null) {
+                                    throw new Exception("emailToList property is not found in testgrid.yaml file")
+                                }
+                                log.info("Creating Job config in " + props.JOB_CONFIG_YAML_PATH)
+                                // Creating the job config file
+                                ws.createJobConfigYamlFile("${props.JOB_CONFIG_YAML_PATH}")
+                                sh """
                                 echo The job-config.yaml content :
                                 cat ${props.JOB_CONFIG_YAML_PATH}
                                
                             """
-                            configFileProvider(
-                                    [configFile(fileId: "common-configs", targetLocation:
-                                            "${props.WORKSPACE}/common-configs.properties")]) {
+                                configFileProvider(
+                                        [configFile(fileId: "common-configs", targetLocation:
+                                                "${props.WORKSPACE}/common-configs.properties")]) {
+                                }
+                                // Providing nexus settings xml as a config file provider through Jenkins.
+                                // This is using only in WUM Test mode.
+                                configFileProvider(
+                                        [configFile(fileId: "uat-nexus-settings", targetLocation:
+                                                "${props.WORKSPACE}/uat-nexus-settings.xml")]) {
+                                }
+
+                                def commonConfigs = readProperties file: "${props.WORKSPACE}/common-configs.properties"
+                                tgYamlContent = config.addCommonConfigsToTestGridYaml(tgYamlContent, commonConfigs)
+
+                                //remove the existing testgrid yaml file before creating the new one
+                                sh " rm ${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}"
+                                //write the new testgrid yaml file after adding new config values
+                                writeYaml file: "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}", data: tgYamlContent
+
+                                log.info("Generating test plans for the product : " + props.PRODUCT)
+
+                                tgExecutor.generateTesPlans(props.PRODUCT, props.JOB_CONFIG_YAML_PATH)
+
+                                log.info("Stashing test plans to be used in different slave nodes")
+                                dir("${props.WORKSPACE}") {
+                                    stash name: "test-plans", includes: "test-plans/**"
+                                }
+                            } catch (e) {
+                                currentBuild.result = "FAILURE"
+                                echo e.toString()
+                            } finally {
+                                alert.sendNotification(currentBuild.result, "preparation", "#build_status_verbose")
                             }
-                            // Providing nexus settings xml as a config file provider through Jenkins. 
-                            // This is using only in WUM Test mode.
-                            configFileProvider(
-                                    [configFile(fileId: "uat-nexus-settings", targetLocation:
-                                            "${props.WORKSPACE}/uat-nexus-settings.xml")]) {
-                            }
-
-                            def commonConfigs = readProperties file:"${props.WORKSPACE}/common-configs.properties"
-                            tgYamlContent = config.addCommonConfigsToTestGridYaml(tgYamlContent,commonConfigs)
-
-                            //remove the existing testgrid yaml file before creating the new one
-                            sh " rm ${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}"
-                            //write the new testgrid yaml file after adding new config values
-                            writeYaml file: "${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}", data: tgYamlContent
-
-                            log.info("Generating test plans for the product : " + props.PRODUCT)
-
-                            tgExecutor.generateTesPlans(props.PRODUCT, props.JOB_CONFIG_YAML_PATH)
-
-                            log.info("Stashing test plans to be used in different slave nodes")
-                            dir("${props.WORKSPACE}") {
-                                stash name: "test-plans", includes: "test-plans/**"
-                            }
-                        } catch (e) {
-                            currentBuild.result = "FAILURE"
-                            echo e.toString()
-                        } finally {
-                            alert.sendNotification(currentBuild.result, "preparation", "#build_status_verbose")
                         }
+
                     }
                 }
             }
 
             stage('parallel-run') {
-                steps {
-                    script {
-                        log.info("Starting parallel execution stage.")
-                        def name = "unknown"
-                        try {
-                            def tests = testExecutor.getTestExecutionMap(props.EXECUTOR_COUNT)
-                            parallel tests
-                        } catch (e) {
-                            echo "Parallel test plan execution error: " + e.toString()
-                            currentBuild.result = "FAILURE"
-                            alert.sendNotification(currentBuild.result, "Parallel", "#build_status_verbose")
+                    steps {
+                        wrap([$class: 'MaskPasswordsBuildWrapper']) {
+                            script {
+                            log.info("Starting parallel execution stage.")
+                            def name = "unknown"
+                            try {
+                                def tests = testExecutor.getTestExecutionMap(props.EXECUTOR_COUNT)
+                                parallel tests
+                            } catch (e) {
+                                echo "Parallel test plan execution error: " + e.toString()
+                                currentBuild.result = "FAILURE"
+                                alert.sendNotification(currentBuild.result, "Parallel", "#build_status_verbose")
+                            }
                         }
                     }
                 }
@@ -184,45 +193,47 @@ def call() {
 
         post {
             always {
-                script {
-                    try {
-                        tgExecutor.finalizeTestPlans(props.PRODUCT, props.WORKSPACE)
-                        tgExecutor.generateEmail(props.PRODUCT, props.WORKSPACE)
-                        awsHelper.uploadCharts()
-                        def configUtil = new ConfigUtils()
-                        //Send email for failed results.
-                        if (fileExists("${props.WORKSPACE}/SummarizedEmailReport.html")) {
-                            def emailBody = readFile "${props.WORKSPACE}/SummarizedEmailReport.html"
-                            def environment = configUtil.getPropertyFromTestgridConfig("TESTGRID_ENVIRONMENT").toUpperCase()
-                            email.send(
-                                    "[${environment}][${currentBuild.result}] '${props.PRODUCT}' Test Results!" + " #(${env.BUILD_NUMBER})",
-                                    "${emailBody}");
+                wrap([$class: 'MaskPasswordsBuildWrapper']) {
+                    script {
+                        try {
+                            tgExecutor.finalizeTestPlans(props.PRODUCT, props.WORKSPACE)
+                            tgExecutor.generateEmail(props.PRODUCT, props.WORKSPACE)
+                            awsHelper.uploadCharts()
+                            def configUtil = new ConfigUtils()
+                            //Send email for failed results.
+                            if (fileExists("${props.WORKSPACE}/SummarizedEmailReport.html")) {
+                                def emailBody = readFile "${props.WORKSPACE}/SummarizedEmailReport.html"
+                                def environment = configUtil.getPropertyFromTestgridConfig("TESTGRID_ENVIRONMENT").toUpperCase()
+                                email.send(
+                                        "[${environment}][${currentBuild.result}] '${props.PRODUCT}' Test Results!" + " #(${env.BUILD_NUMBER})",
+                                        "${emailBody}");
 
-                            //If there is an infra error email generated send it to infra email List recipients
-                            if (fileExists("${props.WORKSPACE}/InfraErrorEmail.html")) {
-                                echo "Infra Email to List : ${props.EMAIL_TO_LIST_INFRA}"
-                                def infraErrorEmailBody = readFile "${props.WORKSPACE}/InfraErrorEmail.html"
-                                email.sendInfraEmail(
-                                        "[${environment}][${currentBuild.result}] '${props.PRODUCT}' Infra Failure!" + " #(${env.BUILD_NUMBER})",
-                                        "${infraErrorEmailBody}");
-                            }else{
-                                log.warn("InfraErrorEmail not found !")
+                                //If there is an infra error email generated send it to infra email List recipients
+                                if (fileExists("${props.WORKSPACE}/InfraErrorEmail.html")) {
+                                    echo "Infra Email to List : ${props.EMAIL_TO_LIST_INFRA}"
+                                    def infraErrorEmailBody = readFile "${props.WORKSPACE}/InfraErrorEmail.html"
+                                    email.sendInfraEmail(
+                                            "[${environment}][${currentBuild.result}] '${props.PRODUCT}' Infra Failure!" + " #(${env.BUILD_NUMBER})",
+                                            "${infraErrorEmailBody}");
+                                } else {
+                                    log.warn("InfraErrorEmail not found !")
+                                }
+
+                            } else {
+                                log.warn("No SummarizedEmailReport.html file found!!")
+                                email.send("'${props.PRODUCT}'#(${env.BUILD_NUMBER}) - SummarizedEmailReport.html " +
+                                        "file not found", "Could not find the summarized email report ${env.BUILD_URL}. This is an error in " +
+                                        "testgrid.")
                             }
-
-                        } else {
-                            log.warn("No SummarizedEmailReport.html file found!!")
-                            email.send("'${props.PRODUCT}'#(${env.BUILD_NUMBER}) - SummarizedEmailReport.html " +
-                                    "file not found", "Could not find the summarized email report ${env.BUILD_URL}. This is an error in " +
-                                    "testgrid.")
+                        } catch (e) {
+                            log.warn("Error during post step execution: " + e.getMessage())
+                            currentBuild.result = "FAILURE"
+                        } finally {
+                            alert.sendNotification(currentBuild.result, "completed", "#build_status")
+                            alert.sendNotification(currentBuild.result, "completed", "#build_status_verbose")
                         }
-                    } catch (e) {
-                        log.warn("Error during post step execution: " + e.getMessage())
-                        currentBuild.result = "FAILURE"
-                    } finally {
-                        alert.sendNotification(currentBuild.result, "completed", "#build_status")
-                        alert.sendNotification(currentBuild.result, "completed", "#build_status_verbose")
-                    }
 
+                    }
                 }
             }
         }

@@ -48,7 +48,8 @@ def call() {
         stages {
             stage('Receive web Hooks') {
                 steps {
-                    script {
+                    wrap([$class: 'MaskPasswordsBuildWrapper']) { // to enable mask-password plugin
+                        script {
                         echo "Received the web hook request!"
                         log.info("The git repo name : " + LocalProperties.GIT_REPOSITORY)
                         log.info("Git SSH URL : " + LocalProperties.GIT_BRANCH)
@@ -70,6 +71,7 @@ def call() {
                         def tgYamls = findTestGridYamls(props.WORKSPACE + "/" + LocalProperties.GIT_REPOSITORY)
                         processTgConfigs(tgYamls)
                         // We need to get a list of Jobs that are configured
+                        }
                     }
                 }
             }
