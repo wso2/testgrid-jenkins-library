@@ -105,6 +105,8 @@ node('COMPONENT_ECS') {
             }
         } else {
             echo 'Tests have failed. Please fix the tests in order to do the prod deployment.'
+            currentBuild.result = 'UNSTABLE'
+            currentBuild.description = 'Tests have failed. Please fix the tests in order to do the prod deployment.'
         }
 
     }
