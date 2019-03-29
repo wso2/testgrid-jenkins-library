@@ -222,7 +222,7 @@ def resolveCredentials(value){
  * @param propName
  * @return property value
  */
-private def getPropertyFromTestgridConfig(String propName) {
+public def getPropertyFromTestgridConfig(String propName) {
     def props = Properties.instance
     def properties = readProperties file: "${props.CONFIG_PROPERTY_FILE_PATH}"
     def prop = properties[propName]

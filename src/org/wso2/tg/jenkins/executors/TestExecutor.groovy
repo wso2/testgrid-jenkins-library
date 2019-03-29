@@ -26,6 +26,7 @@ import org.wso2.tg.jenkins.Properties
 import org.wso2.tg.jenkins.alert.Slack
 import org.wso2.tg.jenkins.util.AWSUtils
 import org.wso2.tg.jenkins.util.Common
+import org.wso2.tg.jenkins.util.ConfigUtils
 import org.wso2.tg.jenkins.util.FileUtils
 import org.wso2.tg.jenkins.util.RuntimeUtils
 
@@ -73,6 +74,7 @@ def runPlan(tPlan, testPlanId) {
 
 def getTestExecutionMap(parallel_executor_count) {
     def runtime = new RuntimeUtils()
+    def config = new ConfigUtils()
     def commonUtils = new Common()
     def log = new Logger()
     def props = Properties.instance
@@ -90,31 +92,41 @@ def getTestExecutionMap(parallel_executor_count) {
         tests["${name}"] = {
             node {
                 stage("Parallel Executor : ${executor}") {
+                    //Authenticating AWS_ECR login.
                     script {
-                        int processFileCount = 0
-                        if (files.length < parallelExecCount) {
-                            processFileCount = 1
-                        } else {
-                            processFileCount = files.length / parallelExecCount
-                        }
-                        runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
-                        if (executor == parallelExecCount) {
-                            for (int i = processFileCount * (executor - 1); i < files.length; i++) {
-                                /*IMPORTANT: Instead of using 'i' directly in your logic below,
-                                you should assign it to a new variable and use it.
-                                (To avoid same 'i-object' being refered)*/
-                                // Execution logic
-                                int fileNo = i
-                                testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/"
-                                        + files[fileNo].name)
-                                runPlan(files[i], testplanId)
+                        sh """
+                            \$(aws ecr get-login --no-include-email)
+                        """
+                    }
+                    docker.image(config.getPropertyFromTestgridConfig("TG_DOCKER_URI"))
+                            .inside("-v ${props.TESTGRID_HOME}:${props.TESTGRID_HOME} " +
+                            "-e AWS_ACCESS_KEY_ID -e AWS_DEFAULT_REGION -e AWS_SECRET_ACCESS_KEY") {
+                        script {
+                            int processFileCount = 0
+                            if (files.length < parallelExecCount) {
+                                processFileCount = 1
+                            } else {
+                                processFileCount = files.length / parallelExecCount
                             }
-                        } else {
-                            for (int i = 0; i < processFileCount; i++) {
-                                int fileNo = processFileCount * (executor - 1) + i
-                                testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/"
-                                        + files[fileNo].name)
-                                runPlan(files[fileNo], testplanId)
+                            runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
+                            if (executor == parallelExecCount) {
+                                for (int i = processFileCount * (executor - 1); i < files.length; i++) {
+                                    /*IMPORTANT: Instead of using 'i' directly in your logic below,
+                            you should assign it to a new variable and use it.
+                            (To avoid same 'i-object' being refered)*/
+                                    // Execution logic
+                                    int fileNo = i
+                                    testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/"
+                                            + files[fileNo].name)
+                                    runPlan(files[i], testplanId)
+                                }
+                            } else {
+                                for (int i = 0; i < processFileCount; i++) {
+                                    int fileNo = processFileCount * (executor - 1) + i
+                                    testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/"
+                                            + files[fileNo].name)
+                                    runPlan(files[fileNo], testplanId)
+                                }
                             }
                         }
                     }
@@ -145,7 +157,6 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
             ls ${props.WORKSPACE}/${testPlanId}/
         """
 
-        tryAddKnownHost("github.com")
         cloneRepo(props.INFRASTRUCTURE_REPOSITORY_URL, props.INFRASTRUCTURE_REPOSITORY_BRANCH, props.WORKSPACE + '/' +
                 testPlanId + '/workspace/' + props.INFRA_LOCATION)
 
