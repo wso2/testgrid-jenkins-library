@@ -38,7 +38,6 @@ class Properties {
     final static def INFRA_LOCATION               = "InfraRepository"
     final static def DEPLOYMENT_LOCATION          = "DeploymentRepository"
     final static def SCENARIOS_LOCATION           = "ScenariosRepository"
-    final static def DOCKER_RUN_TP_JAVA_HOME      = "/opt/java/openjdk/"
 
     // Job Properties which are set when init is called
     static def PRODUCT

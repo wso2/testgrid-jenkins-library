@@ -49,13 +49,12 @@ def generateTesPlans(def product, def configYaml) {
  * @param url Jenkins build url for the test plan
  */
 def runTesPlans(def product, def testPlanFilePath, def workspace, def url) {
-        def props = Properties.instance
-        def log = new Logger()
-        log.info("Running Test-Plan: " + testPlanFilePath + " of product " + product + " in the workspace " + workspace)
-        sh """
+    def props = Properties.instance
+    def log = new Logger()
+    log.info("Running Test-Plan: " + testPlanFilePath + " of product " + product + " in the workspace " + workspace)
+    sh """
         cd ${props.TESTGRID_DIST_LOCATION}/${props.TESTGRID_NAME}
         export TESTGRID_HOME="${props.TESTGRID_HOME}"
-        export JAVA_HOME="${props.DOCKER_RUN_TP_JAVA_HOME}"
         ./testgrid run-testplan --product ${product} \
             --file ${testPlanFilePath} --workspace ${workspace} --url ${url}       
     """
