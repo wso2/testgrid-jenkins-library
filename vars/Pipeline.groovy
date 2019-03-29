@@ -84,7 +84,6 @@ def call() {
                                     withCredentials([string(credentialsId: "GIT_WUM_USERNAME", variable: 'user'),
                                                      string(credentialsId: "GIT_WUM_PASSWORD", variable: 'pass')]) {
                                         sh """
-                                        mkdir -p ${props.WORKSPACE}
                                         curl --user $user:$pass -k -o ${props.WORKSPACE}/${
                                             props.TESTGRID_YAML_LOCATION
                                         } ${props.TESTGRID_YAML_URL}
@@ -92,9 +91,8 @@ def call() {
                                     }
                                 } else {
                                     sh """
-                                        git clone ${props.TESTGRID_JOB_CONFIG_REPOSITORY}
-                                        mkdir -p ${props.WORKSPACE}
-                                    """
+                                git clone ${props.TESTGRID_JOB_CONFIG_REPOSITORY}
+                                """
                                     def jobConfigExists = fileExists "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml"
                                     log.info("The file location is set as " +
                                             "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml and the exist flag is set to "
@@ -103,9 +101,10 @@ def call() {
                                         log.info("The testgrid yaml is found in remote repository " +
                                                 "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml")
                                         sh """
-                                        cp "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml" ${props.WORKSPACE}/${
-                                                props.TESTGRID_YAML_LOCATION}
-                                        """
+                                    cp "testgrid-job-configs/${props.PRODUCT}-testgrid.yaml" ${props.WORKSPACE}/${
+                                            props.TESTGRID_YAML_LOCATION
+                                        }
+                                """
                                     } else {
                                         log.info("The testgrid yaml is copied from the configFile provider.")
                                         configFileProvider(
