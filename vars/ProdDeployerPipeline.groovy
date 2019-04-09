@@ -43,7 +43,7 @@ node('COMPONENT_ECS') {
                 """
         }
     }
-    def test_result = "FAIL"
+    def test_result = "FAILURE"
     stage ('Test Dev Deployment'){
         def response1 = sh (returnStdout: true, script: "curl -X GET ${env.TEST_BUILD_URL}${env.TEST_TOKEN} --user ${env.TG_USER}:${env.TG_USER_PASS}")
         echo "Response1: " + response1
@@ -54,7 +54,7 @@ node('COMPONENT_ECS') {
             def json = new JsonSlurper().parseText(response)
             jobResult = json.result
         } // end while        
-        println("Phase1 test job completed with status: " + jobResult)
+        println("E2e test job completed with status: " + jobResult)
         test_result = jobResult;
     }
     stage('Deploy to Prod'){
@@ -105,8 +105,16 @@ node('COMPONENT_ECS') {
             }
         } else {
             echo 'Tests have failed. Please fix the tests in order to do the prod deployment.'
-            currentBuild.result = 'UNSTABLE'
-            currentBuild.description = 'Tests have failed. Please fix the tests in order to do the prod deployment.'
+            currentBuild.result = test_result
+            currentBuild.description = 'E2e Tests have failed. Please fix the tests in order to do the prod deployment.'
+            mail (
+                    to: "${TEAM_MEMBERS}",
+                    subject: "Testgrid prod deploy failed - (${env.BUILD_NUMBER})",
+                    body: "Hi folks,\n" +
+                            "\nSome issue with blackbox testing detected." +
+                            "\nFor details, visit ${env.BUILD_URL}." +
+                            "\n\nThanks!")
+
         }
 
     }
