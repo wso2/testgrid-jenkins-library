@@ -34,7 +34,8 @@ node('COMPONENT_ECS') {
                 scp -o StrictHostKeyChecking=no distribution/target/*.zip ${DEV_USER}@${DEV_HOST}:/testgrid/testgrid-home/testgrid-dist/WSO2-TestGrid.zip
                 ssh -o StrictHostKeyChecking=no ${DEV_USER}@${DEV_HOST} /bin/bash << EOF
                     cd /testgrid/testgrid-home/testgrid-dist/;
-                    unzip WSO2-TestGrid.zip -d WSO2-TestGrid-unzipped;
+                    rm -rf WSO2-TestGrid-unzipped;
+                    unzip -q WSO2-TestGrid.zip -d WSO2-TestGrid-unzipped;
                     curl -o ./WSO2-TestGrid-unzipped/WSO2-TestGrid/lib/mysql.jar ${MYSQL_DRIVER_LOCATION}
                     rm -rf WSO2-TestGrid-backup;
                     mv WSO2-TestGrid WSO2-TestGrid-backup;
@@ -92,7 +93,8 @@ node('COMPONENT_ECS') {
                         scp -o StrictHostKeyChecking=no distribution/target/*.zip ${PROD_USER}@${PROD_HOST}:/testgrid/testgrid-home/testgrid-dist/WSO2-TestGrid.zip
                         ssh -o StrictHostKeyChecking=no ${PROD_USER}@${PROD_HOST} /bin/bash << EOF
                             cd /testgrid/testgrid-home/testgrid-dist/;
-                            unzip WSO2-TestGrid.zip -d WSO2-TestGrid-unzipped;
+                            rm -rf WSO2-TestGrid-unzipped;
+                            unzip -q WSO2-TestGrid.zip -d WSO2-TestGrid-unzipped;
                             curl -o ./WSO2-TestGrid-unzipped/WSO2-TestGrid/lib/mysql.jar ${MYSQL_DRIVER_LOCATION}
                             rm -rf WSO2-TestGrid-backup;
                             mv WSO2-TestGrid WSO2-TestGrid-backup;
