@@ -70,20 +70,19 @@ node('COMPONENT_ECS') {
                             "\nYou have 4 hours left!\n\nThanks!");
             try {
                 timeout(time: 4, unit: 'HOURS') {
-                    userInput = input (
-                            message: 'Deploy to Prod environment?', parameters: [
-                            [$class: 'BooleanParameterDefinition', defaultValue: true, description: '', name: 'Please confirm you agree with this.']
-                    ])
+                    try {
+                        userInput = input(
+                                message: 'Deploy to Prod environment?', parameters: [
+                                [$class: 'BooleanParameterDefinition', defaultValue: true, description: '', name: 'Please confirm you agree with this.']
+                        ])
+                    } catch(err) {
+                        echo "Aborted the prod deployment by user."
+                        userInput = false
+                    }
                 }
             } catch(err) { // input false
-                def user = err.getCauses()[0].getUser()
-                if('SYSTEM' == user.toString()) { // SYSTEM means timeout.
-                    echo "Waiting timeout exceeded. Going forward with PROD deployment."
-                    userInput = true
-                } else {
-                    echo "Aborted by: [${user}]"
-                    userInput = false
-                }
+                echo "Waiting timeout exceeded. Going forward with PROD deployment."
+                userInput = true
             }
             if (userInput == true) {
                 sshagent(['testgrid-prod-key']) {
