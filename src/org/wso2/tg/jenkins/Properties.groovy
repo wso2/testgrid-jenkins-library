@@ -38,6 +38,7 @@ class Properties {
     final static def INFRA_LOCATION               = "InfraRepository"
     final static def DEPLOYMENT_LOCATION          = "DeploymentRepository"
     final static def SCENARIOS_LOCATION           = "ScenariosRepository"
+    final static def GKE_ACC_FILE_PATH            = "workspace/data-bucket/key.json"
 
     // Job Properties which are set when init is called
     static def PRODUCT
@@ -74,6 +75,8 @@ class Properties {
     static def EMAIL_TO_LIST_INFRA
     static def EMAIL_REPLY_TO
 
+    static def PROVISION
+
     /**
      * Initializing the properties
      */
@@ -106,6 +109,7 @@ class Properties {
         EMAIL_TO_LIST_INFRA = getJobProperty("EMAIL_TO_LIST_INFRA", false)
         EMAIL_REPLY_TO = getJobProperty("EMAIL_REPLY_TO", false);
         TESTGRID_YAML_URL = getJobProperty("TESTGRID_YAML_URL", false)
+        PROVISION= getJobProperty("PROVISION",false)
     }
 
     /**

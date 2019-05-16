@@ -138,6 +138,7 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
             mkdir -p ${props.WORKSPACE}/${testPlanId}
             mkdir -p ${props.WORKSPACE}/${testPlanId}/builds
             mkdir -p ${props.WORKSPACE}/${testPlanId}/workspace
+            mkdir -p ${props.WORKSPACE}/${testPlanId}/workspace/data-bucket
             #Cloning should be done before unstashing TestGridYaml since its going to be injected
             #inside the cloned repository
             cd ${props.WORKSPACE}/${testPlanId}/workspace
@@ -168,6 +169,16 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
             chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.SSH_KEY_FILE_PATH}
             chmod 400 ${props.TESTGRID_HOME}/${props.SSH_KEY_FILE_PATH_INTG}
         """
+        }
+        if(props.PROVISION == "KUBERNETES"){
+            log.info("Using the service account accessKey.json file for authentication login")
+            withCredentials([file(credentialsId: 'GKE_BOT_GCE_SERVICE_ACC', variable: 'keyLocation')]) {
+                sh """
+            cp ${keyLocation} ${props.WORKSPACE}/${testPlanId}/${props.GKE_ACC_FILE_PATH}
+            chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.GKE_ACC_FILE_PATH}
+        """
+            }
+
         }
         if (props.TEST_MODE == "WUM") {
             for (repo in scenarioConfigs) {
