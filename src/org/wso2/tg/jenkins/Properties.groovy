@@ -75,7 +75,7 @@ class Properties {
     static def EMAIL_TO_LIST_INFRA
     static def EMAIL_REPLY_TO
 
-    static def PROVISION
+    static def IAC_PROVIDER
 
     /**
      * Initializing the properties
@@ -109,7 +109,7 @@ class Properties {
         EMAIL_TO_LIST_INFRA = getJobProperty("EMAIL_TO_LIST_INFRA", false)
         EMAIL_REPLY_TO = getJobProperty("EMAIL_REPLY_TO", false);
         TESTGRID_YAML_URL = getJobProperty("TESTGRID_YAML_URL", false)
-        PROVISION= getJobProperty("PROVISION",false)
+        IAC_PROVIDER= getJobProperty("IAC_PROVIDER",false)
     }
 
     /**

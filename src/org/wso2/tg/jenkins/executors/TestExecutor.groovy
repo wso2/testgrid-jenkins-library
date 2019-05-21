@@ -170,7 +170,7 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
             chmod 400 ${props.TESTGRID_HOME}/${props.SSH_KEY_FILE_PATH_INTG}
         """
         }
-        if(props.PROVISION == "KUBERNETES"){
+        if(props.IAC_PROVIDER == "KUBERNETES"){
             log.info("Using the service account accessKey.json file for authentication login")
             withCredentials([file(credentialsId: 'GKE_BOT_GCE_SERVICE_ACC', variable: 'keyLocation')]) {
                 sh """
