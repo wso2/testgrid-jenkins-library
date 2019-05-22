@@ -138,7 +138,7 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
             mkdir -p ${props.WORKSPACE}/${testPlanId}
             mkdir -p ${props.WORKSPACE}/${testPlanId}/builds
             mkdir -p ${props.WORKSPACE}/${testPlanId}/workspace
-            mkdir -p ${props.WORKSPACE}/${testPlanId}/workspace/data-bucket
+            mkdir -p ${props.WORKSPACE}/${testPlanId}/data-bucket
             #Cloning should be done before unstashing TestGridYaml since its going to be injected
             #inside the cloned repository
             cd ${props.WORKSPACE}/${testPlanId}/workspace
