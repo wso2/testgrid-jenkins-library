@@ -38,7 +38,7 @@ class Properties {
     final static def INFRA_LOCATION               = "InfraRepository"
     final static def DEPLOYMENT_LOCATION          = "DeploymentRepository"
     final static def SCENARIOS_LOCATION           = "ScenariosRepository"
-    final static def GKE_ACC_FILE_PATH            = "/data-bucket/key.json"
+    final static def GKE_ACC_FILE_PATH            = "data-bucket/key.json"
 
     // Job Properties which are set when init is called
     static def PRODUCT
