@@ -122,6 +122,7 @@ def call() {
                                 props.EMAIL_TO_LIST = tgYamlContent.emailToList
                                 props.EMAIL_TO_LIST_INFRA = tgYamlContent.infraFailureEmailToList
                                 props.IAC_PROVIDER = tgYamlContent.infrastructureConfig.iacProvider
+                                log.info("iacProvider " + props.IAC_PROVIDER)
                                 if (props.EMAIL_TO_LIST == null) {
                                     throw new Exception("emailToList property is not found in testgrid.yaml file")
                                 }
