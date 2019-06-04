@@ -48,6 +48,7 @@ def send(subject,  content) {
  * @param content mail content
  */
 def sendInfraEmail(subject,  content){
+    def props = Properties.instance
     if (props.EMAIL_TO_LIST_INFRA != null) {
         Logger logger = new Logger();
         logger.info("sending infra failure report to :" + "${props.EMAIL_TO_LIST_INFRA}")

@@ -123,7 +123,6 @@ class Properties {
             ctx.echo "A mandatory prop " + property + " is empty or null"
             throw new Exception("A mandatory property " + property + " is empty or null")
         }
-        ctx.echo "Property : " + property + " value is set as " + prop
         return prop
     }
 
@@ -150,6 +149,7 @@ class Properties {
         def executorCount = getJobProperty(key, false)
         if (executorCount == null || executorCount.trim() == "") {
            executorCount = DEFAULT_EXECUTOR_COUNT
+          //TODO parallel execution is broken when the parallel count is > 12
         }
         return executorCount
     }

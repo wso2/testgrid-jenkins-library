@@ -216,11 +216,11 @@ def call() {
                                             "[${environment}][${currentBuild.result}] '${props.PRODUCT}' Infra Failure!" + " #(${env.BUILD_NUMBER})",
                                             "${infraErrorEmailBody}");
                                 } else {
-                                    log.warn("InfraErrorEmail not found !")
+                                    log.info("No InfraErrorEmail to send!")
                                 }
 
                             } else {
-                                log.warn("No SummarizedEmailReport.html file found!!")
+                                log.warn("No SummarizedEmailReport to send!")
                                 email.send("'${props.PRODUCT}'#(${env.BUILD_NUMBER}) - SummarizedEmailReport.html " +
                                         "file not found", "Could not find the summarized email report ${env.BUILD_URL}. This is an error in " +
                                         "testgrid.")
