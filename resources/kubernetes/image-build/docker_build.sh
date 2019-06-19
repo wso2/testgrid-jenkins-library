@@ -311,7 +311,7 @@ function download_docker_repo() {
           log_error "WGET failed to download the Git repo ${GIT_REPO_ZIP_URL}"
       fi
   else
-      if ! curl -H "Authorization: token ${ACCESS_TOKEN}" -H "Accept: application/vnd.github.v3.raw" -o ${ZIP_FILE_NAME} -L ${GIT_REPO_ZIP_URL} ; then
+      if ! wget --https-only --header="PRIVATE-TOKEN: ${GITHUB_ACCESS_TOKEN}" "${GIT_REPO_ZIP_URL}" -O ${ZIP_FILE_NAME}; then
        log_error "Curl failed to download the Git repo: ${GIT_REPO_ZIP_URL}. Exiting !!"
       fi
   fi
