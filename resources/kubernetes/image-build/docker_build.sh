@@ -320,6 +320,14 @@ function download_docker_repo() {
   fi
 
   log_info "\"${ZIP_FILE_NAME}\" is extracted !"
+
+  echo "trouble shooting: checking the file structure"
+  ls ${GIT_REPO_NAME}
+  ls ${GIT_REPO_NAME}/dockerfiles
+  ls ${GIT_REPO_NAME}/dockerfiles/ubuntu
+  ls ${GIT_REPO_NAME}/dockerfile/ubuntu/apim-analytics/
+  ls ${GIT_REPO_NAME}/dockerfile/ubuntu/apim-analytics/base/
+
 }
 
 install_dependencies
