@@ -48,7 +48,7 @@ ORACLE_JDBC_URL="http://download.oracle.com/otn/utilities_drivers/jdbc/183/ojdbc
 MSSQL_JDBC_URL="http://central.maven.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.0.0.jre8/mssql-jdbc-7.0.0.jre8.jar"
 POSTGRESQL_URL="https://jdbc.postgresql.org/download/postgresql-42.2.5.jar"
 
-ORACLE_JDK_URL="https://download.oracle.com/otn/java/jdk/8u211-b12/478a62b7d4e34b78b671c754eaaf38ab/jdk-8u211-linux-x64.tar.gz"
+ORACLE_JDK_URL="http://download.oracle.com/otn-pub/java/jdk/8u131-b11/d54c1d3a095b4ff2b6607d096fa80163/jdk-8u131-linux-x64.tar.gz"
 
 WUM_CONFIG_FILE=~/.wum3/config.yaml
 
@@ -247,7 +247,8 @@ fi
 log_info "${WSO2_PRODUCT_PACK} is extracted to ${DOCKERFILE_HOME}files/"
 
 # Download JDK
-if ! wget --https-only --user ${ORACLE_USER} --password ${ORACLE_PASS} ${ORACLE_JDK_URL}; then
+
+if ! wget --https-only -c --header "Cookie: oraclelicense=accept-securebackup-cookie" ${ORACLE_JDK_URL} ; then
   log_error "Cannot download Oracle JDK"
 fi
 
