@@ -41,7 +41,6 @@ WSO2_SERVER_VERSION="" # 5.3.0
 GIT_REPO_NAME="" # docker-is-master
 DOCKERFILE_DIR=""
 TAG=""
-ACCESS_TOKEN=""
 MAIL=""
 
 MYSQL_CONNECTOR_URL="http://central.maven.org/maven2/mysql/mysql-connector-java/5.1.45/mysql-connector-java-5.1.45.jar"
@@ -311,7 +310,7 @@ function download_docker_repo() {
           log_error "WGET failed to download the Git repo ${GIT_REPO_ZIP_URL}"
       fi
   else
-      if ! wget --https-only --header="PRIVATE-TOKEN: ${GITHUB_ACCESS_TOKEN}" "${GIT_REPO_ZIP_URL}" -O ${ZIP_FILE_NAME}; then
+      if ! wget --https-only --header="PRIVATE-TOKEN: ${ACCESS_TOKEN}" "${GIT_REPO_ZIP_URL}" -O ${ZIP_FILE_NAME}; then
        log_error "Curl failed to download the Git repo: ${GIT_REPO_ZIP_URL}. Exiting !!"
       fi
   fi
