@@ -41,7 +41,6 @@ WSO2_SERVER_VERSION="" # 5.3.0
 GIT_REPO_NAME="" # docker-is-master
 DOCKERFILE_DIR=""
 TAG=""
-ACCESS_TOKEN=""
 MAIL=""
 
 MYSQL_CONNECTOR_URL="http://central.maven.org/maven2/mysql/mysql-connector-java/5.1.45/mysql-connector-java-5.1.45.jar"
