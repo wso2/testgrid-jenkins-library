@@ -8,13 +8,13 @@ TAG_LATEST=1
 
 # Git repo URLs
 APIM_GIT_REPO_URL_260="https://github.com/NishikaDeSilva/docker-apim-support/archive/v2.6.0.1.zip"
-EI_GIT_REPO_URL_640="https://github.com/NishikaDeSilva/jenkins-test/blob/master/docker-products/ei-6.4.x.zip?raw=true"
-IS_GIT_REPO_URL_570="https://github.com/NishikaDeSilva/jenkins-test/blob/master/docker-products/is-5.7.x.zip?raw=true"
+EI_GIT_REPO_URL_640="https://github.com/NishikaDeSilva/docker-ei-support/archive/v6.4.0.zip"
+IS_GIT_REPO_URL_570="https://github.com/NishikaDeSilva/docker-is-support/archive/v5.7.0.zip"
 
 # name of the unzipped directory
 APIM_GIT_REPO_NAME_260="docker-apim-support-2.6.0.1"
-EI_GIT_REPO_NAME_640="docker-ei-6.4.x"
-IS_GIT_REPO_NAME_570="docker-is-5.7.x"
+EI_GIT_REPO_NAME_640="docker-ei-support-6.4.0"
+IS_GIT_REPO_NAME_570="docker-is-support-5.7.0"
 
 echo "----------------------------------------Building new images with latest updates--------------------------------------------------"
 
@@ -54,9 +54,9 @@ echo "---------------------------------------------------------Building wso2ei-b
       --product-name "wso2ei" \
       --wso2-server-version "6.4.0" \
       --git-repo-name ${EI_GIT_REPO_NAME_640} \
-      --docker-file-dir "ubuntu/integrator/" \
+      --docker-file-dir "ubuntu/analytics/base/" \
       --tag "6.4.0" \
-      --docker-repo-name "wso2ei-base" \
+      --docker-repo-name "wso2ei" \
       --mail ${MAIL} \
 
 
