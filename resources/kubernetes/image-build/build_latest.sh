@@ -21,12 +21,12 @@ echo "----------------------------------------Building new images with latest up
 echo "----------------------------------------Building wso2am-2.6.0---------------------------------------------------------"
       ./docker_build.sh --log-file ${LOG_FILE} \
       --git-repo-zip-url ${APIM_GIT_REPO_URL_260} \
-      --product-name "wso2am" \
+      --product-name "wso2am-analytics" \
       --wso2-server-version "2.6.0" \
       --git-repo-name ${APIM_GIT_REPO_NAME_260} \
       --docker-file-dir "ubuntu/apim-analytics/base/" \
       --tag "2.6.0" \
-      --docker-repo-name "wso2am" \
+      --docker-repo-name "wso2am-analytics" \
       --mail ${MAIL} \
 
       if [ $? -ne 0 ]; then
