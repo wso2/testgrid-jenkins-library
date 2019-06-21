@@ -32,7 +32,7 @@ CLUSTER_NAME="chathurangi-test-cluster"
 ZONE="us-central1-a"
 PROJECT_NAME="testgrid"
 REG_LOCATION="asia.gcr.io"
-PROJECT_ID="testgrid/chathurangi-test-cluster"
+PROJECT_ID="testgrid/wso2-docker/"
 
 LOG_FILE="" # log.txt
 GIT_REPO_ZIP_URL=""
@@ -41,7 +41,6 @@ WSO2_SERVER_VERSION="" # 5.3.0
 GIT_REPO_NAME="" # docker-is-master
 DOCKERFILE_DIR=""
 TAG=""
-MAIL=""
 
 MYSQL_CONNECTOR_URL="http://central.maven.org/maven2/mysql/mysql-connector-java/5.1.45/mysql-connector-java-5.1.45.jar"
 ORACLE_JDBC_URL="http://download.oracle.com/otn/utilities_drivers/jdbc/183/ojdbc8.jar"
@@ -86,10 +85,6 @@ while (( "$#" )); do
       DOCKER_REPO_NAME=$2
       shift 2
       ;;
-    --mail)
-      MAIL=$2
-      shift 2
-      ;;
     --) # end argument parsing
       shift
       break
@@ -120,7 +115,6 @@ function log_info() {
 function log_error() {
     local err_msg=$@
     echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')][ERROR]: ${err_msg}" >&2 | tee -a ${LOG_FILE}
-    #echo ${err_msg} | mail -s "Weekly Docker Image Building"  ${MAIL}
     exit 1
 }
 
