@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # This will build Docker images for all the latest WSO2 products to use in testgrid
-#set -e
+set -o xtrace
+
 LOG_FILE="$(date +%F).log"
 AUTH_SERVER_URL="https://dockerauth.wso2.com/auth?service=WSO2%20Docker%20registry&scope="
-MAIL="nishika@wso2.com"
 TAG_LATEST=1
 
 # Git repo URLs
@@ -27,7 +27,6 @@ echo "----------------------------------------Building wso2am-2.6.0-------------
       --docker-file-dir "ubuntu/apim-analytics/base/" \
       --tag "2.6.0" \
       --docker-repo-name "wso2am-analytics" \
-      --mail ${MAIL} \
 
       if [ $? -ne 0 ]; then
        exit 1
@@ -42,7 +41,6 @@ echo "---------------------------------------------------------Building wso2is-5
       --docker-file-dir "ubuntu/is/"\
       --tag "5.7.0" \
       --docker-repo-name "wso2is" \
-      --mail ${MAIL} \
 
       if [ $? -ne 0 ]; then
        exit 1
@@ -57,7 +55,6 @@ echo "---------------------------------------------------------Building wso2ei-b
       --docker-file-dir "ubuntu/analytics/base/" \
       --tag "6.4.0" \
       --docker-repo-name "wso2ei" \
-      --mail ${MAIL} \
 
 
     if [ $? -ne 0 ]; then
