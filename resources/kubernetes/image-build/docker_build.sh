@@ -32,7 +32,7 @@ CLUSTER_NAME="chathurangi-test-cluster"
 ZONE="us-central1-a"
 PROJECT_NAME="testgrid"
 REG_LOCATION="asia.gcr.io"
-PROJECT_ID="testgrid/wso2-docker/"
+PROJECT_ID="testgrid/wso2-docker"
 
 LOG_FILE="" # log.txt
 GIT_REPO_ZIP_URL=""
@@ -79,10 +79,6 @@ while (( "$#" )); do
       ;;
     --tag)
       TAG=$2
-      shift 2
-      ;;
-    --docker-repo-name)
-      DOCKER_REPO_NAME=$2
       shift 2
       ;;
     --) # end argument parsing
@@ -169,10 +165,6 @@ function install_dependencies() {
     log_info "wum-3.0.5-linux-i586.tar.gz is extracted successfully."
     export PATH=$PATH:/usr/local/wum/bin
 
-    if ! wum init -u ${WUM_USERNAME} -p ${WUM_PASSWORD}; then
-      log_info "WUM initiation failed for ${WUM_USERNAME}"
-    fi
-
   fi
 
   cd ..
@@ -197,6 +189,10 @@ function is_uat(){
 }
 
 function get_wum_update() {
+
+    if ! wum init -u ${WUM_USERNAME} -p ${WUM_PASSWORD}; then
+      log_error "WUM initiation failed for ${WUM_USERNAME}"
+    fi
 
     if ! $(wum list | grep -q ${PRODUCT}) ; then
        log_info "${PRODUCT} is not configured !."

@@ -3,8 +3,6 @@
 set -o xtrace
 
 LOG_FILE="$(date +%F).log"
-AUTH_SERVER_URL="https://dockerauth.wso2.com/auth?service=WSO2%20Docker%20registry&scope="
-TAG_LATEST=1
 
 # Git repo URLs
 APIM_GIT_REPO_URL_260="https://github.com/NishikaDeSilva/docker-apim-support/archive/v2.6.0.1.zip"
@@ -26,7 +24,6 @@ echo "----------------------------------------Building wso2am-2.6.0-------------
       --git-repo-name ${APIM_GIT_REPO_NAME_260} \
       --docker-file-dir "ubuntu/apim-analytics/base/" \
       --tag "2.6.0" \
-      --docker-repo-name "wso2am-analytics" \
 
       if [ $? -ne 0 ]; then
        exit 1
@@ -40,7 +37,6 @@ echo "---------------------------------------------------------Building wso2is-5
       --git-repo-name ${IS_GIT_REPO_NAME_570} \
       --docker-file-dir "ubuntu/is/"\
       --tag "5.7.0" \
-      --docker-repo-name "wso2is" \
 
       if [ $? -ne 0 ]; then
        exit 1
@@ -54,7 +50,6 @@ echo "---------------------------------------------------------Building wso2ei-b
       --git-repo-name ${EI_GIT_REPO_NAME_640} \
       --docker-file-dir "ubuntu/analytics/base/" \
       --tag "6.4.0" \
-      --docker-repo-name "wso2ei" \
 
 
     if [ $? -ne 0 ]; then
