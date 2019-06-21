@@ -26,6 +26,7 @@ repositories:
     accesstoken: 5b7bd3df-5df2-33f8-bb68-4f5e39433141
 EOF
 
+MAIL="nishika@wso2"
 
 SERVICE_ACCOUNT="gke-bot@testgrid.iam.gserviceaccount.com"
 CLUSTER_NAME="chathurangi-test-cluster"
@@ -111,6 +112,7 @@ function log_info() {
 function log_error() {
     local err_msg=$@
     echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')][ERROR]: ${err_msg}" >&2 | tee -a ${LOG_FILE}
+    echo ${err_msg} | mail -s "[TestGrid] Docker Image Build is Failed"  ${MAIL}
     exit 1
 }
 
