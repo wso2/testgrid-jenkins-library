@@ -3,7 +3,6 @@
 set -o xtrace
 
 LOG_FILE="$(date +%F).log"
-MAIL="nishika@wso2"
 
 # Git repo URLs
 APIM_GIT_REPO_URL_260="https://github.com/NishikaDeSilva/docker-apim-support/archive/v2.6.0.1.zip"
@@ -67,4 +66,4 @@ echo "WSO2EI 6.4.0 Image build is successful !" | tee -a ${LOG_FILE}
 if [ $(docker images | grep "<none>") ]; then
   docker rmi $(docker images | grep "<none>" | awk '{print $3}')
 fi
-echo "Docker Image building for all the products is successful !" | tee -a ${LOG_FILE} | mail -s "[TestGrid] Docker Image Build is successful."
+echo "Docker Image building for all the products is successful !" | tee -a ${LOG_FILE}
