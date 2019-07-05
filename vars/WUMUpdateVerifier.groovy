@@ -88,11 +88,11 @@ def call() {
             }
         }
 
-        stage('build-image') {
+        stage('build-docker-image') {
           steps {
-            echo "Building prodcut images with latest updates from UAT ... "
-            build job: 'nishika-wum-k8s-job-runner'
-            echo "Product image build is successful."
+            echo "Building prodcut Docker images with latest updates from WUM UAT ... "
+            build job: 'wum-k8s-docker-image-builder'
+            echo "Product Docker image build is successful."
           }
         }
 
