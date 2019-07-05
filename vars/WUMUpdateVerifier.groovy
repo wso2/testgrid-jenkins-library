@@ -80,13 +80,20 @@ def call() {
                         mkdir WUM_LOGS
                         cd ${WORKSPACE}/WUM_LOGS
                         git clone ${SCENARIOS_REPOSITORY}
-        
                         cd ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner
                         sh get-wum-uat-products.sh
                       """
                     }
                 }
             }
+        }
+
+        stage('build-image') {
+          steps {
+            echo "Building prodcut images with latest updates from UAT ... "
+            build job: 'nishika-wum-k8s-job-runner'
+            echo "Product image build is successful."
+          }
         }
 
         stage('parallel-run') {
