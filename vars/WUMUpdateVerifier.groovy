@@ -81,8 +81,18 @@ def call() {
                         cd ${WORKSPACE}/WUM_LOGS
                         git clone ${SCENARIOS_REPOSITORY}
                         cd ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner
-                        sh get-wum-uat-products.sh
+
+                        sh get-wum-uat-products.sh --check-update-status
                       """
+
+                      if ( $uat_status == 0 ){
+                        currentBuild.result='SUCCESS'
+                        return
+                      }
+                    sh """
+                      sh get-wum-uat-products.sh --get-job-list
+                    """
+
                     }
                 }
             }
