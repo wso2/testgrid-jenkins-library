@@ -81,16 +81,19 @@ def call() {
                         cd ${WORKSPACE}/WUM_LOGS
                         git clone ${SCENARIOS_REPOSITORY}
                         cd ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner
-
-                        sh get-wum-uat-products.sh --check-update-status
                       """
 
-                      if ( $uat_status == 0 ){
+                      def live_ts = sh(script: 'get-wum-uat-products --get-live-timestamp)', returnStdout: true).split("\r?\n")[2]
+                      def uat_ts = sh(script: 'get-wum-uat-products --get-uat-timestamp)', returnStdout: true).split("\r?\n")[2]
+
+                      echo "uat timestamp: ${uat_ts} | live timestamp: ${live_ts}"
+
+                      if ( "${uat_ts}" == "${live_ts}" ){
                         currentBuild.result='SUCCESS'
                         return
                       }
                     sh """
-                      sh get-wum-uat-products.sh --get-job-list
+                      sh get-wum-uat-products.sh --get-job-list ${live_ts}
                     """
 
                     }
