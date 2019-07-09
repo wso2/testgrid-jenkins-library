@@ -41,6 +41,12 @@ class Properties {
     final static def GKE_ACC_FILE_PATH            = "data-bucket/key.json"
     final static def GKE_K8S_SECRET_TLS_CERT   = "data-bucket/testgrid-certs-v2.crt"
     final static def GKE_K8S_SECRET_TLS_KEY = "data-bucket/testgrid-certs-v2.key"
+    final static def MANUAL_SCHEDULE              = "manual"
+    final static def DAILY_SCHEDULE               = "daily"
+    final static def WEEKLY_SCHEDULE              = "weekly"
+    final static def MONTHLY_SCHEDULE             = "monthly"
+    final static def MONTHLY_SCHEDULED_DAY        = 1
+    final static def WEEKLY_SCHEDULED_DAY         = Calendar.MONDAY
 
     // Job Properties which are set when init is called
     static def PRODUCT

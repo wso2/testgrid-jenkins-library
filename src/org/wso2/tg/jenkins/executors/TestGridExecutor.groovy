@@ -18,6 +18,7 @@
 
 package org.wso2.tg.jenkins.executors
 
+import hudson.model.Cause
 import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.Properties
 
@@ -34,10 +35,47 @@ def generateTesPlans(def product, def configYaml) {
         export TESTGRID_HOME="${props.TESTGRID_HOME}"
         ./testgrid generate-test-plan \
             --product ${product} \
-            --file ${configYaml}
+            --file ${configYaml} 
         echo "Following Test plans were generated : "
         ls -al ${props.WORKSPACE}/test-plans
     """
+}
+
+/**
+ * Select the schedule considering build cause. If the build has been triggered by a user return
+ * the schedule as manual and otherwise return time based period schedule.
+ *
+ * @param build current build
+ * @return schedule the schedule use for generate infrastructure combinations
+ */
+static def selectSchedule(build) {
+    def props = Properties.instance
+    // Check if the build was triggered by some jenkins user
+    def userId = build.rawBuild.getCause(Cause.UserIdCause.class).properties.userId
+    if (userId != null) {
+        return props.MANUAL_SCHEDULE
+    }
+    return selectTimePeriod()
+}
+
+/**
+ * Select the schedule considering the present date.
+ *
+ * @return schedule the schedule use for generate infrastructure combinations
+ */
+static def selectTimePeriod(){
+    def props = Properties.instance
+    // Check day of the month and day of the week
+    Calendar date = Calendar.getInstance()
+    int dayOfMonth = date.get(Calendar.DAY_OF_MONTH)
+    int dayOfTheWeek = date.get(Calendar.DAY_OF_WEEK)
+    if (dayOfMonth == props.MONTHLY_SCHEDULED_DAY) {
+        return props.MONTHLY_SCHEDULE
+    } else if (dayOfTheWeek == props.WEEKLY_SCHEDULED_DAY) {
+        return props.WEEKLY_SCHEDULE
+    } else {
+        return props.DAILY_SCHEDULE
+    }
 }
 
 /**

@@ -17,6 +17,7 @@
  */
 
 
+import hudson.model.Cause
 import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.PipelineContext
 import org.wso2.tg.jenkins.Properties
@@ -127,8 +128,10 @@ def call() {
                                     throw new Exception("emailToList property is not found in testgrid.yaml file")
                                 }
                                 log.info("Creating Job config in " + props.JOB_CONFIG_YAML_PATH)
+                                // Select schedule by using current build information
+                                def schedule = tgExecutor.selectSchedule(currentBuild)
                                 // Creating the job config file
-                                ws.createJobConfigYamlFile("${props.JOB_CONFIG_YAML_PATH}")
+                                ws.createJobConfigYamlFile("${props.JOB_CONFIG_YAML_PATH}", schedule)
                                 sh """
                                 echo The job-config.yaml content :
                                 cat ${props.JOB_CONFIG_YAML_PATH}
