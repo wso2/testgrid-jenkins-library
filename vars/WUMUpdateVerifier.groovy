@@ -83,8 +83,8 @@ def call() {
                         cd ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner
                       """
 
-                      def live_ts = sh(script: 'get-wum-uat-products.sh --get-live-timestamp', returnStdout: true).split("\r?\n")[2]
-                      def uat_ts = sh(script: 'get-wum-uat-products.sh --get-uat-timestamp', returnStdout: true).split("\r?\n")[2]
+                      def live_ts = sh(script: '${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-live-timestamp', returnStdout: true).split("\r?\n")[2]
+                      def uat_ts = sh(script: '${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-uat-timestamp', returnStdout: true).split("\r?\n")[2]
 
                       echo "uat timestamp: ${uat_ts} | live timestamp: ${live_ts}"
 
