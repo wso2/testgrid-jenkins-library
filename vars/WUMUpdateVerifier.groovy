@@ -90,6 +90,7 @@ def call() {
                       echo "uat timestamp: ${uat_ts} | live timestamp: ${live_ts}"
 
                       if ( "${uat_ts}" == "${live_ts}" ){
+                        echo "There are no updated product packs for the given timestamp in UAT. Hence Skipping the process."
                         currentBuild.result='SUCCESS'
                         return
                       }
