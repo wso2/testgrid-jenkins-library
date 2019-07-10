@@ -81,8 +81,23 @@ def call() {
                         cd ${WORKSPACE}/WUM_LOGS
                         git clone ${SCENARIOS_REPOSITORY}
                         cd ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner
-                        sh get-wum-uat-products.sh
+                        chmod +x get-wum-uat-products.sh
                       """
+
+                      def live_ts = sh(script: '${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-live-timestamp', returnStdout: true).split("\r?\n")[2]
+                      def uat_ts = sh(script: '${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-uat-timestamp', returnStdout: true).split("\r?\n")[2]
+
+                      echo "uat timestamp: ${uat_ts} | live timestamp: ${live_ts}"
+
+                      if ( "${uat_ts}" == "${live_ts}" ){
+                        echo "There are no updated product packs for the given timestamp in UAT. Hence Skipping the process."
+                        currentBuild.result='SUCCESS'
+                        return
+                      }
+                    sh """
+                      sh ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-job-list ${live_ts}
+                    """
+
                     }
                 }
             }
