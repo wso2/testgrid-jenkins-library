@@ -181,17 +181,17 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
             log.info("Public key is used to access the external endpoints of the deployment in the cluster")
             withCredentials([file(credentialsId: 'GKE_K8S_SECRET_TLS_CERT', variable: 'publicAccessKeyLocation')]) {
                 sh """
-            cp ${publicAccessKeyLocation} ${props.WORKSPACE}/${testPlanId}/${props.PUBLIC_ACCESS_KEY_LOCATION}
-            chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.PUBLIC_ACCESS_KEY_LOCATION}
+            cp ${publicAccessKeyLocation} ${props.WORKSPACE}/${testPlanId}/${props.GKE_K8S_SECRET_TLS_CERT}
+            chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.GKE_K8S_SECRET_TLS_CERT}
         """
             }
             withCredentials([file(credentialsId: 'GKE_K8S_SECRET_TLS_KEY', variable: 'privateAccessKeyLocation')]) {
                 sh """
-            cp ${privateAccessKeyLocation} ${props.WORKSPACE}/${testPlanId}/${props.PRIVATE_ACCESS_KEY_LOCATION}
-            chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.PRIVATE_ACCESS_CERTIFICATION}
+            cp ${privateAccessKeyLocation} ${props.WORKSPACE}/${testPlanId}/${props.GKE_K8S_SECRET_TLS_KEY}
+            chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.GKE_K8S_SECRET_TLS_KEY}
         """
             }
-           
+
         }
         if (props.TEST_MODE == "WUM") {
             for (repo in scenarioConfigs) {

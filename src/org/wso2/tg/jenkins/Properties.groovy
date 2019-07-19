@@ -39,9 +39,8 @@ class Properties {
     final static def DEPLOYMENT_LOCATION          = "DeploymentRepository"
     final static def SCENARIOS_LOCATION           = "ScenariosRepository"
     final static def GKE_ACC_FILE_PATH            = "data-bucket/key.json"
-    final static def PUBLIC_ACCESS_KEY_LOCATION   = "data-bucket/testgrid-certs-v2.crt"
-    final static def PRIVATE_ACCESS_KEY_LOCATION  = "data-bucket/testgrid-certs-v2.csr"
-    final static def PRIVATE_ACCESS_CERTIFICATION = "data-bucket/testgrid-certs-v2.key"
+    final static def GKE_K8S_SECRET_TLS_CERT   = "data-bucket/testgrid-certs-v2.crt"
+    final static def GKE_K8S_SECRET_TLS_KEY = "data-bucket/testgrid-certs-v2.key"
 
     // Job Properties which are set when init is called
     static def PRODUCT
