@@ -178,6 +178,25 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
             chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.GKE_ACC_FILE_PATH}
         """
             }
+            log.info("Public key is used to access the external endpoints of the deployment in the cluster")
+            withCredentials([file(credentialsId: 'PUBLIC_ACCESS_KEY', variable: 'publicAccessKeyLocation')]) {
+                sh """
+            cp ${publicAccessKeyLocation} ${props.WORKSPACE}/${testPlanId}/${props.PUBLIC_ACCESS_KEY_LOCATION}
+            chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.PUBLIC_ACCESS_KEY_LOCATION}
+        """
+            }
+            withCredentials([file(credentialsId: 'PRIVATE_ACCESS_KEY', variable: 'privateAccessKeyLocation')]) {
+                sh """
+            cp ${privateAccessKeyLocation} ${props.WORKSPACE}/${testPlanId}/${props.PRIVATE_ACCESS_KEY_LOCATION}
+            chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.PRIVATE_ACCESS_CERTIFICATION}
+        """
+            }
+            withCredentials([file(credentialsId: 'PRIVATE_ACCESS_CERTIFICATION', variable: 'privateAccessCertification')]) {
+                sh """
+            cp ${privateAccessCertification} ${props.WORKSPACE}/${testPlanId}/${props.PRIVATE_ACCESS_CERTIFICATION}
+            chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.PRIVATE_ACCESS_CERTIFICATION}
+        """
+            }
 
         }
         if (props.TEST_MODE == "WUM") {
