@@ -38,6 +38,9 @@ class Properties {
     final static def INFRA_LOCATION               = "InfraRepository"
     final static def DEPLOYMENT_LOCATION          = "DeploymentRepository"
     final static def SCENARIOS_LOCATION           = "ScenariosRepository"
+    final static def GKE_ACC_FILE_PATH            = "data-bucket/key.json"
+    final static def GKE_K8S_SECRET_TLS_CERT   = "data-bucket/testgrid-certs-v2.crt"
+    final static def GKE_K8S_SECRET_TLS_KEY = "data-bucket/testgrid-certs-v2.key"
 
     // Job Properties which are set when init is called
     static def PRODUCT
@@ -74,6 +77,8 @@ class Properties {
     static def EMAIL_TO_LIST_INFRA
     static def EMAIL_REPLY_TO
 
+    static def IAC_PROVIDER
+
     /**
      * Initializing the properties
      */
@@ -106,6 +111,7 @@ class Properties {
         EMAIL_TO_LIST_INFRA = getJobProperty("EMAIL_TO_LIST_INFRA", false)
         EMAIL_REPLY_TO = getJobProperty("EMAIL_REPLY_TO", false);
         TESTGRID_YAML_URL = getJobProperty("TESTGRID_YAML_URL", false)
+        IAC_PROVIDER= getJobProperty("IAC_PROVIDER",false)
     }
 
     /**

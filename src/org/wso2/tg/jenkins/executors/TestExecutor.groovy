@@ -138,6 +138,7 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
             mkdir -p ${props.WORKSPACE}/${testPlanId}
             mkdir -p ${props.WORKSPACE}/${testPlanId}/builds
             mkdir -p ${props.WORKSPACE}/${testPlanId}/workspace
+            mkdir -p ${props.WORKSPACE}/${testPlanId}/data-bucket
             #Cloning should be done before unstashing TestGridYaml since its going to be injected
             #inside the cloned repository
             cd ${props.WORKSPACE}/${testPlanId}/workspace
@@ -168,6 +169,29 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
             chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.SSH_KEY_FILE_PATH}
             chmod 400 ${props.TESTGRID_HOME}/${props.SSH_KEY_FILE_PATH_INTG}
         """
+        }
+        if(props.IAC_PROVIDER == "KUBERNETES"){
+            log.info("Using the service account accessKey.json file for authentication login")
+            withCredentials([file(credentialsId: 'GKE_BOT_GCE_SERVICE_ACC', variable: 'keyLocation')]) {
+                sh """
+            cp ${keyLocation} ${props.WORKSPACE}/${testPlanId}/${props.GKE_ACC_FILE_PATH}
+            chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.GKE_ACC_FILE_PATH}
+        """
+            }
+            log.info("Public key is used to access the external endpoints of the deployment in the cluster")
+            withCredentials([file(credentialsId: 'GKE_K8S_SECRET_TLS_CERT', variable: 'publicAccessKeyLocation')]) {
+                sh """
+            cp ${publicAccessKeyLocation} ${props.WORKSPACE}/${testPlanId}/${props.GKE_K8S_SECRET_TLS_CERT}
+            chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.GKE_K8S_SECRET_TLS_CERT}
+        """
+            }
+            withCredentials([file(credentialsId: 'GKE_K8S_SECRET_TLS_KEY', variable: 'privateAccessKeyLocation')]) {
+                sh """
+            cp ${privateAccessKeyLocation} ${props.WORKSPACE}/${testPlanId}/${props.GKE_K8S_SECRET_TLS_KEY}
+            chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.GKE_K8S_SECRET_TLS_KEY}
+        """
+            }
+
         }
         if (props.TEST_MODE == "WUM") {
             for (repo in scenarioConfigs) {
