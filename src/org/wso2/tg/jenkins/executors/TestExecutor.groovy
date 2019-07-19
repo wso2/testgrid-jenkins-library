@@ -179,25 +179,19 @@ def prepareWorkspace(testPlanId, scenarioConfigs) {
         """
             }
             log.info("Public key is used to access the external endpoints of the deployment in the cluster")
-            withCredentials([file(credentialsId: 'PUBLIC_ACCESS_KEY', variable: 'publicAccessKeyLocation')]) {
+            withCredentials([file(credentialsId: 'GKE_K8S_SECRET_TLS_CERT', variable: 'publicAccessKeyLocation')]) {
                 sh """
             cp ${publicAccessKeyLocation} ${props.WORKSPACE}/${testPlanId}/${props.PUBLIC_ACCESS_KEY_LOCATION}
             chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.PUBLIC_ACCESS_KEY_LOCATION}
         """
             }
-            withCredentials([file(credentialsId: 'PRIVATE_ACCESS_KEY', variable: 'privateAccessKeyLocation')]) {
+            withCredentials([file(credentialsId: 'GKE_K8S_SECRET_TLS_KEY', variable: 'privateAccessKeyLocation')]) {
                 sh """
             cp ${privateAccessKeyLocation} ${props.WORKSPACE}/${testPlanId}/${props.PRIVATE_ACCESS_KEY_LOCATION}
             chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.PRIVATE_ACCESS_CERTIFICATION}
         """
             }
-            withCredentials([file(credentialsId: 'PRIVATE_ACCESS_CERTIFICATION', variable: 'privateAccessCertification')]) {
-                sh """
-            cp ${privateAccessCertification} ${props.WORKSPACE}/${testPlanId}/${props.PRIVATE_ACCESS_CERTIFICATION}
-            chmod 400 ${props.WORKSPACE}/${testPlanId}/${props.PRIVATE_ACCESS_CERTIFICATION}
-        """
-            }
-
+           
         }
         if (props.TEST_MODE == "WUM") {
             for (repo in scenarioConfigs) {
