@@ -35,7 +35,7 @@ def generateTesPlans(def product, def configYaml) {
         export TESTGRID_HOME="${props.TESTGRID_HOME}"
         ./testgrid generate-test-plan \
             --product ${product} \
-            --file ${configYaml} 
+            --file ${configYaml}
         echo "Following Test plans were generated : "
         ls -al ${props.WORKSPACE}/test-plans
     """
