@@ -25,7 +25,7 @@ import org.wso2.tg.jenkins.Properties
  *
  * @param filePath full qualified path of jobconfig.yaml
  */
-def createJobConfigYamlFile(def filePath) {
+def createJobConfigYamlFile(def filePath, def schedule) {
 
     def props = Properties.instance
     def log = new Logger()
@@ -38,6 +38,7 @@ def createJobConfigYamlFile(def filePath) {
     echo 'deploymentRepository: "workspace/${props.DEPLOYMENT_LOCATION}/"' >> ${filePath}
     echo 'scenarioTestsRepository: "workspace/${props.SCENARIOS_LOCATION}"' >> ${filePath}
     echo 'testgridYamlLocation: "${props.TESTGRID_YAML_LOCATION}"' >> ${filePath}
+    echo 'schedule: "${schedule}"' >> ${filePath} 
     echo 'properties:' >> ${filePath}
     echo '  PRODUCT_GIT_URL: "${props.PRODUCT_GIT_URL}"' >> ${filePath}
     echo '  PRODUCT_GIT_BRANCH: "${props.PRODUCT_GIT_BRANCH}"' >> ${filePath}
