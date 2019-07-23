@@ -334,19 +334,19 @@ def handleException(Exception e, def testPlanId) {
     def log = new Logger()
     def props = Properties.instance
     def runtime = new RuntimeUtils()
-    def errorMsg = "Error while running test-plan ${testPlanId} : ${e}"
+    def errorMsg = "[Pipeline] Error while executing test-plan ${testPlanId} : ${e}"
     log.error(errorMsg)
     currentBuild.result = 'UNSTABLE'
 
     runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
 
     sh """
-        set -o xtrace
+        set +o xtrace
         if [ -d ${props.WORKSPACE}/${testPlanId}/builds/test-run.log ]; then
-            echo "I'm writing to ${props.WORKSPACE}/${testPlanId}/builds/test-run.log"
-            echo '${errorMsg}' >> ${props.WORKSPACE}/${testPlanId}/builds/test-run.log
+            echo "I'm writing to \${WORKSPACE}/${testPlanId}/builds/test-run.log"
+            echo '${errorMsg}' >> \${WORKSPACE}/${testPlanId}/builds/test-run.log
         else
-            echo "Can not find ${props.WORKSPACE}/${testPlanId}/builds/test-run.log"
+            echo "Cannot find \${WORKSPACE}/${testPlanId}/builds/test-run.log"
         fi
     """
 
