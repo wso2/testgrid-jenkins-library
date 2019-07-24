@@ -18,6 +18,7 @@
 
 package org.wso2.tg.jenkins.executors
 
+import com.cloudbees.groovy.cps.NonCPS
 import hudson.model.Cause
 import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.Properties
@@ -48,10 +49,17 @@ def generateTesPlans(def product, def configYaml) {
  * @param build current build
  * @return schedule the schedule use for generate infrastructure combinations
  */
+@NonCPS
 static def selectSchedule(build) {
     def props = Properties.instance
+    def log = new Logger()
     // Check if the build was triggered by some jenkins user
-    def userId = build.rawBuild.getCause(Cause.UserIdCause.class).properties.userId
+    def cause = build.rawBuild.getCause(Cause.UserIdCause.class)
+    if (cause == null) {
+        log.info("Build cause is not a manual trigger. Hence, using time based schedule selection.")
+        return selectTimePeriod()
+    }
+    def userId = cause.properties.userId
     if (userId != null) {
         return props.MANUAL_SCHEDULE
     }

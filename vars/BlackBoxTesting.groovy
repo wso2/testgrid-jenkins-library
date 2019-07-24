@@ -19,7 +19,7 @@
 node {
 
   stage('Test Setup') {
-    wit   hCredentials([string(credentialsId: 'TESTGRID-TEST-EMAIL', variable: 'EMAIL')]) {
+    withCredentials([string(credentialsId: 'TESTGRID-TEST-EMAIL', variable: 'EMAIL')]) {
       sh """
                     rm -rf ${env.CONFIG}
                     echo 'email=$EMAIL' > ${env.CONFIG}
@@ -47,7 +47,9 @@ node {
                     export JAVA_HOME=/testgrid/software/java/jdk1.8.0_161
                     export TEST_PROPS=${env.CONFIG}
                     cd testRepo/test/integration-tests
-                    mvn clean install;
+                    mvn clean install \
+                    -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
+                    -fae;
             """
   }
 }
