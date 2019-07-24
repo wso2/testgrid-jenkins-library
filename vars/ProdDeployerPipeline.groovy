@@ -46,12 +46,12 @@ node('COMPONENT_ECS') {
     }
     def test_result = "FAILURE"
     stage ('Test Dev Deployment'){
-        def response1 = sh (returnStdout: true, script: "curl -X GET ${env.TEST_BUILD_URL}${env.TEST_TOKEN} --user ${env.TG_USER}:${env.TG_USER_PASS}")
+        def response1 = sh (returnStdout: true, script: "curl -kX GET ${env.TEST_BUILD_URL}${env.TEST_TOKEN} --user ${env.TG_USER}:${env.TG_USER_PASS}")
         echo "Response1: " + response1
         def jobResult = null
         while(jobResult == null) {
             sleep 3
-            def response = sh (returnStdout: true, script: "curl --silent -X GET ${env.TEST_STATE_URL} --user ${env.TG_USER}:${env.TG_USER_PASS}")
+            def response = sh (returnStdout: true, script: "curl --silent -kX GET ${env.TEST_STATE_URL} --user ${env.TG_USER}:${env.TG_USER_PASS}")
             def json = new JsonSlurper().parseText(response)
             jobResult = json.result
         } // end while        
