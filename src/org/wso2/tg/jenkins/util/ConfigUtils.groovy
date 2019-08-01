@@ -36,8 +36,7 @@ import org.wso2.tg.jenkins.Properties
  */
 def addCommonConfigsToTestGridYaml(tgYamlContent, commonConfigs) {
 
-    echo "Populating testgrid yaml file with common configs"
-
+    echo "Injecting secrets into testgrid.yaml from Testgrid Jenkins"
     commonConfigs.each { key, value ->
 
         resolvedValue = resolveCredentials(value)
@@ -89,9 +88,9 @@ def addCommonConfigsToTestGridYaml(tgYamlContent, commonConfigs) {
                                 if (script.testgridProvidedParameters != null) {
                                     script.testgridProvidedParameters.each { param ->
                                         if (param.equals(split[split.length - 1])) {
+                                            //echo "Injecting to infra input parameters list: " + key
                                             if(script.inputParameters != null){
                                                 script.inputParameters.put(split[split.length - 1], value)
-                                                echo "Added new infra input Parameter " + key
                                             }else{
                                                 script.inputParameters = new LinkedHashMap<String,String>();
                                                 script.inputParameters.put(split[split.length - 1], value)
@@ -117,13 +116,13 @@ def addCommonConfigsToTestGridYaml(tgYamlContent, commonConfigs) {
                                 if (script.testgridProvidedParameters != null) {
                                     script.testgridProvidedParameters.each { param ->
                                         if (param.equals(split[split.length - 1])) {
+                                            //echo "Injecting to deployment input parameters list: " + key
                                             if(script.inputParameters!= null){
                                                 script.inputParameters.put(split[split.length - 1], value)
                                             }else{
                                                 script.inputParameters = new LinkedHashMap<String,String>();
                                                 script.inputParameters.put(split[split.length - 1], value)
                                             }
-                                            echo "Added new deployment input Parameter " + key
                                         }
                                     }
                                 }
@@ -143,7 +142,7 @@ def addCommonConfigsToTestGridYaml(tgYamlContent, commonConfigs) {
                         paramvalues.put(split[split.length - 1], value)
                         scenarioConfigs.get(0).put("infraParameters",paramvalues)
                     }
-                    echo "Added new scenario input Parameter " + key
+                    //echo "Added new test input Parameter " + key
                 } else {
                     if (scenarioConfigs.testgridProvidedParameters != null) {
                         scenarioConfigs.testgridProvidedParameters.each { paramList ->
@@ -156,7 +155,7 @@ def addCommonConfigsToTestGridYaml(tgYamlContent, commonConfigs) {
                                         paramvalues.put(split[split.length - 1], value)
                                         scenarioConfigs.get(0).put("inputParameters",paramvalues)
                                     }
-                                    echo "Added new scenario input Parameter " + key
+                                    //echo "Added new test input Parameter " + key
                                 }
                             }
                         }

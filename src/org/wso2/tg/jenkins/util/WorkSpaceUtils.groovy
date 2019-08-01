@@ -31,8 +31,8 @@ def createJobConfigYamlFile(def filePath, def schedule) {
     def log = new Logger()
     // TODO: this can be improved with inbuilt groovy support
     // https://jenkins.io/doc/pipeline/steps/pipeline-utility-steps/#writeyaml-write-a-yaml
-    log.info("Creating Job-config.yaml at : {$filePath}")
     sh """
+    set +x
     echo 'keyFileLocation: "${props.SSH_KEY_FILE_PATH}"' > ${filePath}
     echo 'infrastructureRepository: "workspace/${props.INFRA_LOCATION}/"' >> ${filePath}
     echo 'deploymentRepository: "workspace/${props.DEPLOYMENT_LOCATION}/"' >> ${filePath}

@@ -174,7 +174,6 @@ class Properties {
             ctx.echo "A mandatory credential is empty or null " + key
             throw new Exception("A mandatory property " + key + " is empty or null")
         }
-        ctx.echo "Credential for key : " + key + " is found."
         return cred
     }
 }
