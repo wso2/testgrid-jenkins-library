@@ -68,7 +68,13 @@ def runPlan(tPlan, testPlanId) {
         notifier.sendNotification(currentBuild.result, "Parallel \n Infra : " + name, "#build_status_verbose")
     }
     log.info("RESULT: ${currentBuild.result}")
-    awsHelper.uploadToS3(testPlanId)
+    def properties = readProperties file: "${props.CONFIG_PROPERTY_FILE_PATH}"
+    def testgrid_environment = properties['TESTGRID_ENVIRONMENT']
+    if("${testgrid_environment}" == "local"){
+        //archive logs locally
+    }else {
+        awsHelper.uploadToS3(testPlanId)
+    }
 }
 
 def getTestExecutionMap(parallel_executor_count) {

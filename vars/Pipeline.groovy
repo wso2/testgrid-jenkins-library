@@ -201,7 +201,13 @@ def call() {
                         try {
                             tgExecutor.finalizeTestPlans(props.PRODUCT, props.WORKSPACE)
                             tgExecutor.generateEmail(props.PRODUCT, props.WORKSPACE)
-                            awsHelper.uploadCharts()
+                            def properties = readProperties file: "${props.CONFIG_PROPERTY_FILE_PATH}"
+                            def testgrid_environment = properties['TESTGRID_ENVIRONMENT']
+                            if("${testgrid_environment}" == "local"){
+                                //archive logs locally
+                            }else {
+                                awsHelper.uploadCharts()
+                            }
                             def configUtil = new ConfigUtils()
                             //Send email for failed results.
                             if (fileExists("${props.WORKSPACE}/SummarizedEmailReport.html")) {

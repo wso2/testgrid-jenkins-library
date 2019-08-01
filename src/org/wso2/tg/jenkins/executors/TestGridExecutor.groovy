@@ -130,8 +130,16 @@ def finalizeTestPlans(def product, def workspace) {
  */
 def generateEmail(def product, def workspace) {
     def props = Properties.instance
+    def properties = readProperties file: "${props.CONFIG_PROPERTY_FILE_PATH}"
+    def testgrid_environment = properties['TESTGRID_ENVIRONMENT']
+    def display
+    if("${testgrid_environment}" == "local"){
+        display=":0"
+    }else {
+        display=":95.0"
+    }
     sh """
-       export DISPLAY=:95.0
+       export DISPLAY=${display}
        export TESTGRID_HOME="${props.TESTGRID_HOME}"
        cd ${props.TESTGRID_DIST_LOCATION}/${props.TESTGRID_NAME}
        ./testgrid generate-email \
@@ -149,8 +157,16 @@ def generateEmail(def product, def workspace) {
 def generateEscalationEmail(def workspace, def excludeProduct) {
     def props = Properties.instance
     def includeWUMScenarioRegEx = "^wum-sce.*\$"
+    def properties = readProperties file: "${props.CONFIG_PROPERTY_FILE_PATH}"
+    def testgrid_environment = properties['TESTGRID_ENVIRONMENT']
+    def display
+    if("${testgrid_environment}" == "local"){
+        display=":0"
+    }else {
+        display=":95.0"
+    }
     sh """
-       export DISPLAY=:95.0
+       export DISPLAY=${display}
        export TESTGRID_HOME="${props.TESTGRID_HOME}"
        cd ${props.TESTGRID_DIST_LOCATION}/${props.TESTGRID_NAME}
        ./testgrid generate-escalation-email \
