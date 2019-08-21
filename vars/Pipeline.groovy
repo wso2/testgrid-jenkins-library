@@ -203,9 +203,9 @@ def call() {
                             tgExecutor.generateEmail(props.PRODUCT, props.WORKSPACE)
                             def properties = readProperties file: "${props.CONFIG_PROPERTY_FILE_PATH}"
                             def testgrid_environment = properties['TESTGRID_ENVIRONMENT']
-                            if("${testgrid_environment}" == "local"){
+                            if ("${testgrid_environment}" == "local") {
                                 //archive logs locally
-                            }else {
+                            } else {
                                 awsHelper.uploadCharts()
                             }
                             def configUtil = new ConfigUtils()
