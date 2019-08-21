@@ -133,9 +133,9 @@ def generateEmail(def product, def workspace) {
     def properties = readProperties file: "${props.CONFIG_PROPERTY_FILE_PATH}"
     def testgrid_environment = properties['TESTGRID_ENVIRONMENT']
     def display
-    if("${testgrid_environment}" == "local"){
+    if ("${testgrid_environment}" == "local") {
         display=":0"
-    }else {
+    } else {
         display=":95.0"
     }
     sh """
@@ -160,9 +160,9 @@ def generateEscalationEmail(def workspace, def excludeProduct) {
     def properties = readProperties file: "${props.CONFIG_PROPERTY_FILE_PATH}"
     def testgrid_environment = properties['TESTGRID_ENVIRONMENT']
     def display
-    if("${testgrid_environment}" == "local"){
+    if ("${testgrid_environment}" == "local") {
         display=":0"
-    }else {
+    } else {
         display=":95.0"
     }
     sh """
