@@ -79,6 +79,7 @@ def getTestExecutionMap(parallel_executor_count) {
     def parallelExecCount = parallel_executor_count as int
     def name = "unknown"
     def tests = [:]
+    runtime.unstashTestPlansIfNotAvailable("${props.WORKSPACE}/testplans")
     def files = findFiles(glob: '**/test-plans/*.yaml')
     log.info("Found ${files.length} testplans")
     log.info("Parallel exec count " + parallelExecCount)
