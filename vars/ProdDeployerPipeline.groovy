@@ -23,7 +23,7 @@ import groovy.json.JsonSlurper
  * Note: this pipeline cannot be run inside groovy sandbox because of err.getCauses()[0] call.
  */
 node('COMPONENT_ECS') {
-    def MYSQL_DRIVER_LOCATION='http://central.maven.org/maven2/mysql/mysql-connector-java/6.0.6/mysql-connector-java-6.0.6.jar'
+    def MYSQL_DRIVER_LOCATION='https://repo1.maven.org/maven2/mysql/mysql-connector-java/6.0.6/mysql-connector-java-6.0.6.jar'
     stage('Deploy to Dev'){
         deleteDir()
         copyArtifacts(projectName: 'testgrid/testgrid', filter: 'distribution/target/*.zip, web/target/*.war, deployment-tinkerer/target/*.war');
