@@ -103,14 +103,6 @@ def call() {
             }
         }
 
-        stage('build-docker-image') {
-          steps {
-            echo "Building prodcut Docker images with latest updates from WUM UAT ... "
-            build job: 'wum-k8s-docker-image-builder'
-            echo "Product Docker image build is successful."
-          }
-        }
-
         stage('parallel-run') {
             steps {
                 wrap([$class: 'MaskPasswordsBuildWrapper']) {
