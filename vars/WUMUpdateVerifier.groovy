@@ -65,6 +65,7 @@ def call() {
         UPDATENO_LIST = "${WORKSPACE}/WUM_LOGS/updateNo-list.txt"
         PRODUCT_ID = "${WORKSPACE}/WUM_LOGS/product-id.txt"
         PRODUCT_ID_LIST = "${WORKSPACE}/WUM_LOGS/product-id-list.txt"
+        SCENARIO_BUILD_URL = "https://testgrid-live.private.wso2.com/admin/job/WUM/"
       }
 
       stages {
@@ -219,6 +220,13 @@ def call() {
         <td>${updateNo}</td>
       </tr>
     </table>
+    <br/>
+    <p style="height:10px;font-family:Lucida Grande;font-size: 20px;">
+      <font color="black">
+        <b>Build Info:</b>
+        <small><a href="${SCENARIO_BUILD_URL}">${SCENARIO_BUILD_URL}</a></small>
+      </font>
+    </p>
     <br/>
     <em>Tested by WSO2 TestGrid.</em>
   </div>
