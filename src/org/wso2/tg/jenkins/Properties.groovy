@@ -56,6 +56,7 @@ class Properties {
     final static def MONTHLY_SCHEDULE             = "monthly"
     final static def MONTHLY_SCHEDULED_DAY        = 1
     final static def WEEKLY_SCHEDULED_DAY         = Calendar.MONDAY
+    final static def AGENT_NODE_LABEL_IDENTIFIER  = "agentNodeLabel"
 
     // Job Properties which are set when init is called
     static def PRODUCT
@@ -93,6 +94,7 @@ class Properties {
     static def EMAIL_REPLY_TO
 
     static def IAC_PROVIDER
+    static def AGENT_NODE_LABEL
 
     /**
      * Initializing the properties
@@ -127,6 +129,8 @@ class Properties {
         EMAIL_REPLY_TO = getJobProperty("EMAIL_REPLY_TO", false);
         TESTGRID_YAML_URL = getJobProperty("TESTGRID_YAML_URL", false)
         IAC_PROVIDER= getJobProperty("IAC_PROVIDER",false)
+        AGENT_NODE_LABEL = getAgentNodeLabel()
+
     }
 
     /**
@@ -184,5 +188,13 @@ class Properties {
             throw new Exception("A mandatory property " + key + " is empty or null")
         }
         return cred
+    }
+
+    private def getAgentNodeLabel() {
+        prop = getJobProperty(AGENT_NODE_LABEL_IDENTIFIER, false)
+        if (prop == null || prop.trim() == "") {
+            prop = "default"
+        }
+        return prop
     }
 }
