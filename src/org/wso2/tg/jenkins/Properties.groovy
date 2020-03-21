@@ -191,10 +191,10 @@ class Properties {
     }
 
     private def getAgentNodeLabel() {
-        prop = getJobProperty(AGENT_NODE_LABEL_IDENTIFIER, false)
-        if (prop == null || prop.trim() == "") {
-            prop = "default"
+        def label = getJobProperty(AGENT_NODE_LABEL_IDENTIFIER, false)
+        if (label == null || label.trim() == "") {
+            label = "default"
         }
-        return prop
+        return label
     }
 }
