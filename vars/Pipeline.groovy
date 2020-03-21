@@ -48,7 +48,7 @@ def call() {
     pipeline {
         agent {
             node {
-                label ""
+                label "${props.AGENT_NODE_LABEL}"
                 customWorkspace "${props.WORKSPACE}"
             }
         }
