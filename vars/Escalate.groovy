@@ -42,9 +42,6 @@ def call() {
                 customWorkspace "${props.WORKSPACE}"
             }
         }
-        tools {
-            jdk 'jdk8'
-        }
 
         stages {
             stage('Generate Escalations') {
