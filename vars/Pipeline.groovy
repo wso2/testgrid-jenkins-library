@@ -150,6 +150,11 @@ def call() {
                                 def commonConfigs = readProperties file: "${props.WORKSPACE}/common-configs.properties"
                                 tgYamlContent = config.addCommonConfigsToTestGridYaml(tgYamlContent, commonConfigs)
 
+                                //check if infra includes have been overridden
+                                if(props.INFRA_OVERRIDES != null) {
+                                    tgYamlContent.infrastructureConfig.includes = props.INFRA_OVERRIDES
+                                }
+
                                 //remove the existing testgrid yaml file before creating the new one
                                 sh " rm ${props.WORKSPACE}/${props.TESTGRID_YAML_LOCATION}"
                                 //write the new testgrid yaml file after adding new config values

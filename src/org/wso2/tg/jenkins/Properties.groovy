@@ -57,6 +57,7 @@ class Properties {
     final static def MONTHLY_SCHEDULED_DAY        = 1
     final static def WEEKLY_SCHEDULED_DAY         = Calendar.MONDAY
     final static def AGENT_NODE_LABEL_IDENTIFIER  = "agentNodeLabel"
+    final static def INFRA_OVERRIDES_PARAM        = "infraOverrides"
 
     // Job Properties which are set when init is called
     static def PRODUCT
@@ -95,6 +96,7 @@ class Properties {
 
     static def IAC_PROVIDER
     static def AGENT_NODE_LABEL
+    static def INFRA_OVERRIDES
 
     /**
      * Initializing the properties
@@ -130,6 +132,7 @@ class Properties {
         TESTGRID_YAML_URL = getJobProperty("TESTGRID_YAML_URL", false)
         IAC_PROVIDER= getJobProperty("IAC_PROVIDER",false)
         AGENT_NODE_LABEL = getAgentNodeLabel()
+        INFRA_OVERRIDES = getInfraOverrides()
 
     }
 
@@ -196,5 +199,15 @@ class Properties {
             label = "default"
         }
         return label
+    }
+
+    private def getInfraOverrides () {
+        def infra_params = getJobProperty(INFRA_OVERRIDES_PARAM, false)
+        if (infra_params != null && infra_params.trim() != "") {
+            def param_list = infra_params.split(",")
+            return param_list
+        } else {
+            return null
+        }
     }
 }
