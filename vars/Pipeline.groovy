@@ -152,7 +152,10 @@ def call() {
 
                                 //check if infra includes have been overridden
                                 if(props.INFRA_OVERRIDES != null) {
-                                    tgYamlContent.infrastructureConfig.includes = props.INFRA_OVERRIDES
+                                    tgYamlContent.infrastructureConfig.includes = []
+                                    for (String item : props.INFRA_OVERRIDES) {
+                                        tgYamlContent.infrastructureConfig.includes.add(item)
+                                    }
                                 }
 
                                 //remove the existing testgrid yaml file before creating the new one
