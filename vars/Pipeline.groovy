@@ -154,7 +154,7 @@ def call() {
                                 if(props.INFRA_OVERRIDES != null) {
                                     tgYamlContent.infrastructureConfig.includes = []
                                     for (String item : props.INFRA_OVERRIDES) {
-                                        tgYamlContent.infrastructureConfig.includes.add(item)
+                                        tgYamlContent.infrastructureConfig.includes.add(item.trim())
                                     }
                                 }
 
