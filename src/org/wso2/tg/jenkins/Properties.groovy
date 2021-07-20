@@ -97,6 +97,7 @@ class Properties {
     static def IAC_PROVIDER
     static def AGENT_NODE_LABEL
     static def INFRA_OVERRIDES
+    static def TESTGRID_EMAIL_PASSWORD
 
     /**
      * Initializing the properties
@@ -133,6 +134,7 @@ class Properties {
         IAC_PROVIDER= getJobProperty("IAC_PROVIDER",false)
         AGENT_NODE_LABEL = getAgentNodeLabel()
         INFRA_OVERRIDES = getInfraOverrides()
+        TESTGRID_EMAIL_PASSWORD = getCredentials("TESTGRID_EMAIL_PASSWORD")
 
     }
 
