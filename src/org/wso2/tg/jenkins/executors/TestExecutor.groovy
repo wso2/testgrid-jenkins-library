@@ -59,7 +59,14 @@ def runPlan(tPlan, testPlanId) {
         name = commonUtil.extractInfraCombination(testplanId)
         echo "name: " + "${name}"
         notifier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
-        echo "Notifer done..."
+        echo "##### TG Executor: Parameters #####"
+        echo "PRODUCT: " +"${props.PRODUCT}"
+        echo "WORKSPACE: " +"${props.WORKSPACE}"
+        echo "tPlan: " +"${tPlan}"
+        echo "testPlanId: " +"${testPlanId}"
+        echo "url: " +"${url}"
+        echo "testPlanFilePath: " +"${props.WORKSPACE}/${testPlanId}"
+
         tgExecutor.runTesPlans(props.PRODUCT,
                 "${props.WORKSPACE}/${tPlan}", "${props.WORKSPACE}/${testPlanId}","${url}")
         //commonUtil.truncateTestRunLog(testPlanId)
