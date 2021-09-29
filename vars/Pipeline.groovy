@@ -190,6 +190,7 @@ def call() {
                             def name = "unknown"
                             try {
                                 def tests = testExecutor.getTestExecutionMap(props.EXECUTOR_COUNT)
+                                log.info("Running parallel tests")
                                 parallel tests
                             } catch (e) {
                                 echo "Parallel test plan execution error: " + e.toString()
@@ -207,6 +208,7 @@ def call() {
                 wrap([$class: 'MaskPasswordsBuildWrapper']) {
                     script {
                         try {
+                            log.info("Starting post stage.")
                             tgExecutor.finalizeTestPlans(props.PRODUCT, props.WORKSPACE)
                             tgExecutor.generateEmail(props.PRODUCT, props.WORKSPACE)
                             def properties = readProperties file: "${props.CONFIG_PROPERTY_FILE_PATH}"

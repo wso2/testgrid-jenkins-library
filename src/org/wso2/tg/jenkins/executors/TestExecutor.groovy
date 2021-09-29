@@ -102,6 +102,7 @@ def getTestExecutionMap(parallel_executor_count) {
         def executor = f
         testplanId = commonUtils.getTestPlanId("${props.WORKSPACE}/test-plans/" + files[f - 1].name)
         name = commonUtils.extractInfraCombination(testplanId)
+        echo "InfracombinationName: " + "${name}"
 
         tests["${name}"] = {
             node {
