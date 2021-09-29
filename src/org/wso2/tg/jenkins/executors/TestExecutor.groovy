@@ -57,7 +57,9 @@ def runPlan(tPlan, testPlanId) {
         curl --max-time 6 --retry 6 -o ${props.WORKSPACE}/${testPlanId}/workspace/${props.DEPLOYMENT_LOCATION}/deploy.sh https://raw.githubusercontent.com/wso2/testgrid/master/jobs/test-resources/deploy.sh
         """
         name = commonUtil.extractInfraCombination(testplanId)
+        echo "name: " + "${name}"
         notifier.sendNotification("STARTED", "parallel \n Infra : " + name, "#build_status_verbose")
+        echo "Notifer done..."
         tgExecutor.runTesPlans(props.PRODUCT,
                 "${props.WORKSPACE}/${tPlan}", "${props.WORKSPACE}/${testPlanId}","${url}")
         //commonUtil.truncateTestRunLog(testPlanId)
