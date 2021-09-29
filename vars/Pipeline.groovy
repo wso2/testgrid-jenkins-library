@@ -190,8 +190,9 @@ def call() {
                             def name = "unknown"
                             try {
                                 def tests = testExecutor.getTestExecutionMap(props.EXECUTOR_COUNT)
-                                log.info("Running parallel tests")
+                                log.info("Running parallel tests ...")
                                 parallel tests
+                                log.info("Running parallel tests completed ...")
                             } catch (e) {
                                 echo "Parallel test plan execution error: " + e.toString()
                                 currentBuild.result = "FAILURE"
@@ -210,6 +211,7 @@ def call() {
                         try {
                             log.info("Starting post stage.")
                             tgExecutor.finalizeTestPlans(props.PRODUCT, props.WORKSPACE)
+                            log.info("Finalize Test Plans completed ...")
                             tgExecutor.generateEmail(props.PRODUCT, props.WORKSPACE)
                             def properties = readProperties file: "${props.CONFIG_PROPERTY_FILE_PATH}"
                             def testgrid_environment = properties['TESTGRID_ENVIRONMENT']

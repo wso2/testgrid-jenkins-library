@@ -101,10 +101,15 @@ def runTesPlans(def product, def testPlanFilePath, def workspace, def url) {
     sh """
         cd ${props.TESTGRID_DIST_LOCATION}/${props.TESTGRID_NAME}
         export TESTGRID_HOME="${props.TESTGRID_HOME}"
+        echo "TESTGRID_HOME=${props.TESTGRID_HOME}"
+        echo "./testgrid run-testplan --product ${product} \
+            --file ${testPlanFilePath} --workspace ${workspace} --url ${url}"
+        sleep 3600
         ./testgrid run-testplan --product ${product} \
-            --file ${testPlanFilePath} --workspace ${workspace} --url ${url}       
+            --file ${testPlanFilePath} --workspace ${workspace} --url ${url}   
+        echo "run-testplan status: " + $?    
     """
-    echo "runTestPlans Finished..."
+    echo "runTesPlans Finished..."
 }
 
 /**
