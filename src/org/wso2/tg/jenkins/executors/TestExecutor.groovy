@@ -139,6 +139,7 @@ def getTestExecutionMap(parallel_executor_count) {
             }
         }
     }
+    log.info("getTestExecutionMap success...")
     return tests
 }
 
