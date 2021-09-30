@@ -352,7 +352,7 @@ def handleException(Exception e, def testPlanId) {
     def log = new Logger()
     def props = Properties.instance
     def runtime = new RuntimeUtils()
-    def errorMsg = "[Pipeline] Error while executing test-plan ${testPlanId} :${e}\n" + "${e.getStackTrace()}""
+    def errorMsg = "[Pipeline] Error while executing test-plan ${testPlanId} :${e}" + "${e.getStackTrace()}"
     log.error(errorMsg)
     currentBuild.result = 'UNSTABLE'
 
