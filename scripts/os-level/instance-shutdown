@@ -1,0 +1,39 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Required-Start:    $local_fs
+# Required-Stop:     $local_fs
+# Provides:          Shutdown or Reboot Exec
+# Default-Start:     4
+# Default-Stop:      0 6
+# Description:       Shutdown or Reboot
+### END INIT INFO
+
+case "$1" in
+    stop)
+        instance="replace_by_instance"
+        product="replace_by_product"
+        version="replace_by_version"
+        s3BucketLocation="replace_by_s3_bucket_location"
+        instanceId=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+        declare -a logDirectories
+        if [[ ${instance} == "puppetmaster" ]];
+        then
+            logDirectories=('/var/log/')
+        else
+            logDirectories=('/usr/lib/wso2/'${product}'/'${version}'/'${product}'-'${version}'/repository/logs/' '/usr/lib/wso2/'${product}'/'${version}'/'${product}'-'${version}'/repository/conf/' '/usr/lib/wso2/'${product}'/'${version}'/'${product}'-'${version}'/repository/deployment/')
+            s3BucketLocation=${s3BucketLocation}-${instanceId}
+        fi
+        mkdir /tmp/upload-dir
+        for dir in ${logDirectories[@]}; do
+            if [ -d ${dir} ];
+            then
+               cp -r ${dir} /tmp/upload-dir
+            fi
+        done
+        tar -zvcf /tmp/${instanceId}.tar -P /tmp/upload-dir
+        aws s3 cp /tmp/${instanceId}.tar s3://${s3BucketLocation}/
+        curl -v -X GET 'https://abcjaneth.free.beeceptor.com/my/api/path' -H 'some-header: some-value'
+	;;
+esac
+
+exit 0
