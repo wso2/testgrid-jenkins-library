@@ -16,7 +16,7 @@
         "DBPassword": "",
         "DBAllocationStorage": "20",
         "DBInstanceType": "db.t2.medium",
-        "MultipleResourceID": "",
+        "UniqueIdentifier": "",
         "StackName": "",
         "S3AccessKeyID": "",
         "S3SecretAccessKey": "",

@@ -13,7 +13,7 @@
 required_variables=3
 
 if [ $# -ne ${required_variables} ]; then
-    echo "${required_variables} variables required"
+    log_error "${required_variables} variables required"
     exit 0
 else
     parameter_variable=${1}

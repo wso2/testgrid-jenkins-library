@@ -20,9 +20,10 @@ import groovy.io.FileType
 import hudson.model.*
 
 def deploymentDirectories = []
-def updateLevel = ""
+def updateType = ""
 def s3BucketName = "janeth-tg-logs"
 def s3BuildLogPath = ""
+
 pipeline {
 agent {label 'pipeline-slave'}
 stages {
@@ -33,80 +34,79 @@ stages {
                     parameters([
                         string(
                             name: 'product',
-                            defaultValue: 'apim',
-                            description: 'The WSO2 product that needs to be tested from Test Grid.', 
+                            defaultValue: '',
+                            description: 'The WSO2 product that needs to be tested from TestGrid. Check the README file on https://github.com/wso2/testgrid-jenkins-library/tree/main/README.md',
                             trim: false
                         ),
                         string(
                             name: 'cfn_repo_url',
-                            defaultValue: 'https://github.com/janethavi/aws-apim.git',
-                            description: 'The WSO2 product CFN repo name', 
+                            defaultValue: '',
+                            description: 'The WSO2 product CFN repo name. Check the README file on https://github.com/wso2/testgrid-jenkins-library/tree/main/README.md', 
                             trim: false
                         ),
                         string(
                             name: 'product_version',
-                            defaultValue: '3.2.0',
-                            description: 'The product version that needs to be tested using testgrid.',
+                            defaultValue: '',
+                            description: 'The product version that needs to be tested using testgrid. Check the README file on https://github.com/wso2/testgrid-jenkins-library/tree/main/README.md',
                             trim: false
                         ),
                         string(
                             name: 'product_deployment_region',
-                            defaultValue: 'us-east-2',
-                            description: 'The region where the product stack is getting deployed.',
-                            trim: false
+                            defaultValue: '',
+                            description: 'The region where the product stack is getting deployed. Check the README file on https://github.com/wso2/testgrid-jenkins-library/tree/main/README.md'
                         ),
                         string(
                             name: 'os_list',
-                            defaultValue: 'CentOS7',
-                            description: 'The OS and its version. If there are multiple parameters, please add them by separating them by a ","(Comma).',
+                            defaultValue: '',
+                            description: 'The OS and its version. If there are multiple parameters, please add them by separating them by a ","(Comma). Check the README file on https://github.com/wso2/testgrid-jenkins-library/tree/main/README.md',
                             trim: false
                         ),
                         string(
                             name: 'jdk_list',
-                            defaultValue: 'OPEN_JDK8',
-                            description: 'The JDK and its version. If there are multiple parameters, please add them by separating them by a ","(Comma).',
+                            defaultValue: '',
+                            description: 'The JDK and its version. If there are multiple parameters, please add them by separating them by a ","(Comma). Check the README file on https://github.com/wso2/testgrid-jenkins-library/tree/main/README.md',
                             trim: false
                         ),
                         string(
                             name: 'database_list',
-                            defaultValue: 'MySQL-5.7',
-                            description: 'The Database type and its version. If there are multiple parameters, please add them by separating them by a ","(Comma).',
+                            defaultValue: '',
+                            description: 'The Database type and its version. If there are multiple parameters, please add them by separating them by a ","(Comma). Check the README file on https://github.com/wso2/testgrid-jenkins-library/tree/main/README.md',
                             trim: false
                         ),
                         booleanParam(
                             name: 'use_wum',
-                            defaultValue: true,
-                            description: 'If using WUM this should be true. If using U2 this should be false.'
+                            defaultValue: false,
+                            description: 'If using WUM this should be true. If using U2 this should be false. Check the README file on https://github.com/wso2/testgrid-jenkins-library/tree/main/README.md'
                         ),
                         string(
                             name: 'product_repository',
-                            defaultValue: 'https://github.com/janethavi/product-apim.git',
-                            description: 'The product repo where the test scripts are existing',
+                            defaultValue: '',
+                            description: 'The product repo where the test scripts are existing. Check the README file on https://github.com/wso2/testgrid-jenkins-library/tree/main/README.md',
                             trim: false
                         ),
                         string(
                             name: 'product_test_branch', 
-                            defaultValue: 'product-scenarios-3.2.0',
-                            description: 'The repo branch where the test script is existing',
+                            defaultValue: '',
+                            description: 'The repo branch where the test script is existing. Check the README file on https://github.com/wso2/testgrid-jenkins-library/tree/main/README.md',
                             trim: false
                         ),
                         string(
                             name: 'product_test_script', 
-                            defaultValue: 'product-scenarios/test.sh',
-                            description: 'The location of the test script',
+                            defaultValue: '',
+                            description: 'The location of the test script. Check the README file on https://github.com/wso2/testgrid-jenkins-library/tree/main/README.md',
                             trim: false
                         )
                     ])
                 ])
-                aws_repo_branch=""
-                if (use_wum.toBoolean(){
+                aws_repo_branch="" //need to exit if the branch name is invalid
+                if (use_wum.toBoolean()){
                     aws_repo_branch="${product_version}-new"
-                    updateLevel="wum"
+                    updateType="wum"
                 }else{
                     aws_repo_branch="${product_version}-u2-new"
-                    updateLevel="u2"
+                    updateType="u2"
                 }
-                dir(product) {
+                dir("aws-"+product) {
                     git branch: "${aws_repo_branch}",
                     credentialsId: "JANETH_GITHUB_TEMP",
                     url: "${cfn_repo_url}"
@@ -168,7 +168,7 @@ stages {
                     ./scripts/write-parameter-file.sh "S3OutputBucketLocation" '''+s3BuildLogPath+''' "${WORKSPACE}/parameters/parameters.json"
                     echo "Writing to parameter file completed!"
                     echo --- Preparing parameter files for deployments! ---
-                    ./scripts/parameter-file-handler.sh ${product} ${product_version} '''+updateLevel+'''
+                    ./scripts/deployment-builder.sh ${product} ${product_version} '''+updateType+'''
                 '''
             }
         }
@@ -209,9 +209,9 @@ post {
         '''
         archiveArtifacts artifacts: "build-${env.BUILD_NUMBER}/**/*.*", fingerprint: true
         script {
-            sendEmail(deploymentDirectories)
+            sendEmail(deploymentDirectories, updateType)
         }
-        cleanWs deleteDirs: true, notFailBuild: true
+        //cleanWs deleteDirs: true, notFailBuild: true
     }
 }
 }
@@ -220,21 +220,23 @@ def create_build_jobs(deploymentDirectory){
     return{
         stage("${deploymentDirectory}"){
             stage("Deploy ${deploymentDirectory}") {
-                println "Stack deploying..."
+                println "Deploying Stack:- ${deploymentDirectory}..."
                 String[] cloudformationLocation = []
                 switch(product) {
                     case "apim":
-                        cloudformationLocation = ["${WORKSPACE}/apim/apim/Minimum-HA/apim.yaml"]
+                        cloudformationLocation = ["${WORKSPACE}/aws-apim/apim/Minimum-HA/apim.yaml"]
                         break;
                     case "is":
                         // The deployment is done in the indexed order
-                        cloudformationLocation = ["${WORKSPACE}/is/is/Minimum-HA/identity.yaml", "${WORKSPACE}/is/is-samples/test-is-samples.yml"]
+                        cloudformationLocation = ["${WORKSPACE}/aws-is/is/Minimum-HA/identity.yaml", "${WORKSPACE}/aws-is/is-samples/test-is-samples.yml"]
                         break;
                     default:
-                        println("Product name is incorrect!");
+                        //check
+                        println("Product name is incorrect! Existing the execution");
+                        currentBuild.result = 'ABORTED'
                 }
                 sh'''
-                    ./scripts/deploy.sh '''+deploymentDirectory+''' '''+cloudformationLocation+''' 
+                    ./scripts/deployment-handler.sh '''+deploymentDirectory+''' '''+cloudformationLocation+''' 
                 '''
                 stage("Testing ${deploymentDirectory}") {
                     println "Deployment testing..."
@@ -253,10 +255,16 @@ def create_build_jobs(deploymentDirectory){
     }
 }
 
-def sendEmail(deploymentDirectories) {
+def sendEmail(deploymentDirectories, updateType) {
     def deployments = ""
     for (deploymentDirectory in deploymentDirectories){
         deployments = deployments + deploymentDirectory + "<br>"
+    }
+    
+    if (currentBuild.currentResult.equals("SUCCESS")){
+        headerColour = "#05B349"
+    }else{
+        headerColour = "#ff0000"
     }
     content="""
         <div style="padding-left: 10px">
@@ -282,8 +290,8 @@ def sendEmail(deploymentDirectories) {
             <col width="150"/>
         </colgroup>
         <tr style="border: 1px solid black; font-size: 16px;">
-            <th bgcolor="#05B349" style="padding-top: 3px; padding-bottom: 3px">Test Specification</th>
-            <th bgcolor="#05B349" style="black">Test Values</th>
+            <th bgcolor="${headerColour}" style="padding-top: 3px; padding-bottom: 3px">Test Specification</th>
+            <th bgcolor="${headerColour}" style="black">Test Values</th>
         </tr>
         <tr>
             <td>Product</td>
@@ -334,7 +342,7 @@ def sendEmail(deploymentDirectories) {
         <em>Tested by WSO2 Jenkins TestGrid Pipeline.</em>
         </div>
         """
-    subject="[Jenkins TestGrid] ${currentBuild.currentResult}- ${product.toUpperCase()}:${product_version} Build-#${env.BUILD_NUMBER}"
+    subject="[TestGrid][${updateType.toUpperCase()}][${product.toUpperCase()}:${product_version}][SCE]-Build ${currentBuild.currentResult}-#${env.BUILD_NUMBER}"
     emailext(to: "janeth@wso2.com",
             subject: subject,
             body: content, mimeType: 'text/html')

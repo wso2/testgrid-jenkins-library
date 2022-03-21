@@ -24,42 +24,50 @@ source ${currentScript}/common-functions.sh
 
 productDirectoryLocation=""
 
-function cloneResourceRepo(){
+function cloneTestRepo(){
     local githubUsername=$(extractParameters "GithubUserName" ${parameterFilePath})
     local githubPassword=$(extractParameters "GithubPassword" ${parameterFilePath})
     local cloneString=$(echo ${productRepository} | sed  's#https://#&'${githubUsername}':'${githubPassword}@'#')
 
-    echo "Cloning product repo to get test scripts"
+    log_info "Cloning product repo to get test scripts"
     git -C ${deploymentDirectory} clone ${cloneString} --branch ${productTestBranch}
+    if [[ $? != 0 ]];
+        then
+            log_error "Testing repo clone failed! Please check if the Git credentials or the test repo name is correct."
+            bash ${currentScript}/post-actions.sh ${deploymentName}
+            exit 1
+        else
+            log_info "Cloning the test repo was successfull!"
+        fi
     local repoName="$(basename ${productRepository} .git)"
     productDirectoryLocation="${deploymentDirectory}/${repoName}"
 }
 
 function deploymentTest(){
-    echo "Creating output directory"
+    log_info "Creating output directory"
     if [ -d "${testOutputDir}" ]; then
-        echo "Output directory already exists. Removing the existing output directory."
+        log_error "Output directory already exists. Removing the existing output directory."
         rm -r "${testOutputDir}"
     fi
     mkdir ${testOutputDir}
-    echo "Executing scenario tests!"
+    log_info "Executing scenario tests!"
     local scriptDir="${productDirectoryLocation}/${productTestScript}"
     local scriptDirPath=$(dirname ${scriptDir})
     cd ${scriptDirPath}
     source ${productDirectoryLocation}/${productTestScript} --input-dir "${deploymentDirectory}"  --output-dir "${testOutputDir}"
     if [ ${MVNSTATE} -gt 0 ];
     then
-        echo "Test Execution Failed with exit code ${MVNSTATE}"
-        echo "Extracting logs and exiting!"
+        log_error "Test Execution Failed with exit code ${MVNSTATE}"
+        log_error "Extracting logs and exiting!"
         bash ${currentScript}/post-actions.sh ${deploymentName}
         exit 1
     else
-        echo "Test Execution Passed!"
+        log_info "Test Execution Passed!"
     fi
 }
 
 function main(){
-    cloneResourceRepo
+    cloneTestRepo
     deploymentTest
 }
 
