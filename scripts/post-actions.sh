@@ -23,14 +23,14 @@ testLogsUploadLocation="s3://${S3OutputBucketLocation}/test-execution-logs"
 stackAvailable=false
 
 function uploadTestLogs(){
-    echo "The test executer logs will be uploaded to S3 Bucket."
-    echo "Upload location: ${testLogsUploadLocation}"
+    log_info "The test executer logs will be uploaded to S3 Bucket."
+    log_info "Upload location: ${testLogsUploadLocation}"
     aws s3 cp ${outputDirectory} ${testLogsUploadLocation} --recursive --quiet
     if [[ $? != 0 ]];
     then
-        echo "Error occured when uploading Test executer logs"
+        log_error "Error occured when uploading Test executer logs"
     else
-        echo "Test executer logs are uploaded successfully!"
+        log_info "Test executer logs are uploaded successfully!"
     fi
 }
 
@@ -47,7 +47,7 @@ function validateDeleteStack(){
 }
 
 function deleteStack(){
-    echo "Deleting the stacks after testing and uploading the logs..."
+    log_info "Deleting the stacks after testing and uploading the logs..."
     declare -A stackData=()
     while IFS= read -r -d '' file; do
         local stackName=$(extractParameters "StackName" ${file})
@@ -57,34 +57,39 @@ function deleteStack(){
 
     for stackName in "${!stackData[@]}"
     do
-        echo "Checking stack status of ${stackName} before deleting..."
+        log_info "Checking stack status of ${stackName} before deleting..."
         stackAvailable=$(validateDeleteStack ${stackName} ${stackData[$stackName]})
         if [ "${stackAvailable}" = true ];
         then
-            echo "Stack ${stackName} is available. Proceeding to delete!"
-            echo "Deleting the stack: ${stackName} that is in the ${stackData[$stackName]} region"
+            log_info "Stack ${stackName} is available. Proceeding to delete!"
+            log_info "Deleting the stack: ${stackName} that is in the ${stackData[$stackName]} region"
             aws cloudformation delete-stack \
             --stack-name ${stackName} \
             --region ${stackData[$stackName]}
-            local stackDeleted=false
-            while [ ${stackDeleted} = false ]
-            do
-                stackStatus=$(aws cloudformation describe-stacks --stack-name ${stackName} --region ${stackData[$stackName]} 2> /dev/null | jq -r '.Stacks[0].StackStatus')
-                if [[ "${stackStatus}" == "DELETE_IN_PROGRESS" ]];
-                then
-                    echo "Still deleting the stack ${stackName}"
-                    # Test cannot end before deleting the entire stack becase when archiving the logs
-                    # the instance logs should be available on the S3 bucket. Therefore sleeping till 
-                    # the stack fully gets deleted.
-                    sleep 60 #1min sleep
-                else
-                    # If command fails that means the stack doesn't exist(already deleted)
-                    echo "Stack ${stackName} deletion completed!"
-                    stackDeleted=true
-                fi
-            done
+            if [[ $? != 0 ]];
+            then
+                log_error "AWS Stack: ${stackName} deletion failed!"
+            else
+                local stackDeleted=false
+                while [ ${stackDeleted} = false ]
+                do
+                    stackStatus=$(aws cloudformation describe-stacks --stack-name ${stackName} --region ${stackData[$stackName]} 2> /dev/null | jq -r '.Stacks[0].StackStatus')
+                    if [[ "${stackStatus}" == "DELETE_IN_PROGRESS" ]];
+                    then
+                        log_info "Still deleting the stack ${stackName}"
+                        # Test cannot end before deleting the entire stack becase when archiving the logs
+                        # the instance logs should be available on the S3 bucket. Therefore sleeping till 
+                        # the stack fully gets deleted.
+                        sleep 60 #1min sleep
+                    else
+                        # If command fails that means the stack doesn't exist(already deleted)
+                        log_info "Stack ${stackName} deletion completed!"
+                        stackDeleted=true
+                    fi
+                done
+            fi
         else
-            echo "Stack ${stackName} that is in ${stackData[$stackName]} region is not available" 
+            log_error "Stack ${stackName} that is in ${stackData[$stackName]} region is not available" 
         fi
     done
 }
@@ -97,7 +102,7 @@ function main(){
         deleteStack
         uploadTestLogs
     else
-        echo "Logs are already uploaded to S3"
+        log_info "Logs are already uploaded to S3"
     fi
 }
 

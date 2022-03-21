@@ -33,15 +33,15 @@ function cloudformationValidation() {
     ## Validate the CFN file before deploying
     for cloudformationFileLocation in ${cloudformationFileLocations[@]}
     do
-        echo "Validating cloudformation script ${cloudformationFileLocation}!"
+        log_info "Validating cloudformation script ${cloudformationFileLocation}!"
         cloudformationResult=$(aws cloudformation validate-template --template-body file://${cloudformationFileLocation})
         if [[ $? != 0 ]];
         then
-            echo "Cloudformation Template Validation failed!"
+            log_error "Cloudformation Template Validation failed!"
             bash ${currentScript}/post-actions.sh ${deploymentName}
             exit 1
         else
-            echo "Cloudformation template is valid!"
+            log_info "Cloudformation template is valid!"
         fi
     done
 }
@@ -56,41 +56,9 @@ function changeCommonLogPath(){
 }
 
 function cloudformationDeployment(){
-   echo "Executing product specific deployment..."
-   echo "Running ${product} deployment.."
+   log_info "Executing product specific deployment..."
+   log_info "Running ${product} deployment.."
    bash ${currentScript}/${product}/deploy.sh ${deploymentName} ${cloudformationFileLocations[@]}
-}
-
-# Get the output links of the Stack into a file
-function getCfnOutput(){
-    local stackName=${1}
-    local region=${2}
-    echo "Getting outputs from deployed stack ${stackName}"
-    
-    stackDescription=$(aws cloudformation describe-stacks --stack-name ${stackName} --region ${region})
-    stackOutputs=$(echo ${stackDescription} | jq ".Stacks[].Outputs")
-    readarray -t outputsArray < <(echo ${stackOutputs} | jq -c '.[]')
-}
-
-# Wrting the output links of the Stack into a file
-function writePropertiesFile(){
-    for output in "${outputsArray[@]}"; do
-        outputKey=$(jq -r '.OutputKey' <<< "$output")
-        outputValue=$(jq -r '.OutputValue' <<< "$output")
-        outputEntry="${outputKey}=${outputValue}"
-        echo "${outputEntry}" >> ${outputFile}
-    done
-}
-
-# Wrting the output links of the Stack into a file
-function writeJsonFile(){
-    local writeFile=$1
-    for output in "${outputsArray[@]}"; do
-        outputKey=$(jq -r '.OutputKey' <<< "$output")
-        outputValue=$(jq -r '.OutputValue' <<< "$output")
-        outputEntry="${outputKey}=${outputValue}"
-        bash ${currentScript}/write-parameter-file.sh ${outputKey} ${outputValue} ${writeFile}
-    done
 }
 
 function writeCommonVariables(){

@@ -30,3 +30,47 @@ function updateJsonFile(){
     local contents="$(jq --arg k "$key" --arg v "$value" '.Parameters[$k] = $v' $jsonFile)" && \
     echo "${contents}" > $jsonFile
 }
+
+# Get the output links of the Stack into a file
+function getCfnOutput(){
+    local stackName=${1}
+    local region=${2}
+    log_info "Getting outputs from deployed stack ${stackName}"
+    
+    stackDescription=$(aws cloudformation describe-stacks --stack-name ${stackName} --region ${region})
+    stackOutputs=$(echo ${stackDescription} | jq ".Stacks[].Outputs")
+    readarray -t outputsArray < <(echo ${stackOutputs} | jq -c '.[]')
+}
+
+# Wrting the output links of the Stack into a file
+function writePropertiesFile(){
+    for output in "${outputsArray[@]}"; do
+        outputKey=$(jq -r '.OutputKey' <<< "$output")
+        outputValue=$(jq -r '.OutputValue' <<< "$output")
+        outputEntry="${outputKey}=${outputValue}"
+        echo "${outputEntry}" >> ${outputFile}
+    done
+}
+
+# Wrting the output links of the Stack into a file
+function writeJsonFile(){
+    local writeFile=$1
+    local writeParamFileLocation="${WORKSPACE}/scripts/write-parameter-file.sh"
+    for output in "${outputsArray[@]}"; do
+        outputKey=$(jq -r '.OutputKey' <<< "$output")
+        outputValue=$(jq -r '.OutputValue' <<< "$output")
+        outputEntry="${outputKey}=${outputValue}"
+        bash ${writeParamFileLocation} ${outputKey} ${outputValue} ${writeFile}
+    done
+}
+
+# Logging functions
+function log_info() {
+    local string=$@
+    echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')][INFO]: ${string}" >&1
+}
+
+function log_error() {
+    local string=$@
+    echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')][ERROR]: ${string}. Exiting !" >&1
+}
