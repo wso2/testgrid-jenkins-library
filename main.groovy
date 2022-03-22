@@ -21,11 +21,11 @@ import hudson.model.*
 
 def deploymentDirectories = []
 def updateType = ""
-def s3BucketName = "janeth-tg-logs"
+def s3BucketName = "testgrid-pipeline-logs"
 def s3BuildLogPath = ""
 
 pipeline {
-agent {label 'pipeline-slave'}
+agent {label 'pipeline-agent'}
 stages {
     stage('Clone CFN repo') {
         steps {
@@ -98,7 +98,7 @@ stages {
                         )
                     ])
                 ])
-                aws_repo_branch="" //need to exit if the branch name is invalid
+                aws_repo_branch=""
                 if (use_wum.toBoolean()){
                     aws_repo_branch="${product_version}-new"
                     updateType="wum"
@@ -108,7 +108,7 @@ stages {
                 }
                 dir("aws-"+product) {
                     git branch: "${aws_repo_branch}",
-                    credentialsId: "JANETH_GITHUB_TEMP",
+                    credentialsId: "WSO2_GITHUB_TOKEN",
                     url: "${cfn_repo_url}"
                 }
             }
@@ -142,7 +142,7 @@ stages {
                         ./scripts/write-parameter-file.sh "S3SecretAccessKey" ${s3secretKey} "${WORKSPACE}/parameters/parameters.json"
                     '''
                 }
-                withCredentials([usernamePassword(credentialsId: 'JANETH_GITHUB_TEMP', usernameVariable: 'githubUserName', passwordVariable: 'githubPassword')]) 
+                withCredentials([usernamePassword(credentialsId: 'WSO2_GITHUB_TOKEN', usernameVariable: 'githubUserName', passwordVariable: 'githubPassword')]) 
                 {
                     sh '''
                        echo "Writting Github Username to parameter file"
@@ -211,7 +211,7 @@ post {
         script {
             sendEmail(deploymentDirectories, updateType)
         }
-        //cleanWs deleteDirs: true, notFailBuild: true
+        cleanWs deleteDirs: true, notFailBuild: true
     }
 }
 }
@@ -230,8 +230,13 @@ def create_build_jobs(deploymentDirectory){
                         // The deployment is done in the indexed order
                         cloudformationLocation = ["${WORKSPACE}/aws-is/is/Minimum-HA/identity.yaml", "${WORKSPACE}/aws-is/is-samples/test-is-samples.yml"]
                         break;
+                    case "ei":
+                        cloudformationLocation = ["${WORKSPACE}/aws-ei/integrator/Minimum-HA/integrator-ha.yaml", "${WORKSPACE}/aws-ei/integrator/Sample-Backends/activemq-be.yaml"]
+                        break;
+                    case "esb":
+                        cloudformationLocation = ["${WORKSPACE}/aws-esb/esb/Minimum-HA/esb-ha.yaml", "${WORKSPACE}/aws-esb/esb/Sample-Backends/activemq-be.yaml"]
+                        break;
                     default:
-                        //check
                         println("Product name is incorrect! Existing the execution");
                         currentBuild.result = 'ABORTED'
                 }
@@ -343,7 +348,7 @@ def sendEmail(deploymentDirectories, updateType) {
         </div>
         """
     subject="[TestGrid][${updateType.toUpperCase()}][${product.toUpperCase()}:${product_version}][SCE]-Build ${currentBuild.currentResult}-#${env.BUILD_NUMBER}"
-    emailext(to: "janeth@wso2.com",
+    emailext(to: "testgrid@wso2.com,janeth@wso2.com",
             subject: subject,
             body: content, mimeType: 'text/html')
 }
