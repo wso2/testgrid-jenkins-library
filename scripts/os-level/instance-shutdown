@@ -32,7 +32,6 @@ case "$1" in
         done
         tar -zvcf /tmp/${instanceId}.tar -P /tmp/upload-dir
         aws s3 cp /tmp/${instanceId}.tar s3://${s3BucketLocation}/
-        curl -v -X GET 'https://abcjaneth.free.beeceptor.com/my/api/path' -H 'some-header: some-value'
 	;;
 esac
 

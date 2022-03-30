@@ -348,7 +348,15 @@ def sendEmail(deploymentDirectories, updateType) {
         </div>
         """
     subject="[TestGrid][${updateType.toUpperCase()}][${product.toUpperCase()}:${product_version}][SCE]-Build ${currentBuild.currentResult}-#${env.BUILD_NUMBER}"
-    emailext(to: "testgrid@wso2.com,janeth@wso2.com",
+    senderEmailGroup=""
+    if(product.equals("apim") || product.equals("ei") || product.equals("esb") || product.equals("mi")){
+        senderEmailGroup = "integration-builder@wso2.com"
+    }else if(product.equals("is")) {
+        senderEmailGroup = "iam-builder@wso2.com"
+    }else if(product.equals("ob")) {
+        senderEmailGroup = "bfsi-group@wso2.com"
+    }
+    emailext(to: "${senderEmailGroup},janeth@wso2.com",
             subject: subject,
             body: content, mimeType: 'text/html')
 }
