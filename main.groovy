@@ -356,7 +356,7 @@ def sendEmail(deploymentDirectories, updateType) {
     }else if(product.equals("ob")) {
         senderEmailGroup = "bfsi-group@wso2.com"
     }
-    emailext(to: "${senderEmailGroup},janeth@wso2.com",
+    emailext(to: "${senderEmailGroup},janeth@wso2.com,builder@wso2.org",
             subject: subject,
             body: content, mimeType: 'text/html')
 }
