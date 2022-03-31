@@ -344,6 +344,8 @@ def sendEmail(deploymentDirectories, updateType) {
             </font>
         </p>
         <br/>
+        <br/>
+        <br/>
         <em>Tested by WSO2 Jenkins TestGrid Pipeline.</em>
         </div>
         """
