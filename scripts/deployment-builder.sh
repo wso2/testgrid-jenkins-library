@@ -22,6 +22,8 @@ product=$1
 productVersion=$2
 updateType=$3
 
+currentScript=$(dirname $(realpath "$0"))
+source ${currentScript}/common-functions.sh
 originalParameteFilePath="${WORKSPACE}/parameters/parameters.json"
 
 osArray=(`echo ${os_list} | sed 's/,/\n/g'`)
