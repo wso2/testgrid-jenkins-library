@@ -74,6 +74,7 @@ do
     if [[ $? != 0 ]];
     then
         log_error "CloudFormation file errors identified!"
+        aws cloudformation describe-stack-events --stack-name ${stackName} --region ${region}
         bash ${currentScript}/../post-actions.sh ${deploymentName}
         exit 1
     fi
