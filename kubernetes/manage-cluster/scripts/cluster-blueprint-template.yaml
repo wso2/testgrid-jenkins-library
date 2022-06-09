@@ -1,0 +1,25 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: ${EKS_CLUSTER_NAME}
+  region: ${EKS_CLUSTER_REGION}
+
+availabilityZones: ["us-east-1a","us-east-1b"]
+
+nodeGroups:
+  - name: ng-1
+    instanceType: t3.micro
+    desiredCapacity: 0
+    minSize: 0
+    maxSize: 1
+
+fargateProfiles:
+  - name: fp-default
+    selectors:
+      # All workloads in the "default" Kubernetes namespace will be
+      # scheduled onto Fargate:
+      - namespace: default
+      # All workloads in the "kube-system" Kubernetes namespace will be
+      # scheduled onto Fargate:
+      - namespace: kube-system

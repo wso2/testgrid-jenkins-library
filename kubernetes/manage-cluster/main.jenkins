@@ -1,0 +1,83 @@
+pipeline {
+    // agent {label 'pipeline-kubernetes-agent'}
+    agent any
+    environment {
+        EKS_CLUSTER_REGION = 'us-east-1'   
+        EKS_CLUSTER_NAME = 'testgrid-eks-cluster'
+        RDS_STACK_NAME = 'testgrid-rds-stack'                           
+    }
+    stages {
+        stage('Clone repo') {
+            steps {
+                script {
+                    // deleteDir()
+                    properties([
+                        parameters([
+                            booleanParam(
+                                name: 'create_new_cluster',
+                                defaultValue: true,
+                                description: 'If selected new kubernetes cluster will be created, based on the cloud formation script provided in the above repository.'
+                            ),
+                            booleanParam(
+                                name: 'delete_cluster_at_end',
+                                defaultValue: false,
+                                description: 'If selected kubernetes cluster will be deleted at the end of the testing.'
+                            )
+                        ])
+                    ])
+                }
+                sh "chmod +x -R ${env.WORKSPACE}"
+            }
+        }
+        stage('Create cluster') {
+            when {
+                expression { create_new_cluster.toBoolean() && !delete_cluster_at_end.toBoolean()}
+            }
+            steps {
+                script {
+                    echo "Create cluster stage"
+                    
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: "AWS_CRED",
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        sh '''
+                            ls
+                            ./kubernetes/manage-cluster/scripts/create-cluster.sh
+                        '''
+                    }
+                }
+            }
+        }
+        stage('Delete cluster') {
+            when {
+                expression {delete_cluster_at_end.toBoolean() && !create_new_cluster.toBoolean()}
+            }
+            steps {
+                script {
+                    echo "Deleting cluster in progress."
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: "AWS_CRED",
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        sh '''
+                        ls
+                            ./kubernetes/manage-cluster/scripts/delete-cluster.sh
+                        '''
+                    }
+                    
+                }
+            }
+        }
+    }
+    post {
+        always {
+            
+            cleanWs deleteDirs: true, notFailBuild: true
+        }
+    }
+}

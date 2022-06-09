@@ -1,0 +1,286 @@
+pipeline {
+    // agent {label 'pipeline-kubernetes-agent'}
+    agent any 
+    environment {
+        EKS_CLUSTER_REGION = 'us-east-1'   
+        EKS_CLUSTER_NAME = 'testgrid-eks-cluster'
+        RDS_STACK_NAME = 'testgrid-rds-stack'  
+        DB_USERNAME = 'root'
+        DB_PASSWORD = '613296496' 
+    }
+    stages {
+        stage('Clone repo') {
+            steps {
+                script {
+                    properties([
+                        parameters([
+                            separator(name: "PRODUCT_ENVIRONMENT", sectionHeader: "Product Details",
+			separatorStyle: "border-width: 0",
+			sectionHeaderStyle: """
+				background-color: #7ea6d3;
+				text-align: center;
+				padding: 4px;
+				color: #343434;
+				font-size: 22px;
+				font-weight: normal;
+				text-transform: uppercase;
+				font-family: 'Orienta', sans-serif;
+				letter-spacing: 1px;
+				font-style: italic;
+                margin-bottom: 25px;
+			"""),
+                            string(
+                                name: 'product_name',
+                                defaultValue: 'apim',
+                                description: 'Product name',
+                                trim: true
+                            ),
+                            string(
+                                name: 'product_version',
+                                defaultValue: '4.1.0',
+                                description: 'Product version',
+                                trim: true
+                            ),
+                            separator(name: "AWS_ENVIRONMENT", sectionHeader: "AWS cloudformation Details",
+			separatorStyle: "border-width: 0",
+			sectionHeaderStyle: """
+				background-color: #7ea6d3;
+				text-align: center;
+				padding: 4px;
+				color: #343434;
+				font-size: 22px;
+				font-weight: normal;
+				text-transform: uppercase;
+				font-family: 'Orienta', sans-serif;
+				letter-spacing: 1px;
+				font-style: italic;
+                margin-bottom: 25px;
+			"""),
+                            string(
+                                name: 'deployment_script_repo_url',
+                                defaultValue: 'https://github.com/Tharsanan1/APIMCloudFormation',
+                                description: 'Cloud formation repository url.',
+                                trim: true
+                            ),
+                            string(
+                                name: 'deployment_script_repo_branch',
+                                defaultValue: 'main',
+                                description: 'Branch name of the cloud formation repo.',
+                                trim: true
+                            ),
+                            string(
+                                name: 'db_engine',
+                                defaultValue: 'mysql',
+                                description: 'Database engine',
+                                trim: true
+                            ),
+                            string(
+                                name: 'db_version',
+                                defaultValue: '8.0.28',
+                                description: 'Database engine version',
+                                trim: true
+                            ),
+                            string(
+                                name: 'db_instance_class',
+                                defaultValue: 'db.t3.small',
+                                description: 'Database engine instance class',
+                                trim: true
+                            ),
+                            separator(name: "KUBERNETES_ENVIRONMENT", sectionHeader: "Kubernetes Details",
+                                separatorStyle: "border-width: 0",
+                                sectionHeaderStyle: """
+                                    background-color: #7ea6d3;
+                                    text-align: center;
+                                    padding: 4px;
+                                    color: #343434;
+                                    font-size: 22px;
+                                    font-weight: normal;
+                                    text-transform: uppercase;
+                                    font-family: 'Orienta', sans-serif;
+                                    letter-spacing: 1px;
+                                    font-style: italic;
+                                    margin-bottom: 25px;
+                                """),           
+                            string(
+                                name: 'kubernetes_repo_url',
+                                defaultValue: 'https://github.com/Tharsanan1/kubernetes-apim',
+                                description: "Product's kubernetes repository URL.",
+                                trim: true
+                            ),
+                            string(
+                                name: 'kubernetes_repo_branch',
+                                defaultValue: '4.1.x',
+                                description: 'Branch name of the kubernetes repository.',
+                                trim: true
+                            ),
+                            string(
+                                name: 'path_to_helm_folder',
+                                defaultValue: 'advanced/am-pattern-4',
+                                description: 'Relative path of the helm folder in your helm repository.',
+                                trim: true
+                            ),
+                            string(
+                                name: 'kubernetes_namespace',
+                                defaultValue: 'default',
+                                description: 'namespace to be deployed.',
+                                trim: true
+                            ),
+                            separator(name: "TESTING ENVIRONMENT", sectionHeader: "Testing Details",
+			separatorStyle: "border-width: 0",
+			sectionHeaderStyle: """
+				background-color: #7ea6d3;
+				text-align: center;
+				padding: 4px;
+				color: #343434;
+				font-size: 22px;
+				font-weight: normal;
+				text-transform: uppercase;
+				font-family: 'Orienta', sans-serif;
+				letter-spacing: 1px;
+				font-style: italic;
+                margin-bottom: 25px;
+			"""),
+                            string(
+                                name: 'product_testing_repo_url',
+                                defaultValue: 'https://github.com/Tharsanan1/APIM_testing',
+                                description: "Product's testing repository URL.",
+                                trim: true
+                            ),
+                            string(
+                                name: 'product_testing_repo_branch',
+                                defaultValue: 'main',
+                                description: "Product's testing repository branch name.",
+                                trim: true
+                            ),
+                            string(
+                                name: 'test_file_path',
+                                defaultValue: './main.sh',
+                                description: 'Test execution relative file path',
+                                trim: true
+                            ),
+                            string(
+                                name: 'service_startup_timeout',
+                                defaultValue: '600',
+                                description: 'Service up timeout in seconds.',
+                                trim: true
+                            )
+                        ])
+                    ])
+                    def lst = ["apim"];
+                    if (!lst.contains(product_name)) {
+                        error("Product ${product_name} not supported");
+                    } 
+                    def cnfFolderName = "kubernetes/product-deployment/scripts/${product_name}"
+                    def kubernetesFolderName = "kubernetes/product-deployment/scripts/${product_name}/kubernetes-${product_name}"
+                    def testingFolderName = "kubernetes/product-deployment/scripts/${product_name}/test-${product_name}"
+                    dir(cnfFolderName) {
+                        git branch: "${deployment_script_repo_branch}", url: "${deployment_script_repo_url}"
+                    }
+                    dir(kubernetesFolderName) {
+                        deleteDir()
+                        git branch: "${kubernetes_repo_branch}", url: "${kubernetes_repo_url}"
+                    }
+                    dir(testingFolderName) {
+                        deleteDir()
+                        git branch: "${product_testing_repo_branch}", url: "${product_testing_repo_url}"
+                    }
+                    echo "workspace path : ${env.WORKSPACE} pwd: "
+                    sh "pwd"
+                    sh "chmod +x -R ${env.WORKSPACE}"
+                }
+            }
+        }
+        stage('Validate cluster') {
+            steps {
+                script {
+                    echo "\n\n\n\n=============================================="
+                    echo "Validate."
+                    echo "==============================================\n\n\n\n"
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: "AWS_CRED",
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        sh "./kubernetes/product-deployment/scripts/validate-cluster-and-params.sh"
+                    }
+                }
+            }
+        }
+        stage('Create Database') {
+            steps {
+                script {
+                    echo "\n\n\n\n=============================================="
+                    echo "Create RDS database."
+                    echo "==============================================\n\n\n\n"
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: "AWS_CRED",
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        sh "./kubernetes/product-deployment/scripts/create-database.sh"
+                    }
+                }
+            }
+        }
+        stage('Deploy into cluster') {
+            steps {
+                script {
+                    echo "\n\n\n\n=============================================="
+                    echo "Deploy ${product_name} into cluster"
+                    echo "==============================================\n\n\n\n"
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: "AWS_CRED",
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        sh "./kubernetes/product-deployment/scripts/deploy.sh ${product_name}"
+                    }
+                }
+            }
+        }
+        stage('Testing') {
+            steps {
+                script {
+                    echo "\n\n\n\n=============================================="
+                    echo "Testing ${product_name} into cluster"
+                    echo "==============================================\n\n\n\n"
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: "AWS_CRED",
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        hostName = sh(
+                            returnStdout: true, 
+                            script: './kubernetes/product-deployment/scripts/extract-cluster-details.sh'
+                        )
+                        sh "kubectl wait --for=condition=ready pod   -l eks.amazonaws.com/fargate-profile=fp-default   --timeout='$service_startup_timeout's"
+                    }
+                    env.HOST_NAME=hostName.trim()
+                    sh "sh ./kubernetes/product-deployment/scripts/test.sh ${product_name} ${test_file_path}"
+                }
+            }
+        }
+    }
+    post {
+        always {
+            withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: "AWS_CRED",
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        echo "\n\n\n\n=============================================="
+                        echo "Uninstall ${product_name} in cluster"
+                        echo "==============================================\n\n\n\n"
+                        sh "sh ./kubernetes/product-deployment/scripts/cleanup.sh ${product_name}"
+                        
+                    }
+            
+            cleanWs deleteDirs: true, notFailBuild: true
+        }
+    }
+}
