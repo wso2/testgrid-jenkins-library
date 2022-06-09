@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  pDbUser:
+    Type: String
+  pDbPass:
+    Type: String
+  pDbEngine:
+    Type: String
+  pDbVersion:
+    Type: String
+  pDbInstanceClass:
+    Type: String
+
+Resources:
+  TESTGRIDDB:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      MasterUsername: !Ref pDbUser
+      MasterUserPassword: !Ref pDbPass
+      Engine: !Ref pDbEngine
+      EngineVersion: !Ref pDbVersion
+      DBInstanceClass: !Ref pDbInstanceClass
+      StorageType: gp2
+      PubliclyAccessible: True
+      AllocatedStorage: "20"
+      DBInstanceIdentifier: testgrid-rds
+      LicenseModel:
+        !If [UseLicensedVersion, license-included, !Ref "AWS::NoValue"]
+      Tags:
+        - Key: email
+          Value: tharsanan@wso2.com
+      MultiAZ: false
+      BackupRetentionPeriod: 0
+
+Outputs:
+  TestgridDBJDBCConnectionString:
+    Description: JDBC connection string for the master database
+    Value: !Join ["", [!GetAtt [TESTGRIDDB, Endpoint.Address]]]
+  TestgridDBJDBCPort:
+    Description: JDBC port
+    Value: !Join ["", [!GetAtt [TESTGRIDDB, Endpoint.Port]]]
+
+Conditions:
+  UseLicensedVersion:
+    !Or [
+      !Equals [sqlserver, !Select [0, !Split ["-", !Ref pDbEngine]]],
+      !Equals [oracle, !Select [0, !Split ["-", !Ref pDbEngine]]],
+    ]
