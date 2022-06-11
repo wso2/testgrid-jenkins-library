@@ -64,9 +64,14 @@ function changeCommonLogPath(){
 }
 
 function cloudformationDeployment(){
-   log_info "Executing product specific deployment..."
-   log_info "Running ${product} deployment.."
-   bash ${currentScript}/${product}/deploy.sh ${deploymentName} ${cloudformationFileLocations[@]}
+    log_info "Executing product specific deployment..."
+    log_info "Running ${product} deployment.."
+    bash ${currentScript}/${product}/deploy.sh ${deploymentName} ${cloudformationFileLocations[@]}
+    if [[ $? != 0 ]];
+    then
+        # If deployment fails the handler should also fail
+        exit 1
+    fi
 }
 
 function writeCommonVariables(){
