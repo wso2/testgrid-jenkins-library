@@ -34,6 +34,3 @@ You can delete the kubeneretes cluster which was created by TestGrid. To delete 
    7. Click ‘Build’ button.
 
 When user performs this delete action TestGrid will delete the kubernetes cluster which was created in “Create cluster” step. As we already know at a given time TestGrid supports only one kubernestes cluster. Common use case for deleting the TestGrid kubernested cluster would be to save some cost when we dont need the cluster.
-
-
-Check the [Kubernetes deployment pipeline documentation](https://docs.google.com/document/d/1x2CMTP8QJTGmFsLF9DJPVkk5-KwK8NuTaE7PeXW2M5I/edit?usp=sharing)

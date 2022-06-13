@@ -36,6 +36,3 @@ Blueocean Version:- 1.25.3
 13. **product_testing_repo_branch** - Test repository branch.
 14. **test_file_path** - Relative file path of the testing entrypoint bash file.
 15. **service_startup_timeout** - Amount of time the TestGrid wait for the service to come alive. If all of the kubernetes become healthy within the specified time the TestGrid will start the testing by triggering the test.sh file. Otherwise pipeline will throw an error.  
-
-
-Check the [Kubernetes deployment pipeline documentation](https://docs.google.com/document/d/1x2CMTP8QJTGmFsLF9DJPVkk5-KwK8NuTaE7PeXW2M5I/edit?usp=sharing)
