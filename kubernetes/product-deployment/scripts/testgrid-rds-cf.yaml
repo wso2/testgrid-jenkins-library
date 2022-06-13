@@ -26,6 +26,8 @@ Parameters:
     Type: String
   pDbInstanceClass:
     Type: String
+  pProductName:
+    Type: String
 
 Resources:
   TESTGRIDDB:
@@ -43,8 +45,8 @@ Resources:
       LicenseModel:
         !If [UseLicensedVersion, license-included, !Ref "AWS::NoValue"]
       Tags:
-        - Key: email
-          Value: tharsanan@wso2.com
+        - Key: name
+          Value: !Ref pProductName
       MultiAZ: false
       BackupRetentionPeriod: 0
 
