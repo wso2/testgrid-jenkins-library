@@ -275,7 +275,7 @@ pipeline {
                             returnStdout: true, 
                             script: './kubernetes/product-deployment/scripts/extract-cluster-details.sh'
                         )
-                        sh "kubectl wait --for=condition=ready pod   -l eks.amazonaws.com/fargate-profile=fp-default   --timeout='$service_startup_timeout's"
+                        sh "kubectl wait --for=condition=ready pod   -l eks.amazonaws.com/fargate-profile=fp-default   --timeout='$service_startup_timeout's --namespace='$kubernetes_namespace'"
                     }
                     env.HOST_NAME=hostName.trim()
                     sh "sh ./kubernetes/product-deployment/scripts/test.sh ${product_name} ${test_file_path}"
