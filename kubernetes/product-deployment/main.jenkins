@@ -76,14 +76,14 @@ pipeline {
 			"""),
                             string(
                                 name: 'deployment_script_repo_url',
-                                defaultValue: 'https://github.com/Tharsanan1/APIMCloudFormation',
-                                description: 'Cloud formation repository url.',
+                                defaultValue: 'https://github.com/wso2/apim-test-integration/tree/4.1.0-profile-automation',
+                                description: 'Product deployment script repository.',
                                 trim: true
                             ),
                             string(
                                 name: 'deployment_script_repo_branch',
                                 defaultValue: 'main',
-                                description: 'Branch name of the cloud formation repo.',
+                                description: 'Branch name of the deployment script repository.',
                                 trim: true
                             ),
                             string(
@@ -121,7 +121,7 @@ pipeline {
                                 """),           
                             string(
                                 name: 'kubernetes_repo_url',
-                                defaultValue: 'https://github.com/Tharsanan1/kubernetes-apim',
+                                defaultValue: 'https://github.com/wso2/kubernetes-apim',
                                 description: "Product's kubernetes repository URL.",
                                 trim: true
                             ),
@@ -160,7 +160,7 @@ pipeline {
 			"""),
                             string(
                                 name: 'product_testing_repo_url',
-                                defaultValue: 'https://github.com/Tharsanan1/APIM_testing',
+                                defaultValue: 'https://github.com/wso2/apim-test-integration/tree/4.1.0-profile-automation',
                                 description: "Product's testing repository URL.",
                                 trim: true
                             ),
