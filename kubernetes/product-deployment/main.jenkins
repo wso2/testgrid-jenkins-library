@@ -139,7 +139,7 @@ pipeline {
                             ),
                             string(
                                 name: 'kubernetes_namespace',
-                                defaultValue: 'default',
+                                defaultValue: 'apim-4-1-0',
                                 description: 'namespace to be deployed.',
                                 trim: true
                             ),
