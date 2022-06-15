@@ -38,7 +38,7 @@ Parameters:
       - db.m3.2xlarge
       - db.m4.large
       - db.m4.xlarge
-  pProductName:
+  pProductTagName:
     Type: String
 
 Resources:
@@ -58,7 +58,7 @@ Resources:
         !If [UseLicensedVersion, license-included, !Ref "AWS::NoValue"]
       Tags:
         - Key: name
-          Value: !Ref pProductName
+          Value: !Ref pProductTagName
       MultiAZ: false
       BackupRetentionPeriod: 0
 
