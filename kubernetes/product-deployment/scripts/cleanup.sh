@@ -19,7 +19,7 @@
 # --------------------------------------------------------------------------------------
 
 productName=$1;
-sh ./kubernetes/product-deployment/scripts/"$productName"/cleanup.sh
+./kubernetes/product-deployment/scripts/"$productName"/cleanup.sh
 echo "Scaling node group instances to zero."
 eksctl scale nodegroup --region ${EKS_CLUSTER_REGION} --cluster ${EKS_CLUSTER_NAME} --name ng-1 --nodes=0
 echo "Deleting RDS database."
