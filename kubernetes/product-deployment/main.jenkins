@@ -370,7 +370,7 @@ def sendEmail() {
         <em>Tested by WSO2 Jenkins TestGrid Kubernetes Deployment Pipeline.</em>
         </div>
         """
-    subject="[TestGrid][${product_name.toUpperCase()}:${product_version}]]-Build ${currentBuild.currentResult}-#${env.BUILD_NUMBER}"
+    subject="[TestGrid][KubernetesDeployments][${product_name.toUpperCase()}:${product_version}]]-Build ${currentBuild.currentResult}-#${env.BUILD_NUMBER}"
     senderEmailGroup=""
     if(product_name.equals("apim")){
         senderEmailGroup = "integration-builder@wso2.com"
