@@ -9,7 +9,7 @@
         "DB": "",
         "Product": "",
         "ProductVersion": "",
-        "KeyPairName": "tg-pipeline-stack-test",
+        "KeyPairName": "deployment-prod",
         "WSO2InstanceType": "t2.medium",
         "CertificateName": "wso2_testgrid",
         "DBUsername": "tgdbuser",
