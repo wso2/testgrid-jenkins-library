@@ -34,21 +34,6 @@ for cloudformationFileLocation in ${cloudformationFileLocations[@]}
 do
     parameterFilePath="${deploymentDirectory}/parameters.json"
 
-    if [[ ${cloudformationFileLocation} == *"sample"* ]];
-    then
-        sampleVariableGenerator="${deploymentDirectory}/../../parameters/ei/ei-samples.json"
-        sampleVariableFile="${deploymentDirectory}/ei-samples.json"
-        cp ${parameterFilePath} ${sampleVariableFile}
-        declare -A replaceArray
-        tmp=$(mktemp)
-        while IFS="=" read -r key value
-        do
-            replaceArray[$key]="$value"
-            updateJsonFile ${key} ${value} ${sampleVariableFile}
-        done < <(jq -c -r "to_entries|map(\"\(.key)=\(.value)\")|.[]" ${sampleVariableGenerator})
-        parameterFilePath=$sampleVariableFile
-    fi
-
     region=$(extractParameters "Region" ${parameterFilePath})
     updateJsonFile "StackName" ${stackName} ${parameterFilePath}
     
@@ -67,13 +52,6 @@ do
         aws cloudformation describe-stack-events --stack-name ${stackName} --region ${region} |  jq -r '.StackEvents[] | select(.ResourceStatus=="CREATE_FAILED")'
         bash ${currentScript}/../post-actions.sh ${deploymentName}
         exit 1
-    fi
-
-    # Add a proper comment  why this if confition was used
-    # add another comment to mention other products that needs if conditions
-    if [[ ${cloudformationFileLocation} == *"sample"* ]];
-    then
-        parameterFilePath="${deploymentDirectory}/parameters.json"
     fi
 
     # When the Deployment has issues this will terminate the flow
