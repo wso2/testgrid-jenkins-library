@@ -163,10 +163,10 @@ def create_build_jobs(deploymentDirectory){
                         cloudformationLocation = ["${WORKSPACE}/aws-is/is/Minimum-HA/identity.yaml", "${WORKSPACE}/aws-is/is-samples/test-is-samples.yml"]
                         break;
                     case "ei":
-                        cloudformationLocation = ["${WORKSPACE}/aws-ei/integrator/Minimum-HA/integrator-ha.yaml", "${WORKSPACE}/aws-ei/integrator/Sample-Backends/activemq-be.yaml"]
+                        cloudformationLocation = ["${WORKSPACE}/aws-ei/integrator/Minimum-HA/integrator-ha.yaml"]
                         break;
                     case "esb":
-                        cloudformationLocation = ["${WORKSPACE}/aws-esb/esb/Minimum-HA/esb-ha.yaml", "${WORKSPACE}/aws-esb/esb/Sample-Backends/activemq-be.yaml"]
+                        cloudformationLocation = ["${WORKSPACE}/aws-esb/esb/Minimum-HA/esb-ha.yaml"]
                         break;
                     default:
                         println("Product name is incorrect! Existing the execution");
