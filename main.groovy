@@ -292,7 +292,7 @@ def sendEmail(deploymentDirectories, updateType) {
     }else if(product.equals("ei") || product.equals("esb") || product.equals("mi")) {
         senderEmailGroup = "dulanjali@wso2.com"
     }
-    emailext(to: "${senderEmailGroup},janeth@wso2.com,builder@wso2.org",
+    emailext(to: "${senderEmailGroup},builder@wso2.org",
             subject: subject,
             body: content, mimeType: 'text/html')
 }
