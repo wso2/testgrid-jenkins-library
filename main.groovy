@@ -55,7 +55,8 @@ stages {
                 string(credentialsId: 'WUM_PASSWORD', variable: 'wumPassword'),
                 string(credentialsId: 'DEPLOYMENT_DB_PASSWORD', variable: 'dbPassword'),
                 string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 's3accessKey'),
-                string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 's3secretKey')])
+                string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 's3secretKey'),
+                string(credentialsId: 'TESTGRID_EMAIL_PASSWORD', variable: 'testgridEmailPassword')])
                 {
                     sh '''
                         echo "Writting AWS-Access Key ID to parameter file"
