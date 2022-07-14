@@ -31,6 +31,8 @@ Allowed Value Format- <https://github.com/janethavi/product-apim.git>
 Allowed Values- product-scenarios-3.2.0
 11. **product_test_script**- The location of the test script.
 Allowed Value Format- product-scenarios/test.sh
+12. **use_staging**- If testing environment is staging be true. If using UAT this should be false.
+Allowed Values- Check or Un Check
 
 Please note all the allowed values are mentioned on the TestGrid pipeline documentation. The above values are the most frequently used values.
 

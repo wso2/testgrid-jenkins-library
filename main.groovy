@@ -31,12 +31,22 @@ stages {
         steps {
             script {
                 aws_repo_branch=""
-                if (use_wum.toBoolean()){
-                    aws_repo_branch="${product_version}-new"
-                    updateType="wum"
-                }else{
-                    aws_repo_branch="${product_version}-u2-new"
-                    updateType="u2"
+                if (use_staging.toBoolean()) {
+                    if (use_wum.toBoolean()){
+                        aws_repo_branch="${product_version}-staging-new"
+                        updateType="wum"
+                    }else{
+                        aws_repo_branch="${product_version}-u2-staging-new"
+                        updateType="u2"
+                    }
+                } else {
+                    if (use_wum.toBoolean()){
+                        aws_repo_branch="${product_version}-new"
+                        updateType="wum"
+                    }else{
+                        aws_repo_branch="${product_version}-u2-new"
+                        updateType="u2"
+                    }
                 }
                 dir("aws-"+product) {
                     git branch: "${aws_repo_branch}",
@@ -244,6 +254,10 @@ def sendEmail(deploymentDirectories, updateType) {
         <tr>
             <td>Used WUM as Update</td>
             <td>${use_wum}</td>
+        </tr>
+        <tr>
+            <td>Used Staging as Update</td>
+            <td>${use_staging}</td>
         </tr>
         <tr>
             <td>Operating Systems</td>
