@@ -96,7 +96,6 @@ function addCommonVariables(){
     writeCommonVariables "S3AccessKeyID" "s3accessKey" true
     writeCommonVariables "S3SecretAccessKey" "s3secretKey" true
     writeCommonVariables "TESTGRID_EMAIL_PASSWORD" "testgridEmailPassword" true
-    writeCommonVariables "ProductDistributionName" "ProductDistributionName" true
     writeCommonVariables "CustomURL" "CustomURL" true
 }
 
