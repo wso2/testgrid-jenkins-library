@@ -104,13 +104,9 @@ stages {
                     ./scripts/write-parameter-file.sh "ProductVersion" ${product_version} "${WORKSPACE}/parameters/parameters.json"
                     echo "Writting product deployment region to parameter file"
                     ./scripts/write-parameter-file.sh "Region" ${product_deployment_region} "${WORKSPACE}/parameters/parameters.json"
-                    echo "Writing product release version to parameter file"
-                    ./scripts/write-parameter-file.sh "ReleaseVersion" ${release_version} "${WORKSPACE}/parameters/parameters.json"
-                    echo "Writing product distribution name to parameter file"
-                    ./scripts/write-parameter-file.sh "ProductDistributionName" ${product_distribution_name} "${WORKSPACE}/parameters/parameters.json"
-                    echo "Writing product release pack URL to parameter file"
-                    ./scripts/write-parameter-file.sh "URL" ${url} "${WORKSPACE}/parameters/parameters.json"
-                '''    
+                    echo "Writing custom URL to parameter file"
+                    ./scripts/write-parameter-file.sh "CustomURL" ${custom_url} "${WORKSPACE}/parameters/parameters.json"
+                '''
                 //Generate S3 Log output path
                 s3BuildLogPath = "${s3BucketName}/artifacts/jobs/${product}-${product_version}/build-${BUILD_NUMBER}"
                 println "Your Logs will be uploaded to: s3://"+s3BuildLogPath
