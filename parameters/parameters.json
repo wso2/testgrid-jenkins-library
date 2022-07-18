@@ -23,7 +23,7 @@
         "Region": "us-east-2",
         "AMI": "ami-0b707e6db70f15f97",
         "ReleaseVersion": "",
-        "ProductDistribution": "",
+        "ProductDistributionName": "",
         "URL": ""
     }
 }
