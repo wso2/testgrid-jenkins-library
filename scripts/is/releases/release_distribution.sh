@@ -17,16 +17,17 @@
 # under the License.
 #
 # --------------------------------------------------------------------------------------
-ProductDistributionName='wso2is-6.0.0-alpha3-SNAPSHOT'
-ProductVersion='wso2is-6.0.0'
-ProductDistributionURL='https://wso2.org/jenkins/view/products/job/products/job/product-is/org.wso2.is$wso2is/lastSuccessfulBuild/artifact/org.wso2.is/wso2is/6.0.0-alpha3-SNAPSHOT/wso2is-6.0.0-alpha3-SNAPSHOT.zip'
+Product='wso2is'
+ProductVersion='6.0.0'
+ProductDistribution='alpha3-SNAPSHOT'
+ProductDistributionURL='https://wso2.org/jenkins/view/products/job/products/job/product-is/org.wso2.is$wso2is/lastSuccessfulBuild/artifact/org.wso2.is/'${Product}'/'${ProductVersion}'-'${ProductDistribution}'/'${Product}'-'${ProductVersion}'-'${ProductDistribution}'.zip'
 
-wget -O /etc/puppet/code/environments/production/modules/installers/files/${ProductDistributionName}.zip ${ProductDistributionURL}
+wget -O /etc/puppet/code/environments/production/modules/installers/files/${Product}-${ProductVersion}-${ProductDistribution}.zip ${ProductDistributionURL}
 pushd /etc/puppet/code/environments/production/modules/installers/files/
-md5sum ${ProductDistributionName}.zip
-unzip -q ${ProductDistributionName}.zip
-rm -r ${ProductVersion}.zip # remove if any existing packs
-mv ${ProductDistributionName} ${ProductVersion}
-zip -r ${ProductVersion}.zip ${ProductVersion}/
-rm -rf ${ProductVersion}
-rm ${ProductDistributionName}.zip
+md5sum ${Product}-${ProductVersion}-${ProductDistribution}.zip
+unzip -q ${Product}-${ProductVersion}-${ProductDistribution}.zip
+rm -r ${Product}-${ProductVersion}.zip # remove if any existing packs
+mv ${Product}-${ProductVersion}-${ProductDistribution}  ${Product}-${ProductVersion}
+zip -r  ${Product}-${ProductVersion}.zip  ${Product}-${ProductVersion}/
+rm -rf  ${Product}-${ProductVersion}
+rm ${Product}-${ProductVersion}-${ProductDistribution}.zip
