@@ -106,8 +106,8 @@ stages {
                     ./scripts/write-parameter-file.sh "Region" ${product_deployment_region} "${WORKSPACE}/parameters/parameters.json"
                     echo "Writing product release version to parameter file"
                     ./scripts/write-parameter-file.sh "ReleaseVersion" ${release_version} "${WORKSPACE}/parameters/parameters.json"
-                    echo "Writing product distribution to parameter file"
-                    ./scripts/write-parameter-file.sh "ProductDistribution" ${product_distribution} "${WORKSPACE}/parameters/parameters.json"
+                    echo "Writing product distribution name to parameter file"
+                    ./scripts/write-parameter-file.sh "ProductDistributionName" ${product_distribution_name} "${WORKSPACE}/parameters/parameters.json"
                     echo "Writing product release pack URL to parameter file"
                     ./scripts/write-parameter-file.sh "URL" ${url} "${WORKSPACE}/parameters/parameters.json"
                 '''    
