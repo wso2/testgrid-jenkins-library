@@ -184,7 +184,7 @@ def create_build_jobs(deploymentDirectory){
                         cloudformationLocation = ["${WORKSPACE}/aws-esb/esb/Minimum-HA/esb-ha.yaml"]
                         break;
                     case "mi":
-                        cloudformationLocation = ["${WORKSPACE}/aws-micro-integrator/micro-integrator.yaml"]
+                        cloudformationLocation = ["${WORKSPACE}/aws-mi/micro-integrator.yaml"]
                         break;
                     default:
                         println("Product name is incorrect! Existing the execution");
