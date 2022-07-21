@@ -16,14 +16,11 @@
  * under the License.
  */
 
-import org.wso2.tg.jenkins.PipelineContext
 import org.wso2.tg.jenkins.Properties
 import org.wso2.tg.jenkins.executors.TestGridExecutor
 
 // The pipeline should reside in a call block
 def call() {
-  // Setting the current pipeline context, this should be done initially
-  PipelineContext.instance.setContext(this)
   // Initializing environment properties
   def props = Properties.instance
   props.instance.initProperties()
