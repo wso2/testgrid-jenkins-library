@@ -33,23 +33,10 @@ def call() {
         TESTGRID_HOME = "/home/ubuntu/workspace"
         WORKSPACE = "${TESTGRID_HOME}/jobs/${JOB_BASE_NAME}"
         PWD = pwd()
-        OS_USERNAME = credentials('OS_USERNAME')
-        OS_PASSWORD = credentials('OS_PASSWORD')
-        WUM_APPKEY_UAT = credentials('WUM_APPKEY_UAT')
-        WUM_APPKEY_LIVE = credentials('WUM_APPKEY_LIVE')
         JOB_CONFIG_YAML = "job-config.yaml"
         JOB_CONFIG_YAML_PATH = "${PWD}/${JOB_CONFIG_YAML}"
-        CONFIG_FILE_UAT = "${WORKSPACE}/WUM_LOGS/config-uat.txt"
-        CONFIG_FILE_LIVE = "${WORKSPACE}/WUM_LOGS/config-live.txt"
-        RESPONSE_TIMESTAMP = "${WORKSPACE}/WUM_LOGS/response-timestamp.txt"
-        RESPONSE_PRODUCT = "${WORKSPACE}/WUM_LOGS/response-product.txt"
         PRODUCT_LIST = "${WORKSPACE}/WUM_LOGS/product-list.txt"
-        RESPONSE_CHANNEL = "${WORKSPACE}/WUM_LOGS/response-channel.txt"
-        CHANNEL_LIST = "${WORKSPACE}/WUM_LOGS/channel-list.txt"
         JOB_LIST = "${WORKSPACE}/WUM_LOGS/job-list.txt"
-        UPDATENO_LIST = "${WORKSPACE}/WUM_LOGS/updateNo-list.txt"
-        PRODUCT_ID = "${WORKSPACE}/WUM_LOGS/product-id.txt"
-        PRODUCT_ID_LIST = "${WORKSPACE}/WUM_LOGS/product-id-list.txt"
         SCENARIO_BUILD_URL = "https://testgrid.wso2.com/job/WUM/job/Scenario-Tests/"
       }
 
