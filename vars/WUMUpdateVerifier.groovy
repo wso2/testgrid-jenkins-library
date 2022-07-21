@@ -25,6 +25,13 @@ def call() {
       agent {label 'pipeline-agent'}
 
       environment {
+        PWD = pwd()
+        OS_USERNAME = credentials('OS_USERNAME')
+        OS_PASSWORD = credentials('OS_PASSWORD')
+        WUM_APPKEY_UAT = credentials('WUM_APPKEY_UAT')
+        WUM_APPKEY_LIVE = credentials('WUM_APPKEY_LIVE')
+        JOB_CONFIG_YAML = "job-config.yaml"
+        JOB_CONFIG_YAML_PATH = "${PWD}/${JOB_CONFIG_YAML}"
         CONFIG_FILE_UAT = "${WORKSPACE}/WUM_LOGS/config-uat.txt"
         CONFIG_FILE_LIVE = "${WORKSPACE}/WUM_LOGS/config-live.txt"
         RESPONSE_TIMESTAMP = "${WORKSPACE}/WUM_LOGS/response-timestamp.txt"
@@ -64,10 +71,9 @@ def call() {
                     currentBuild.result='SUCCESS'
                     return
                     }
-                    sh '''
+                    sh """
                         sh ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-job-list ${live_ts}
-                    '''
-
+                    """
                 
                 }
           }
