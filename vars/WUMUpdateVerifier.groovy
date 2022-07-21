@@ -18,7 +18,6 @@
 
 import org.wso2.tg.jenkins.PipelineContext
 import org.wso2.tg.jenkins.Properties
-import org.wso2.tg.jenkins.alert.Email
 import org.wso2.tg.jenkins.executors.TestGridExecutor
 
 // The pipeline should reside in a call block
@@ -29,9 +28,7 @@ def call() {
   def props = Properties.instance
   props.instance.initProperties()
 
-  def log = new Logger()
   def executor = new TestGridExecutor()
-  def email = new Email()
 
   pipeline {
 
