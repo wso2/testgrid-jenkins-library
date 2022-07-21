@@ -21,8 +21,11 @@
 product=$1
 productVersion=$2
 updateLevel=$3
+source ${currentScript}/common-functions.sh
 
 originalParameteFilePath="${WORKSPACE}/parameters/parameters.json"
+
+testType=$(extractParameters "TestType" ${parameterFilePath})
 
 osArray=(`echo ${os_list} | sed 's/,/\n/g'`)
 jdkArray=(`echo ${jdk_list} | sed 's/,/\n/g'`)
@@ -49,7 +52,12 @@ for os in ${osArray[@]}; do
             deploymentParameterFilePath="${deploymentDirPath}/parameters.json"
             simplifiedProductVersion=$(removeSpecialCharacters ${productVersion})
             
-            stackNamePrefix="prod-${product}${simplifiedProductVersion}-${updateLevel}"
+            if [[ ${testType} == "intg"  ]];
+            then
+                stackNamePrefix="prod-intg-${product}${simplifiedProductVersion}-${updateLevel}"
+            else
+                stackNamePrefix="prod-${product}${simplifiedProductVersion}-${updateLevel}"
+            fi
             stackNameSufix=$(removeSpecialCharacters "${os}-${jdk}-${db}")
             stackName="${stackNamePrefix}-${stackNameSufix}-${multipleResourceID}"
 

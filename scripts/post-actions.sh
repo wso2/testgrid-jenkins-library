@@ -25,6 +25,7 @@ source ${currentScript}/common-functions.sh
 
 stackName=$(extractParameters "StackName" ${parameterFilePath})
 region=$(extractParameters "Region" ${parameterFilePath})
+testType=$(extractParameters "TestType" ${parameterFilePath})
 S3OutputBucketLocation=$(extractParameters "S3OutputBucketLocation" ${parameterFilePath})
 outputDirectory="${deploymentDirectory}/outputs"
 testLogsUploadLocation="s3://${S3OutputBucketLocation}/test-execution-logs"
@@ -108,7 +109,10 @@ function main(){
     if [[ "${s3DirList}" == "" ]];
     then
         deleteStack
-        uploadTestLogs
+        if [[ "${testType}" != "intg" ]];
+        then
+            uploadTestLogs
+        fi
     else
         log_info "Logs are already uploaded to S3"
     fi

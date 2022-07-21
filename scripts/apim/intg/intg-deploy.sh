@@ -26,7 +26,7 @@ parameterFilePath="${deploymentDirectory}/parameters.json"
 outputFile="${deploymentDirectory}/deployment.properties"
 currentScript=$(dirname $(realpath "$0"))
 
-source ${currentScript}/../common-functions.sh
+source ${currentScript}/../../common-functions.sh
 
 counter=0
 stackName=$(extractParameters "StackName" ${parameterFilePath})
@@ -57,7 +57,7 @@ do
     then
         log_error "CloudFormation deployment error occurred!"
         aws cloudformation describe-stack-events --stack-name ${stackName} --region ${region} |  jq -r '.StackEvents[] | select(.ResourceStatus=="CREATE_FAILED")'
-        bash ${currentScript}/../post-actions.sh ${deploymentName}
+        bash ${currentScript}/../../post-actions.sh ${deploymentName}
         exit 1
     fi
 
@@ -68,7 +68,7 @@ do
         log_info "Stack:${stackName} creation was successfull!"
     else
         log_error "Stack:${stackName} creation failed! Error:${stackStatus}"
-        bash ${currentScript}/../post-actions.sh ${deploymentName}
+        bash ${currentScript}/../../post-actions.sh ${deploymentName}
         exit 1
     fi
 

@@ -31,6 +31,7 @@ outputFile="${deploymentDirectory}/deployment.properties"
 
 source ${currentScript}/common-functions.sh
 product=$(extractParameters "Product" ${parameterFilePath})
+testType=$(extractParameters "TestType" ${parameterFilePath})
 
 echo "-----------"
 echo "Deployment Directory:    "${deploymentDirectory}
@@ -66,7 +67,17 @@ function changeCommonLogPath(){
 function cloudformationDeployment(){
     log_info "Executing product specific deployment..."
     log_info "Running ${product} deployment.."
-    bash ${currentScript}/${product}/deploy.sh ${deploymentName} ${cloudformationFileLocations[@]}
+    if [[ ${testType} == "intg"  ]];
+    then
+        if [[ ${product} == "wso2am" ]];
+        then
+            bash ${currentScript}/apim/intg/intg-deploy.sh ${deploymentName} ${cloudformationFileLocations[@]}
+        else
+            bash ${currentScript}/${product}/intg/intg-deploy.sh ${deploymentName} ${cloudformationFileLocations[@]}
+        fi
+    else
+        bash ${currentScript}/${product}/deploy.sh ${deploymentName} ${cloudformationFileLocations[@]}
+    fi
     if [[ $? != 0 ]];
     then
         # If deployment fails the handler should also fail
@@ -92,11 +103,22 @@ function writeCommonVariables(){
 
 function addCommonVariables(){
     writeCommonVariables "S3OutputBucketLocation" "S3OutputBucketLocation" true
+    writeCommonVariables "Product" "Product" true
     writeCommonVariables "ProductVersion" "ProductVersion" true
+    writeCommonVariables "WUMUsername" "WUMUsername" true
+    writeCommonVariables "WUMPassword" "WUMPassword" true
+    writeCommonVariables "GithubUserName" "GithubUserName" true
+    writeCommonVariables "GithubPassword" "GithubPassword" true
+    writeCommonVariables "ProductRepository" "ProductRepository" true
+    writeCommonVariables "ProductTestBranch" "ProductTestBranch" true
+    writeCommonVariables "ProductTestScriptLocation" "ProductTestScriptLocation" true
     writeCommonVariables "S3AccessKeyID" "s3accessKey" true
     writeCommonVariables "S3SecretAccessKey" "s3secretKey" true
     writeCommonVariables "TESTGRID_EMAIL_PASSWORD" "testgridEmailPassword" true
     writeCommonVariables "CustomURL" "CustomURL" true
+    writeCommonVariables "UpdateType" "UpdateType" true
+    writeCommonVariables "TestType" "TestType" true
+    writeCommonVariables "SurefireReportDir" "SurefireReportDir" true
 }
 
 function main(){
