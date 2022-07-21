@@ -25,27 +25,26 @@ def call() {
       agent {label 'pipeline-agent'}
 
       environment {
-        PWD = pwd()
-        JOB_CONFIG_YAML = "job-config.yaml"
-        JOB_CONFIG_YAML_PATH = "${PWD}/${JOB_CONFIG_YAML}"
+        CONFIG_FILE_UAT = "${WORKSPACE}/WUM_LOGS/config-uat.txt"
+        CONFIG_FILE_LIVE = "${WORKSPACE}/WUM_LOGS/config-live.txt"
+        RESPONSE_TIMESTAMP = "${WORKSPACE}/WUM_LOGS/response-timestamp.txt"
+        RESPONSE_PRODUCT = "${WORKSPACE}/WUM_LOGS/response-product.txt"
         PRODUCT_LIST = "${WORKSPACE}/WUM_LOGS/product-list.txt"
+        RESPONSE_CHANNEL = "${WORKSPACE}/WUM_LOGS/response-channel.txt"
+        CHANNEL_LIST = "${WORKSPACE}/WUM_LOGS/channel-list.txt"
         JOB_LIST = "${WORKSPACE}/WUM_LOGS/job-list.txt"
+        UPDATENO_LIST = "${WORKSPACE}/WUM_LOGS/updateNo-list.txt"
+        PRODUCT_ID = "${WORKSPACE}/WUM_LOGS/product-id.txt"
+        PRODUCT_ID_LIST = "${WORKSPACE}/WUM_LOGS/product-id-list.txt"
         SCENARIO_BUILD_URL = "https://testgrid.wso2.com/job/WUM/job/Scenario-Tests/"
+        SCENARIOS_REPOSITORY = "https://github.com/wso2-incubator/test-integration-tests-runner"
       }
 
       stages {
         stage('Preparation') {
             steps {
                 script {
-                withCredentials([string(credentialsId: 'WUM_USERNAME', variable: 'wumUserName'),
-                string(credentialsId: 'WUM_PASSWORD', variable: 'wumPassword'),
-                string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 's3accessKey'),
-                string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 's3secretKey'),
-                string(credentialsId: 'TESTGRID_EMAIL_PASSWORD', variable: 'testgridEmailPassword')])
-                {
                     sh '''
-                        echo ${JOB_CONFIG_YAML_PATH}
-                        echo '  TEST_TYPE: ${TEST_TYPE}' >> ${JOB_CONFIG_YAML_PATH}
                         cd ${WORKSPACE}
                         rm -rf WUM_LOGS
                         mkdir WUM_LOGS
@@ -54,14 +53,7 @@ def call() {
                         cd ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner
                         chmod +x get-wum-uat-products.sh
                     '''
-                    //Generate S3 Log output path
-                    s3BuildLogPath = "${s3BucketName}/artifacts/jobs/wum-parent/build-${BUILD_NUMBER}"
-                    println "Your Logs will be uploaded to: s3://"+s3BuildLogPath
-                    sh'''
-                        echo "Writting S3 Log uploading endpoint to parameter file"
-                        ./scripts/write-parameter-file.sh "S3OutputBucketLocation" '''+s3BuildLogPath+''' "${WORKSPACE}/parameters/parameters.json"
-                        echo "Writing to parameter file completed!"
-                    '''
+
                     def live_ts = sh(script: '${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-live-timestamp', returnStdout: true).split("\r?\n")[2]
                     def uat_ts = sh(script: '${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-uat-timestamp', returnStdout: true).split("\r?\n")[2]
 
@@ -76,14 +68,13 @@ def call() {
                         sh ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-job-list ${live_ts}
                     '''
 
-                }
+                
                 }
           }
         }
 
         stage('parallel-run') {
             steps {
-                wrap([$class: 'MaskPasswordsBuildWrapper']) {
                     script {
                         try {
                             def wumJobs = [:]
@@ -119,13 +110,12 @@ def call() {
                             echo "Few of the builds are not found to trigger. " + e
                         }
                     }
-                }
+                
             }
         }
 
         stage('result') {
                 steps {
-                    wrap([$class: 'MaskPasswordsBuildWrapper']) {
                         script {
                         try {
                             sh """
@@ -224,7 +214,7 @@ def call() {
                             currentBuild.result = "FAILED"
                         }
                     }
-                }
+                
             }
         }
       }
