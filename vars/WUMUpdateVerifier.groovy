@@ -16,16 +16,8 @@
  * under the License.
  */
 
-import org.wso2.tg.jenkins.Properties
-import org.wso2.tg.jenkins.executors.TestGridExecutor
-
 // The pipeline should reside in a call block
 def call() {
-  // Initializing environment properties
-  def props = Properties.instance
-  props.instance.initProperties()
-
-  def executor = new TestGridExecutor()
 
   pipeline {
 
