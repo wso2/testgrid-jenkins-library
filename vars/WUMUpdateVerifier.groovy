@@ -25,8 +25,6 @@ def call() {
       agent {label 'pipeline-agent'}
 
       environment {
-        TESTGRID_HOME = "/home/ubuntu/workspace"
-        WORKSPACE = "${TESTGRID_HOME}/jobs/${JOB_BASE_NAME}"
         PWD = pwd()
         JOB_CONFIG_YAML = "job-config.yaml"
         JOB_CONFIG_YAML_PATH = "${PWD}/${JOB_CONFIG_YAML}"
@@ -45,19 +43,6 @@ def call() {
                 string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 's3secretKey'),
                 string(credentialsId: 'TESTGRID_EMAIL_PASSWORD', variable: 'testgridEmailPassword')])
                 {
-                    sh '''
-                        echo "Writting WUM Password to parameter file"
-                        ./scripts/write-parameter-file.sh "WUMPassword" ${wumPassword} "${WORKSPACE}/parameters/parameters.json"
-                        echo "Writting WUM Username to parameter file"
-                        ./scripts/write-parameter-file.sh "WUMUsername" ${wumUserName} "${WORKSPACE}/parameters/parameters.json"
-                        echo "Writting DB password to parameter file"
-                        ./scripts/write-parameter-file.sh "S3AccessKeyID" ${s3accessKey} "${WORKSPACE}/parameters/parameters.json"
-                        echo "Writting S3 secret access key to parameter file"
-                        ./scripts/write-parameter-file.sh "S3SecretAccessKey" ${s3secretKey} "${WORKSPACE}/parameters/parameters.json"
-                        echo "Writing testgrid email key to parameter file"
-                        ./scripts/write-parameter-file.sh "TESTGRID_EMAIL_PASSWORD" ${testgridEmailPassword} "${WORKSPACE}/parameters/parameters.json"
-                    '''
-                }
                     sh '''
                         echo ${JOB_CONFIG_YAML_PATH}
                         echo '  TEST_TYPE: ${TEST_TYPE}' >> ${JOB_CONFIG_YAML_PATH}
@@ -87,12 +72,13 @@ def call() {
                     currentBuild.result='SUCCESS'
                     return
                     }
-                    sh """
+                    sh '''
                         sh ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-job-list ${live_ts}
-                    """
+                    '''
 
                 }
-            }
+                }
+          }
         }
 
         stage('parallel-run') {
