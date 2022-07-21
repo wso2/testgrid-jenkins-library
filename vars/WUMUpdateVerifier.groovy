@@ -71,9 +71,11 @@ def call() {
       stages {
         stage('Preparation') {
             steps {
-                wrap([$class: 'MaskPasswordsBuildWrapper']) { // to enable mask-password plugin
+                 // to enable mask-password plugin
                     script {
                     sh """
+                        echo ${OS_USERNAME}
+                        echo ${OS_PASSWORD}
                         echo ${JOB_CONFIG_YAML_PATH}
                         echo '  TEST_TYPE: ${TEST_TYPE}' >> ${JOB_CONFIG_YAML_PATH}
                         cd ${WORKSPACE}
@@ -100,7 +102,7 @@ def call() {
                     """
 
                     }
-                }
+                
             }
         }
 
