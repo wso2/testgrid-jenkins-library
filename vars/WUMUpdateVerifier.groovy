@@ -16,37 +16,18 @@
  * under the License.
  */
 
-import org.wso2.tg.jenkins.Logger
-import org.wso2.tg.jenkins.PipelineContext
-import org.wso2.tg.jenkins.Properties
-import org.wso2.tg.jenkins.alert.Email
-import org.wso2.tg.jenkins.executors.TestGridExecutor
-
 // The pipeline should reside in a call block
 def call() {
-  // Setting the current pipeline context, this should be done initially
-  PipelineContext.instance.setContext(this)
-  // Initializing environment properties
-  def props = Properties.instance
-  props.instance.initProperties()
-
-  def log = new Logger()
-  def executor = new TestGridExecutor()
-  def email = new Email()
-
   pipeline {
 
     pipeline {
       agent {
         node {
-          label ""
-          customWorkspace "/home/ubuntu/workspace/jobs/${JOB_BASE_NAME}"
+          label "pipeline-agent"
         }
       }
 
       environment {
-        TESTGRID_HOME = "/home/ubuntu/workspace"
-        WORKSPACE = "${TESTGRID_HOME}/jobs/${JOB_BASE_NAME}"
         PWD = pwd()
         OS_USERNAME = credentials('OS_USERNAME')
         OS_PASSWORD = credentials('OS_PASSWORD')
@@ -71,84 +52,82 @@ def call() {
       stages {
         stage('Preparation') {
             steps {
-                wrap([$class: 'MaskPasswordsBuildWrapper']) { // to enable mask-password plugin
-                    script {
-                    sh """
-                        echo ${JOB_CONFIG_YAML_PATH}
-                        echo '  TEST_TYPE: ${TEST_TYPE}' >> ${JOB_CONFIG_YAML_PATH}
-                        cd ${WORKSPACE}
-                        rm -rf WUM_LOGS
-                        mkdir WUM_LOGS
-                        cd ${WORKSPACE}/WUM_LOGS
-                        git clone ${SCENARIOS_REPOSITORY}
-                        cd ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner
-                        chmod +x get-wum-uat-products.sh
-                      """
+              script {
+              sh """
+                  echo ${JOB_CONFIG_YAML_PATH}
+                  echo '  TEST_TYPE: ${TEST_TYPE}' >> ${JOB_CONFIG_YAML_PATH}
+                  cd ${WORKSPACE}
+                  rm -rf WUM_LOGS
+                  mkdir WUM_LOGS
+                  cd ${WORKSPACE}/WUM_LOGS
+                  git clone ${SCENARIOS_REPOSITORY}
+                  cd ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner
+                  chmod +x get-wum-uat-products.sh
+                """
 
-                      def live_ts = sh(script: '${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-live-timestamp', returnStdout: true).split("\r?\n")[2]
-                      def uat_ts = sh(script: '${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-uat-timestamp', returnStdout: true).split("\r?\n")[2]
+                def live_ts = sh(script: '${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-live-timestamp', returnStdout: true).split("\r?\n")[2]
+                def uat_ts = sh(script: '${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-uat-timestamp', returnStdout: true).split("\r?\n")[2]
 
-                      echo "uat timestamp: ${uat_ts} | live timestamp: ${live_ts}"
+                echo "uat timestamp: ${uat_ts} | live timestamp: ${live_ts}"
 
-                      if ( "${uat_ts}" == "${live_ts}" ){
-                        echo "There are no updated product packs for the given timestamp in UAT. Hence Skipping the process."
-                        currentBuild.result='SUCCESS'
-                        return
-                      }
-                    sh """
-                      sh ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-job-list ${live_ts}
-                    """
-
-                    }
+                if ( "${uat_ts}" == "${live_ts}" ){
+                  echo "There are no updated product packs for the given timestamp in UAT. Hence Skipping the process."
+                  currentBuild.result='SUCCESS'
+                  return
                 }
+              sh """
+                sh ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-job-list ${live_ts}
+              """
+
+              }
+                
             }
         }
 
         stage('parallel-run') {
             steps {
-                wrap([$class: 'MaskPasswordsBuildWrapper']) {
-                    script {
-                        try {
-                            def wumJobs = [:]
-                            FILECONTENT = readFile "${JOB_LIST}"
-                            sh """
-                              cd ${WORKSPACE}
-                              rm -rf sucessresult.html failresult.html
-                              touch sucessresult.html failresult.html
-                            """
-                            def jobNamesArray = FILECONTENT.split('\n')
-                            for (line in jobNamesArray) {
-                                String jobName = line;
-                                wumJobs["job:" + jobName] = {
-                                    def result = build(job: jobName, propagate: false).result
-                                    if (result == 'SUCCESS') {
-                                        def output = jobName + " - " + result + "<br/>"
-                                        sh "echo '$output' >> ${WORKSPACE}/sucessresult.html "
+                
+              script {
+                  try {
+                      def wumJobs = [:]
+                      FILECONTENT = readFile "${JOB_LIST}"
+                      sh """
+                        cd ${WORKSPACE}
+                        rm -rf sucessresult.html failresult.html
+                        touch sucessresult.html failresult.html
+                      """
+                      def jobNamesArray = FILECONTENT.split('\n')
+                      for (line in jobNamesArray) {
+                          String jobName = line;
+                          wumJobs["job:" + jobName] = {
+                              def result = build(job: jobName, propagate: false).result
+                              if (result == 'SUCCESS') {
+                                  def output = jobName + " - " + result + "<br/>"
+                                  sh "echo '$output' >> ${WORKSPACE}/sucessresult.html "
 
-                                    } else if (result == 'FAILURE') {
-                                        def output = jobName + " - " + result + "<br/>"
-                                        sh "echo '$output' >> ${WORKSPACE}/failresult.html "
+                              } else if (result == 'FAILURE') {
+                                  def output = jobName + " - " + result + "<br/>"
+                                  sh "echo '$output' >> ${WORKSPACE}/failresult.html "
 
-                                    } else if (result == 'UNSTABLE') {
-                                        def output = jobName + " - " + result + "<br/>"
-                                        sh "echo '$output' >> ${WORKSPACE}/failresult.html "
-                                    }
+                              } else if (result == 'UNSTABLE') {
+                                  def output = jobName + " - " + result + "<br/>"
+                                  sh "echo '$output' >> ${WORKSPACE}/failresult.html "
+                              }
 
-                                };
-                            }
-                            parallel wumJobs
+                          };
+                      }
+                      parallel wumJobs
 
-                        } catch (e) {
-                            echo "Few of the builds are not found to trigger. " + e
-                        }
-                    }
-                }
+                  } catch (e) {
+                      echo "Few of the builds are not found to trigger. " + e
+                  }
+              }
+                
             }
         }
 
         stage('result') {
                 steps {
-                    wrap([$class: 'MaskPasswordsBuildWrapper']) {
                         script {
                         try {
                             sh """
@@ -234,7 +213,7 @@ def call() {
                             """)
 
                             } else {
-                                log.info("No WUM Update found..!")
+                                println "No WUM Update found..!"
                                 send("Testgrid Test Results Summary for WUM Updates!", "No WUM Update found..!")
                             }
                             //Delete the WUM_LOGS
@@ -247,7 +226,7 @@ def call() {
                             currentBuild.result = "FAILED"
                         }
                     }
-                }
+                
             }
         }
       }
