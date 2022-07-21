@@ -20,7 +20,7 @@ case "$1" in
         then
             logDirectories=('/var/log/')
         else
-            logDirectories=('/usr/lib/wso2/'${product}'/'${version}'/'${product}'-'${version}'/repository/logs/' '/usr/lib/wso2/'${product}'/'${version}'/'${product}'-'${version}'/repository/conf/' '/usr/lib/wso2/'${product}'/'${version}'/'${product}'-'${version}'/repository/deployment/')
+            logDirectories=('/usr/lib/wso2/'${product}'/'${version}'/'${product}'-'${version}'/repository/logs/' '/usr/lib/wso2/'${product}'/'${version}'/'${product}'-'${version}'/repository/conf/' '/usr/lib/wso2/'${product}'/'${version}'/'${product}'-'${version}'/repository/deployment/' '/var/log/')
             s3BucketLocation=${s3BucketLocation}-${instanceId}
         fi
         mkdir /tmp/upload-dir
