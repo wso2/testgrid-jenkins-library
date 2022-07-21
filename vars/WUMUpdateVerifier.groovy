@@ -43,9 +43,27 @@ def call() {
       stages {
         stage('Preparation') {
             steps {
-                wrap([$class: 'MaskPasswordsBuildWrapper']) { // to enable mask-password plugin
-                    script {
-                    sh """
+                script {
+                withCredentials([string(credentialsId: 'WUM_USERNAME', variable: 'wumUserName'),
+                string(credentialsId: 'WUM_PASSWORD', variable: 'wumPassword'),
+                string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 's3accessKey'),
+                string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 's3secretKey'),
+                string(credentialsId: 'TESTGRID_EMAIL_PASSWORD', variable: 'testgridEmailPassword')])
+                {
+                    sh '''
+                        echo "Writting WUM Password to parameter file"
+                        ./scripts/write-parameter-file.sh "WUMPassword" ${wumPassword} "${WORKSPACE}/parameters/parameters.json"
+                        echo "Writting WUM Username to parameter file"
+                        ./scripts/write-parameter-file.sh "WUMUsername" ${wumUserName} "${WORKSPACE}/parameters/parameters.json"
+                        echo "Writting DB password to parameter file"
+                        ./scripts/write-parameter-file.sh "S3AccessKeyID" ${s3accessKey} "${WORKSPACE}/parameters/parameters.json"
+                        echo "Writting S3 secret access key to parameter file"
+                        ./scripts/write-parameter-file.sh "S3SecretAccessKey" ${s3secretKey} "${WORKSPACE}/parameters/parameters.json"
+                        echo "Writing testgrid email key to parameter file"
+                        ./scripts/write-parameter-file.sh "TESTGRID_EMAIL_PASSWORD" ${testgridEmailPassword} "${WORKSPACE}/parameters/parameters.json"
+                    '''
+                }
+                    sh '''
                         echo ${JOB_CONFIG_YAML_PATH}
                         echo '  TEST_TYPE: ${TEST_TYPE}' >> ${JOB_CONFIG_YAML_PATH}
                         cd ${WORKSPACE}
@@ -55,23 +73,29 @@ def call() {
                         git clone ${SCENARIOS_REPOSITORY}
                         cd ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner
                         chmod +x get-wum-uat-products.sh
-                      """
+                    '''
+                    //Generate S3 Log output path
+                    s3BuildLogPath = "${s3BucketName}/artifacts/jobs/wum-parent/build-${BUILD_NUMBER}"
+                    println "Your Logs will be uploaded to: s3://"+s3BuildLogPath
+                    sh'''
+                        echo "Writting S3 Log uploading endpoint to parameter file"
+                        ./scripts/write-parameter-file.sh "S3OutputBucketLocation" '''+s3BuildLogPath+''' "${WORKSPACE}/parameters/parameters.json"
+                        echo "Writing to parameter file completed!"
+                    '''
+                    def live_ts = sh(script: '${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-live-timestamp', returnStdout: true).split("\r?\n")[2]
+                    def uat_ts = sh(script: '${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-uat-timestamp', returnStdout: true).split("\r?\n")[2]
 
-                      def live_ts = sh(script: '${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-live-timestamp', returnStdout: true).split("\r?\n")[2]
-                      def uat_ts = sh(script: '${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-uat-timestamp', returnStdout: true).split("\r?\n")[2]
+                    echo "uat timestamp: ${uat_ts} | live timestamp: ${live_ts}"
 
-                      echo "uat timestamp: ${uat_ts} | live timestamp: ${live_ts}"
-
-                      if ( "${uat_ts}" == "${live_ts}" ){
-                        echo "There are no updated product packs for the given timestamp in UAT. Hence Skipping the process."
-                        currentBuild.result='SUCCESS'
-                        return
-                      }
+                    if ( "${uat_ts}" == "${live_ts}" ){
+                    echo "There are no updated product packs for the given timestamp in UAT. Hence Skipping the process."
+                    currentBuild.result='SUCCESS'
+                    return
+                    }
                     sh """
-                      sh ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-job-list ${live_ts}
+                        sh ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-job-list ${live_ts}
                     """
 
-                    }
                 }
             }
         }
