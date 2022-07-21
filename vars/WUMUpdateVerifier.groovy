@@ -16,7 +16,6 @@
  * under the License.
  */
 
-import org.wso2.tg.jenkins.Logger
 import org.wso2.tg.jenkins.PipelineContext
 import org.wso2.tg.jenkins.Properties
 import org.wso2.tg.jenkins.alert.Email
@@ -234,7 +233,7 @@ def call() {
                             """)
 
                             } else {
-                                log.info("No WUM Update found..!")
+                                println "No WUM Update found..!"
                                 send("Testgrid Test Results Summary for WUM Updates!", "No WUM Update found..!")
                             }
                             //Delete the WUM_LOGS
