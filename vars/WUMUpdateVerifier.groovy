@@ -22,12 +22,7 @@ def call() {
   pipeline {
 
     pipeline {
-      agent {
-        node {
-          label ""
-          customWorkspace "/home/ubuntu/workspace/jobs/${JOB_BASE_NAME}"
-        }
-      }
+      agent {label 'pipeline-agent'}
 
       environment {
         TESTGRID_HOME = "/home/ubuntu/workspace"
