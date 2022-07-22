@@ -23,7 +23,7 @@ def call() {
     pipeline {
       agent {
         node {
-          label "pipeline-agent"
+          label "master"
         }
       }
 
@@ -47,6 +47,7 @@ def call() {
         PRODUCT_ID = "${WORKSPACE}/WUM_LOGS/product-id.txt"
         PRODUCT_ID_LIST = "${WORKSPACE}/WUM_LOGS/product-id-list.txt"
         SCENARIO_BUILD_URL = "https://testgrid.wso2.com/job/WUM/job/Scenario-Tests/"
+        SCENARIOS_REPOSITORY = "https://github.com/VimukthiPerera/testgrid-jenkins-library"
       }
 
       stages {
@@ -60,13 +61,14 @@ def call() {
                   rm -rf WUM_LOGS
                   mkdir WUM_LOGS
                   cd ${WORKSPACE}/WUM_LOGS
-                  git clone ${SCENARIOS_REPOSITORY}
-                  cd ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner
+                  git clone -b main ${SCENARIOS_REPOSITORY}
+                  cd ${WORKSPACE}/WUM_LOGS/testgrid-jenkins-library/vars
+                  ls
                   chmod +x get-wum-uat-products.sh
                 """
 
-                def live_ts = sh(script: '${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-live-timestamp', returnStdout: true).split("\r?\n")[2]
-                def uat_ts = sh(script: '${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-uat-timestamp', returnStdout: true).split("\r?\n")[2]
+                def live_ts = sh(script: '${WORKSPACE}/WUM_LOGS/testgrid-jenkins-library/vars/get-wum-uat-products.sh --get-live-timestamp', returnStdout: true).split("\r?\n")[2]
+                def uat_ts = sh(script: '${WORKSPACE}/WUM_LOGS/testgrid-jenkins-library/vars/get-wum-uat-products.sh --get-uat-timestamp', returnStdout: true).split("\r?\n")[2]
 
                 echo "uat timestamp: ${uat_ts} | live timestamp: ${live_ts}"
 
@@ -76,7 +78,7 @@ def call() {
                   return
                 }
               sh """
-                sh ${WORKSPACE}/WUM_LOGS/test-integration-tests-runner/get-wum-uat-products.sh --get-job-list ${live_ts}
+                sh ${WORKSPACE}/WUM_LOGS/testgrid-jenkins-library/vars/get-wum-uat-products.sh --get-job-list ${live_ts}
               """
 
               }
