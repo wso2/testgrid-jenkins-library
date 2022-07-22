@@ -47,7 +47,7 @@ def call() {
         PRODUCT_ID = "${WORKSPACE}/WUM_LOGS/product-id.txt"
         PRODUCT_ID_LIST = "${WORKSPACE}/WUM_LOGS/product-id-list.txt"
         SCENARIO_BUILD_URL = "https://testgrid.wso2.com/job/WUM/job/Scenario-Tests/"
-        SCENARIOS_REPOSITORY = "https://github.com/VimukthiPerera/testgrid-jenkins-library"
+        SCENARIOS_REPOSITORY = "https://github.com/wso2/testgrid-jenkins-library"
       }
 
       stages {
