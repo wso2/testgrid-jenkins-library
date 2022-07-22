@@ -132,9 +132,9 @@ getChannelList() {
                if [ $product = "wso2is" ]; then
                 product_folder="product-is"
                 prod_short="is"
-               elif [ $product = "wso2am" ]; then
-                product_folder="product-apim"
-                prod_short="apim"
+               #elif [ $product = "wso2am" ]; then
+                #product_folder="product-apim"
+                #prod_short="apim"
                elif [ $product = "wso2ei" ]; then
                 product_folder="product-ei"
                 prod_short="ei"
@@ -144,11 +144,11 @@ getChannelList() {
                elif [ $product = "wso2mi" ]; then
                 product_folder="product-mi"
                 prod_short="mi"
-               elif [ $product = "wso2-obam" || $product = "wso2-obkm" ]; then
-                product_folder="product-ob"
-                prod_short="ob"
+               #elif [ $product = "wso2-obam" || $product = "wso2-obkm" ]; then
+                #product_folder="product-ob"
+                #prod_short="ob"
                else
-                echo "[WARNING] $product needs to be added to testgrid-jenkins-library/vars/get-wum-uat-products.sh"
+                echo "[WARNING] $product needs to be onboarded and added to testgrid-jenkins-library/vars/get-wum-uat-products.sh"
                fi
                echo $product_folder/$prod_short"-"$version"-scenario-testgrid-pipeline" >> $JOB_LIST
 
