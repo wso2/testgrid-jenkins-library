@@ -28,7 +28,7 @@ stages {
     stage('Clone CFN repo') {
         steps {
             script {
-                cfn_repo_url="https://github.com/janethavi/testgrid.git"
+                cfn_repo_url="https://github.com/wso2/testgrid.git"
                 cfn_repo_branch="master"
                 if (intg_test.toBoolean()) {
                     if (use_wum.toBoolean()){
@@ -149,10 +149,10 @@ post {
         sh '''
             echo "Job is completed... Deleting the workspace directories!"
         '''
-        // script {
-        //     sendEmail(deploymentDirectories, updateType)
-        // }
-        //cleanWs deleteDirs: true, notFailBuild: true
+        script {
+            sendEmail(deploymentDirectories, updateType)
+        }
+        cleanWs deleteDirs: true, notFailBuild: true
     }
 }
 }
@@ -271,14 +271,12 @@ def sendEmail(deploymentDirectories, updateType) {
         """
     subject="[TestGrid][${updateType.toUpperCase()}][${product.toUpperCase()}:${product_version}][INTG]-Build ${currentBuild.currentResult}-#${env.BUILD_NUMBER}"
     senderEmailGroup=""
-    if(product.equals("apim") || product.equals("ei") || product.equals("esb")){
+    if(product.equals("wso2am") || product.equals("ei") || product.equals("esb") || || product.equals("mi")){
         senderEmailGroup = "integration-builder@wso2.com"
     }else if(product.equals("is")) {
         senderEmailGroup = "iam-builder@wso2.com"
     }else if(product.equals("ob")) {
         senderEmailGroup = "bfsi-group@wso2.com"
-    }else if(product.equals("mi")) {
-        senderEmailGroup = "dulanjali@wso2.com"
     }
     emailext(to: "${senderEmailGroup},builder@wso2.org",
             subject: subject,
