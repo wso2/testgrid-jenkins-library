@@ -23,6 +23,7 @@ def deploymentDirectories = []
 def updateType = ""
 def s3BucketName = "testgrid-pipeline-logs"
 def s3BuildLogPath = ""
+def s3PathConstructor = ""
 
 pipeline {
 agent {label 'pipeline-agent'}
@@ -35,17 +36,21 @@ stages {
                     if (use_wum.toBoolean()){
                         aws_repo_branch="${product_version}-staging-new"
                         updateType="wum"
+                        s3PathConstructor="staging/wum"
                     }else{
                         aws_repo_branch="${product_version}-u2-staging-new"
                         updateType="u2"
+                        s3PathConstructor="staging/u2"
                     }
                 } else {
                     if (use_wum.toBoolean()){
                         aws_repo_branch="${product_version}-new"
                         updateType="wum"
+                        s3PathConstructor="wum"
                     }else{
                         aws_repo_branch="${product_version}-u2-new"
                         updateType="u2"
+                        s3PathConstructor="u2"
                     }
                 }
                 dir("aws-"+product) {
@@ -108,7 +113,7 @@ stages {
                     ./scripts/write-parameter-file.sh "CustomURL" ${custom_url} "${WORKSPACE}/parameters/parameters.json"
                 '''
                 //Generate S3 Log output path
-                s3BuildLogPath = "${s3BucketName}/artifacts/jobs/${product}-${product_version}/build-${BUILD_NUMBER}"
+                s3BuildLogPath = "${s3BucketName}/artifacts/jobs/${s3PathConstructor}/${product}-${product_version}/build-${BUILD_NUMBER}"
                 println "Your Logs will be uploaded to: s3://"+s3BuildLogPath
                 sh'''
                     echo "Writting S3 Log uploading endpoint to parameter file"
