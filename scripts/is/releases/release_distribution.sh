@@ -19,7 +19,7 @@
 # --------------------------------------------------------------------------------------
 Product='wso2is'
 ProductVersion='6.0.0'
-ProductDistribution='alpha4-SNAPSHOT'
+ProductDistribution='beta2-SNAPSHOT'
 ProductDistributionURL='https://wso2.org/jenkins/view/products/job/products/job/product-is/org.wso2.is$wso2is/lastSuccessfulBuild/artifact/org.wso2.is/'${Product}'/'${ProductVersion}'-'${ProductDistribution}'/'${Product}'-'${ProductVersion}'-'${ProductDistribution}'.zip'
 
 wget -O /etc/puppet/code/environments/production/modules/installers/files/${Product}-${ProductVersion}-${ProductDistribution}.zip ${ProductDistributionURL}
