@@ -17,25 +17,26 @@
 # under the License.
 #
 # --------------------------------------------------------------------------------------
+# Please Note that this is only for packs that are yet to be released in GA (testing with product distributions)
 Product='wso2is'
 ProductVersion='6.0.0'
-ProductDistribution='' #Make it empty;i.e('') for rc1,rc2. Else keep values; i.e like ('beta2-SNAPSHOT')
+ProductDistribution='rc1'
+snapshot=0 # make it to 1 if you are testing for a snapshot version
 
-if [ -z "$ProductDistribution" ]
+if [ $snapshot -eq 0  ]
 then
-  ProductDistributionURL='https://wso2.org/jenkins/view/products/job/products/job/product-is/lastSuccessfulBuild/artifact/modules/distribution/target/'${Product}'-'${ProductVersion}'.zip'
-  wget -O /etc/puppet/code/environments/production/modules/installers/files/${Product}-${ProductVersion}.zip ${ProductDistributionURL}
-  pushd /etc/puppet/code/environments/production/modules/installers/files/
-  md5sum ${Product}-${ProductVersion}.zip
+  # For released versions downloading from github
+  ProductDistributionURL='https://github.com/wso2/product-is/releases/download/v'${ProductVersion}'-'${ProductDistribution}'/'${Product}'-'${ProductVersion}'-'${ProductDistribution}'.zip'
 else
+  # For snapshots-downloading from jenkins
   ProductDistributionURL='https://wso2.org/jenkins/view/products/job/products/job/product-is/org.wso2.is$wso2is/lastSuccessfulBuild/artifact/org.wso2.is/'${Product}'/'${ProductVersion}'-'${ProductDistribution}'/'${Product}'-'${ProductVersion}'-'${ProductDistribution}'.zip'
-  wget -O /etc/puppet/code/environments/production/modules/installers/files/${Product}-${ProductVersion}-${ProductDistribution}.zip ${ProductDistributionURL}
-  pushd /etc/puppet/code/environments/production/modules/installers/files/
-  md5sum ${Product}-${ProductVersion}-${ProductDistribution}.zip
-  unzip -q ${Product}-${ProductVersion}-${ProductDistribution}.zip
-  rm -r ${Product}-${ProductVersion}.zip # remove if any existing packs
-  mv ${Product}-${ProductVersion}-${ProductDistribution}  ${Product}-${ProductVersion}
-  zip -r  ${Product}-${ProductVersion}.zip  ${Product}-${ProductVersion}/
-  rm -rf  ${Product}-${ProductVersion}
-  rm ${Product}-${ProductVersion}-${ProductDistribution}.zip
 fi
+wget -O /etc/puppet/code/environments/production/modules/installers/files/${Product}-${ProductVersion}-${ProductDistribution}.zip ${ProductDistributionURL}
+pushd /etc/puppet/code/environments/production/modules/installers/files/
+md5sum ${Product}-${ProductVersion}-${ProductDistribution}.zip
+unzip -q ${Product}-${ProductVersion}-${ProductDistribution}.zip
+rm -r ${Product}-${ProductVersion}.zip # remove if any existing packs
+mv ${Product}-${ProductVersion}-${ProductDistribution}  ${Product}-${ProductVersion}
+zip -r  ${Product}-${ProductVersion}.zip  ${Product}-${ProductVersion}/
+rm -rf  ${Product}-${ProductVersion}
+rm ${Product}-${ProductVersion}-${ProductDistribution}.zip
