@@ -19,7 +19,7 @@
 # --------------------------------------------------------------------------------------
 Product='wso2is'
 ProductVersion='6.0.0'
-ProductDistribution='' #Make it empty;i.e('') for rc1,rc2. Else keep values; i.e like ('alpha1')
+ProductDistribution='' #Make it empty;i.e('') for rc1,rc2. Else keep values; i.e like ('beta2-SNAPSHOT')
 
 if [ -z "$ProductDistribution" ]
 then
