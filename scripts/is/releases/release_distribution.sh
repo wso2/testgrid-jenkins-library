@@ -19,15 +19,23 @@
 # --------------------------------------------------------------------------------------
 Product='wso2is'
 ProductVersion='6.0.0'
-ProductDistribution='beta2-SNAPSHOT'
-ProductDistributionURL='https://wso2.org/jenkins/view/products/job/products/job/product-is/org.wso2.is$wso2is/lastSuccessfulBuild/artifact/org.wso2.is/'${Product}'/'${ProductVersion}'-'${ProductDistribution}'/'${Product}'-'${ProductVersion}'-'${ProductDistribution}'.zip'
+ProductDistribution='' #Make it empty;i.e('') for rc1,rc2. Else keep values; i.e like ('alpha1')
 
-wget -O /etc/puppet/code/environments/production/modules/installers/files/${Product}-${ProductVersion}-${ProductDistribution}.zip ${ProductDistributionURL}
-pushd /etc/puppet/code/environments/production/modules/installers/files/
-md5sum ${Product}-${ProductVersion}-${ProductDistribution}.zip
-unzip -q ${Product}-${ProductVersion}-${ProductDistribution}.zip
-rm -r ${Product}-${ProductVersion}.zip # remove if any existing packs
-mv ${Product}-${ProductVersion}-${ProductDistribution}  ${Product}-${ProductVersion}
-zip -r  ${Product}-${ProductVersion}.zip  ${Product}-${ProductVersion}/
-rm -rf  ${Product}-${ProductVersion}
-rm ${Product}-${ProductVersion}-${ProductDistribution}.zip
+if [ -z "$ProductDistribution" ]
+then
+  ProductDistributionURL='https://wso2.org/jenkins/view/products/job/products/job/product-is/lastSuccessfulBuild/artifact/modules/distribution/target/'${Product}'-'${ProductVersion}'.zip'
+  wget -O /etc/puppet/code/environments/production/modules/installers/files/${Product}-${ProductVersion}.zip ${ProductDistributionURL}
+  pushd /etc/puppet/code/environments/production/modules/installers/files/
+  md5sum ${Product}-${ProductVersion}.zip
+else
+  ProductDistributionURL='https://wso2.org/jenkins/view/products/job/products/job/product-is/org.wso2.is$wso2is/lastSuccessfulBuild/artifact/org.wso2.is/'${Product}'/'${ProductVersion}'-'${ProductDistribution}'/'${Product}'-'${ProductVersion}'-'${ProductDistribution}'.zip'
+  wget -O /etc/puppet/code/environments/production/modules/installers/files/${Product}-${ProductVersion}-${ProductDistribution}.zip ${ProductDistributionURL}
+  pushd /etc/puppet/code/environments/production/modules/installers/files/
+  md5sum ${Product}-${ProductVersion}-${ProductDistribution}.zip
+  unzip -q ${Product}-${ProductVersion}-${ProductDistribution}.zip
+  rm -r ${Product}-${ProductVersion}.zip # remove if any existing packs
+  mv ${Product}-${ProductVersion}-${ProductDistribution}  ${Product}-${ProductVersion}
+  zip -r  ${Product}-${ProductVersion}.zip  ${Product}-${ProductVersion}/
+  rm -rf  ${Product}-${ProductVersion}
+  rm ${Product}-${ProductVersion}-${ProductDistribution}.zip
+fi
