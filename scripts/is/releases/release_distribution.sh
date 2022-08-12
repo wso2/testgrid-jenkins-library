@@ -20,7 +20,7 @@
 # Please Note that this is only for packs that are yet to be released in GA (testing with product distributions)
 Product='wso2is'
 ProductVersion='6.0.0'
-ProductDistribution='rc1'
+ProductDistribution='rc2'
 snapshot=0 # make it to 1 if you are testing for a snapshot version
 
 if [ $snapshot -eq 0  ]
