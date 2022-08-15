@@ -30,15 +30,10 @@ stages {
             script {
                 cfn_repo_url="https://github.com/wso2/testgrid.git"
                 cfn_repo_branch="master"
-                if (intg_test.toBoolean()) {
-                    if (use_wum.toBoolean()){
-                        updateType="wum"
-                    }else{
-                        updateType="u2"
-                    }
-                }else {
-                    println "This script is only used for Intg Tests. Please use the main.goovy file for Scenario Tests..."
-                    currentBuild.result = 'ABORTED'
+                if (use_wum.toBoolean()){
+                    updateType="wum"
+                }else{
+                    updateType="u2"
                 }
                 dir("testgrid") {
                     git branch: "${cfn_repo_branch}",
