@@ -266,7 +266,7 @@ def sendEmail(deploymentDirectories, updateType) {
         """
     subject="[TestGrid][${updateType.toUpperCase()}][${product.toUpperCase()}:${product_version}][INTG]-Build ${currentBuild.currentResult}-#${env.BUILD_NUMBER}"
     senderEmailGroup=""
-    if(product.equals("wso2am") || product.equals("ei") || product.equals("esb") || || product.equals("mi")){
+    if(product.equals("wso2am") || product.equals("ei") || product.equals("esb") || product.equals("mi")){
         senderEmailGroup = "integration-builder@wso2.com"
     }else if(product.equals("is")) {
         senderEmailGroup = "iam-builder@wso2.com"
