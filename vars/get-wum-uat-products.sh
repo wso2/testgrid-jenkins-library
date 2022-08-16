@@ -144,9 +144,9 @@ getChannelList() {
                elif [ $product = "wso2mi" ]; then
                 product_folder="product-mi"
                 prod_short="mi"
-               #elif [ $product = "wso2-obam" || $product = "wso2-obkm" ]; then
-                #product_folder="product-ob"
-                #prod_short="ob"
+               elif [ $product = "wso2-obam" || $product = "wso2-obkm" ]; then
+                product_folder="product-ob"
+                prod_short="ob"
                else
                 echo "[WARNING] $product needs to be onboarded and added to testgrid-jenkins-library/vars/get-wum-uat-products.sh"
                fi
