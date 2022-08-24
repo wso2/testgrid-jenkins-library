@@ -144,7 +144,13 @@ getChannelList() {
                elif [ $product = "wso2mi" ]; then
                 product_folder="product-mi"
                 prod_short="mi"
-               elif [[ $product = "wso2-obam" || $product = "wso2-obkm" ]]; then
+               elif [ $product = "wso2-obam" ]; then
+                product_folder="product-ob"
+                prod_short="ob"
+               elif [ $product = "wso2-obkm" ]; then
+                product_folder="product-ob"
+                prod_short="ob"
+               elif [ $product = "wso2-obiam" ]; then
                 product_folder="product-ob"
                 prod_short="ob"
                else
