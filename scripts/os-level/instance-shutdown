@@ -19,6 +19,10 @@ case "$1" in
         if [[ ${instance} == "puppetmaster" ]];
         then
             logDirectories=('/var/log/')
+        elif [[ ${product} == "wso2am" ]];
+        then
+            logDirectories=('/usr/lib/wso2/'${product}'/'${version}'/'${product}'-'${version}'/repository/logs/' '/usr/lib/wso2/'${product}'/'${version}'/'${product}'-'${version}'/repository/conf/' '/var/log/')
+            s3BucketLocation=${s3BucketLocation}-${instanceId}
         else
             logDirectories=('/usr/lib/wso2/'${product}'/'${version}'/'${product}'-'${version}'/repository/logs/' '/usr/lib/wso2/'${product}'/'${version}'/'${product}'-'${version}'/repository/conf/' '/usr/lib/wso2/'${product}'/'${version}'/'${product}'-'${version}'/repository/deployment/' '/var/log/')
             s3BucketLocation=${s3BucketLocation}-${instanceId}
