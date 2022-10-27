@@ -45,22 +45,27 @@ do
     --capabilities CAPABILITY_NAMED_IAM \
     --region ${region}
 
-    # When the CFN YAML has issues this will terminate the flow.
-    if [[ $? != 0 ]];
-    then
-        log_error "CloudFormation deployment error occurred!"
-        aws cloudformation describe-stack-events --stack-name ${stackName} --region ${region} |  jq -r '.StackEvents[] | select(.ResourceStatus=="CREATE_FAILED")'
-        bash ${currentScript}/../post-actions.sh ${deploymentName}
-        exit 1
-    fi
+    stackCreating=true
+    while [ ${stackCreating} = true ]
+    do
+        stackStatus=$(aws cloudformation describe-stacks --stack-name ${stackName} --region ${region} | jq -r '.Stacks[0].StackStatus')
+        if [[ "${stackStatus}" == "CREATE_IN_PROGRESS" ]];
+        then
+            log_info "Stack ${stackName} is still getting created"
+            sleep 60 #1min sleep until recheck
+        else
+            stackCreating=false
+        fi
+    done
 
     # When the Deployment has issues this will terminate the flow
-    stackStatus=$(aws cloudformation describe-stacks --stack-name ${stackName} --region ${region} | jq -r '.Stacks[0].StackStatus')
     if [[ ${stackStatus} == "CREATE_COMPLETE" ]];
     then
         log_info "Stack:${stackName} creation was successfull!"
     else
-        log_error "Stack:${stackName} creation failed! Error:${stackStatus}"
+        log_error "Stack:${stackName} creation failed!"
+        ## Get all the failed events
+        aws cloudformation describe-stack-events --stack-name ${stackName} --region ${region} |  jq -r '.StackEvents[] | select(.ResourceStatus=="CREATE_FAILED")'
         bash ${currentScript}/../post-actions.sh ${deploymentName}
         exit 1
     fi
