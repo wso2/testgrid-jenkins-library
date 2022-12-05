@@ -30,6 +30,9 @@ stages {
             script {
                 cfn_repo_url="https://github.com/wso2/testgrid.git"
                 cfn_repo_branch="master"
+                if (apim_pre_release.toBoolean()){
+                    cfn_repo_branch="apim-pre-release"
+                }
                 if (use_wum.toBoolean()){
                     updateType="wum"
                 }else{
@@ -224,6 +227,10 @@ def sendEmail(deploymentDirectories, updateType) {
         <tr>
             <td>Used Staging as Update</td>
             <td>${use_staging}</td>
+        </tr>
+        <tr>
+            <td>Used APIM pre-release</td>
+            <td>${apim_pre_release}</td>
         </tr>
         <tr>
             <td>Operating Systems</td>
