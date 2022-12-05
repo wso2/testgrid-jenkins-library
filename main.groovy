@@ -273,6 +273,10 @@ def sendEmail(deploymentDirectories, updateType) {
             <td>${use_staging}</td>
         </tr>
         <tr>
+            <td>Used APIM pre-release</td>
+            <td>${apim_pre_release}</td>
+        </tr>
+        <tr>
             <td>Operating Systems</td>
             <td>${os_list}</td>
         </tr>
