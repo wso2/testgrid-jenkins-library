@@ -34,6 +34,13 @@ stackAvailable=false
 function uploadTestLogs(){
     log_info "The test executer logs will be uploaded to S3 Bucket."
     log_info "Upload location: ${testLogsUploadLocation}"
+    ### Debugging logs for hashana@wso2.com's logging not uploaded issue
+    echo "1. ${WORKSPACE}"
+    echo "2. ${parameterFilePath}"
+    echo "3. ${outputDirectory}"
+    echo "4. ${deploymentDirectory}"
+    echo "5. ${testLogsUploadLocation}"
+    ####
     aws s3 cp ${outputDirectory} ${testLogsUploadLocation} --recursive --quiet
     if [[ $? != 0 ]];
     then
