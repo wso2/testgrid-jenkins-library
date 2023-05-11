@@ -6,14 +6,6 @@
 			"file_name": "OpenJDK8U-jdk_x64_linux_hotspot_8u252b09"
 		},
 		{
-			"name": "ORACLE_JDK8",
-			"file_name": "jdk-8u251-linux-x64"
-		},
-		{
-			"name": "ORACLE_JDK11",
-			"file_name": "jdk-11.0.7_linux-x64_bin"
-		},
-		{
 			"name": "CORRETTO_JDK8",
 			"file_name": "amazon-corretto-8.252.09.1-linux-x64"
 		},
