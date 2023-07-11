@@ -82,7 +82,7 @@ pipeline {
                             ),
                             string(
                                 name: 'deployment_script_repo_branch',
-                                defaultValue: 'main',
+                                defaultValue: '4.1.0-profile-automation',
                                 description: 'Branch name of the deployment script repository.',
                                 trim: true
                             ),
@@ -166,7 +166,7 @@ pipeline {
                             ),
                             string(
                                 name: 'product_testing_repo_branch',
-                                defaultValue: 'main',
+                                defaultValue: '4.1.0-profile-automation',
                                 description: "Product's testing repository branch name.",
                                 trim: true
                             ),
