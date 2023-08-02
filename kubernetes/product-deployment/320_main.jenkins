@@ -301,7 +301,7 @@ pipeline {
                         archiveArtifacts artifacts: "kubernetes/product-deployment/output/**/*.*", fingerprint: true
 
                     }
-            
+            junit allowEmptyResults: true, testResults: '**/*results.xml'
             cleanWs deleteDirs: true, notFailBuild: true
         }
     }
