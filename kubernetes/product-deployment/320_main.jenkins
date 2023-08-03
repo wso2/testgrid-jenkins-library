@@ -123,13 +123,13 @@ pipeline {
                                 """),           
                             string(
                                 name: 'kubernetes_repo_url',
-                                defaultValue: 'https://github.com/wso2/kubernetes-apim',
+                                defaultValue: 'https://github.com/chamilaadhi/kubernetes-apim',
                                 description: "Product's kubernetes repository URL.",
                                 trim: true
                             ),
                             string(
                                 name: 'kubernetes_repo_branch',
-                                defaultValue: '3.2.x',
+                                defaultValue: '3.2.x-patch',
                                 description: 'Branch name of the kubernetes repository.',
                                 trim: true
                             ),
@@ -301,7 +301,7 @@ pipeline {
                         archiveArtifacts artifacts: "kubernetes/product-deployment/output/**/*.*", fingerprint: true
 
                     }
-            
+            junit allowEmptyResults: true, testResults: '**/*results.xml'
             cleanWs deleteDirs: true, notFailBuild: true
         }
     }
