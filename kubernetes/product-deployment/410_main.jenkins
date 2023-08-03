@@ -57,7 +57,7 @@ pipeline {
                             ),
                             string(
                                 name: 'product_version',
-                                defaultValue: '3.2.0',
+                                defaultValue: '4.1.0',
                                 description: 'Product version',
                                 trim: true
                             ),
@@ -301,7 +301,7 @@ pipeline {
                         archiveArtifacts artifacts: "kubernetes/product-deployment/output/**/*.*", fingerprint: true
 
                     }
-            
+            junit allowEmptyResults: true, testResults: '**/*results.xml'
             cleanWs deleteDirs: true, notFailBuild: true
         }
     }
