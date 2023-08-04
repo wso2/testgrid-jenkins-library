@@ -96,7 +96,7 @@ pipeline {
                             ),
                             string(
                                 name: 'db_version',
-                                defaultValue: '8.0.28',
+                                defaultValue: '5.7.42',
                                 description: 'Database engine version',
                                 trim: true
                             ),
