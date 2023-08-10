@@ -22,7 +22,7 @@ pipeline {
     environment {
         EKS_CLUSTER_REGION = 'us-east-1'   
         EKS_CLUSTER_NAME = 'testgrid-eks-cluster'
-        RDS_STACK_NAME = 'testgrid-rds-stack'  
+        RDS_STACK_NAME = 'testgrid-rds-stack-320'  
         DB_USERNAME = 'root'
         DB_PASSWORD = '613296496' 
         WUM_USER = credentials('WUM_USERNAME')
