@@ -22,7 +22,7 @@ pipeline {
     environment {
         EKS_CLUSTER_REGION = 'us-east-1'   
         EKS_CLUSTER_NAME = 'testgrid-eks-cluster'
-        RDS_STACK_NAME = 'testgrid-rds-stack'  
+        RDS_STACK_NAME = 'testgrid-rds-stack-400'  
         DB_USERNAME = 'root'
         DB_PASSWORD = '613296496' 
         WUM_USER = credentials('WUM_USERNAME')
@@ -123,13 +123,13 @@ pipeline {
                                 """),           
                             string(
                                 name: 'kubernetes_repo_url',
-                                defaultValue: 'https://github.com/wso2/kubernetes-apim',
+                                defaultValue: 'https://github.com/chamilaadhi/kubernetes-apim',
                                 description: "Product's kubernetes repository URL.",
                                 trim: true
                             ),
                             string(
                                 name: 'kubernetes_repo_branch',
-                                defaultValue: '4.0.x',
+                                defaultValue: '4.0.x-patch',
                                 description: 'Branch name of the kubernetes repository.',
                                 trim: true
                             ),
