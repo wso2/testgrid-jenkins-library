@@ -26,8 +26,8 @@ echo "Deleting RDS database."
 aws cloudformation delete-stack --region ${EKS_CLUSTER_REGION} --stack-name ${RDS_STACK_NAME}
 aws cloudformation wait stack-delete-complete --region ${EKS_CLUSTER_REGION} --stack-name ${RDS_STACK_NAME}
 
-echo "Listing RDS Snaphots with instance identifier ${RDS_STACK_NAME} ..."
-snapshot_identifiers=$(aws rds describe-db-snapshots --db-instance-identifier ${RDS_STACK_NAME} | jq -r '.DBSnapshots[].DBSnapshotIdentifier')
+echo "Listing RDS Snaphots with instance identifier: testgrid-rds ..."
+snapshot_identifiers=$(aws rds describe-db-snapshots --db-instance-identifier testgrid-rds | jq -r '.DBSnapshots[].DBSnapshotIdentifier')
 
 # Convert the space-separated snapshot identifiers to an array
 IFS=$'\n' read -rd '' -a snapshot_array <<< "$snapshot_identifiers"
