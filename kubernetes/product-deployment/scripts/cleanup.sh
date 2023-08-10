@@ -32,13 +32,13 @@ snapshot_identifiers=$(aws rds describe-db-snapshots --db-instance-identifier te
 # Convert the space-separated snapshot identifiers to an array
 IFS=$'\n' read -rd '' -a snapshot_array <<< "$snapshot_identifiers"
 
-# Print the snapshot identifiers
-echo "RDS Snapshot Identifiers:"
+echo "Deleting RDS Snapshots"
+# Delete the snapshot identifiers
 for snapshot in "${snapshot_array[@]}"; do
     if [[ $snapshot == "${RDS_STACK_NAME}"* ]]; then
-        echo "$snapshot"
         # Delete the RDS snapshot
-        #aws rds delete-db-snapshot --db-snapshot-identifier "$snapshot"
+        echo "Deleting $snapshot"
+        aws rds delete-db-snapshot --db-snapshot-identifier "$snapshot"
     fi
 done
 
