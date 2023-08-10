@@ -35,5 +35,11 @@ IFS=$'\n' read -rd '' -a snapshot_array <<< "$snapshot_identifiers"
 # Print the snapshot identifiers
 echo "RDS Snapshot Identifiers:"
 for snapshot in "${snapshot_array[@]}"; do
-    echo "$snapshot"
+    if [[ $snapshot == "${RDS_STACK_NAME}"* ]]; then
+        echo "$snapshot"
+        # Delete the RDS snapshot
+        #aws rds delete-db-snapshot --db-snapshot-identifier "$snapshot"
+    fi
 done
+
+
