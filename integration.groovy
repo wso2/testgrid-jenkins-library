@@ -182,14 +182,11 @@ def create_build_jobs(deploymentDirectory){
 }
 
 def executeTests(deploymentDirectory, group) {
-    return {
-        stage("Testing ${deploymentDirectory} with group ${group}") {
-            println "Executing test group ${group}"
-            sh '''
+    stage("Testing ${deploymentDirectory} with group ${group}") {
+        println "Executing test group ${group}"
+        sh '''
              ./scripts/intg-test-deployment.sh ''' + deploymentDirectory + ''' ${product_repository} ${product_test_branch} ${product_test_script} ${group}
         '''
-
-        }
     }
 }
 
