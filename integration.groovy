@@ -169,8 +169,9 @@ def create_build_jobs(deploymentDirectory){
                     println "Deployment Integration testing..."
                     script {
                        def testGroups = test_groups.split(",")
-
+                        println "Test Groups ${testGroups}"
                         for (group in testGroups) {
+                            println "Deploying Test for group ${group} for $deploymentDirectory"
                             executeTests(deploymentDirectory, group)
                         }
                     }
