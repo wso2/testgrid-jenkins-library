@@ -16,7 +16,7 @@
 * under the License.
 *
 */
-import groovy.io.FileType
+
 import hudson.model.*
 
 def deploymentDirectories = []
@@ -167,9 +167,17 @@ def create_build_jobs(deploymentDirectory){
                 '''
                 stage("Testing ${deploymentDirectory}") {
                     println "Deployment Integration testing..."
-                    sh'''
-                        ./scripts/intg-test-deployment.sh '''+deploymentDirectory+''' ${product_repository} ${product_test_branch} ${product_test_script}
-                    '''
+                    def testGroups = test_groups.trim().split("s/,/\\n/g")
+
+                    for (group in testGroups) {
+                        stage("Testing ${deploymentDirectory} with group ${group}") {
+                            println "Executing test group ${group}"
+                            sh '''
+                        ./scripts/intg-test-deployment.sh ''' + deploymentDirectory + ''' ${product_repository} ${product_test_branch} ${product_test_script} ${group}
+                        '''
+
+                        }
+                    }
                 }
             }
         }
@@ -241,6 +249,10 @@ def sendEmail(deploymentDirectories, updateType) {
         <tr>
             <td>Databases</td>
             <td>${database_list}</td>
+        </tr>
+        <tr>
+            <td>Test Groups</td>
+            <td>${test_groups}</td>
         </tr>
         <tr>
             <td>JDKs</td>

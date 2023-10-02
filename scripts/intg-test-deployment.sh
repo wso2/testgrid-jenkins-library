@@ -22,6 +22,7 @@ deploymentName=$1
 productRepository=$2
 productTestBranch=$3
 productTestScript=$4
+productTestGroup=$5
 currentScript=$(dirname $(realpath "$0"))
 
 deploymentDirectory="${WORKSPACE}/deployment/${deploymentName}"
@@ -59,6 +60,7 @@ function deploymentTest(){
     fi
     mkdir ${testOutputDir}
     log_info "Executing scenario tests!"
+    bash export PRODUCT_APIM_TEST_GROUPS=${productTestGroup}
     bash ${currentScript}/intg-test-executer.sh "${deploymentDirectory}" "${testOutputDir}"
     if [[ $? != 0 ]];
     then
