@@ -60,7 +60,6 @@ function deploymentTest(){
     fi
     mkdir ${testOutputDir}
     log_info "Executing scenario tests!"
-    bash export PRODUCT_APIM_TEST_GROUPS=${productTestGroup}
     bash ${currentScript}/intg-test-executer.sh "${deploymentDirectory}" "${testOutputDir}"
     if [[ $? != 0 ]];
     then
