@@ -76,7 +76,7 @@ pipeline {
 			"""),
                             string(
                                 name: 'deployment_script_repo_url',
-                                defaultValue: 'https://github.com/wso2/apim-test-integration',
+                                defaultValue: 'https://github.com/AnuGayan/apim-test-integration',
                                 description: 'Product deployment script repository.',
                                 trim: true
                             ),
@@ -160,7 +160,7 @@ pipeline {
 			"""),
                             string(
                                 name: 'product_testing_repo_url',
-                                defaultValue: 'https://github.com/wso2/apim-test-integration',
+                                defaultValue: 'https://github.com/AnuGayan/apim-test-integration',
                                 description: "Product's testing repository URL.",
                                 trim: true
                             ),
