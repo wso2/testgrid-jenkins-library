@@ -59,7 +59,7 @@ function deploymentTest(){
         rm -r "${testOutputDir}"
     fi
     mkdir ${testOutputDir}
-    log_info "Executing scenario tests!"
+    log_info "Executing scenario tests for ${productTestGroup}!"
     bash ${currentScript}/intg-test-executer.sh "${deploymentDirectory}" "${testOutputDir}" "${productTestGroup}"
     if [[ $? != 0 ]];
     then
