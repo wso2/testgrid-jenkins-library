@@ -168,7 +168,7 @@ def create_build_jobs(deploymentDirectory){
                 stage("Testing ${deploymentDirectory}") {
                     println "Deployment Integration testing..."
                     script {
-                       def testGroups = test_groups.trim().split("s/,/\\n/g")
+                       def testGroups = test_groups.split(",")
 
                         for (group in testGroups) {
                             executeTests(deploymentDirectory, group)
