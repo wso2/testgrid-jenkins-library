@@ -60,7 +60,7 @@ function deploymentTest(){
     fi
     mkdir ${testOutputDir}
     log_info "Executing scenario tests!"
-    bash ${currentScript}/intg-test-executer.sh "${deploymentDirectory}" "${testOutputDir}"
+    bash ${currentScript}/intg-test-executer.sh "${deploymentDirectory}" "${testOutputDir}" "${productTestGroup}"
     if [[ $? != 0 ]];
     then
         log_error "Executing post actions!"
