@@ -167,20 +167,26 @@ def create_build_jobs(deploymentDirectory){
                 '''
                 stage("Testing ${deploymentDirectory}") {
                     println "Deployment Integration testing..."
-                    def testGroups = test_groups.trim().split("s/,/\\n/g")
+                    script {
+                       def testGroups = test_groups.trim().split("s/,/\\n/g")
 
-                    for (group in testGroups) {
-                        stage("Testing ${deploymentDirectory} with group ${group}") {
-                            println "Executing test group ${group}"
-                            sh '''
-                        ./scripts/intg-test-deployment.sh ''' + deploymentDirectory + ''' ${product_repository} ${product_test_branch} ${product_test_script} ${group}
-                        '''
-
+                        for (group in testGroups) {
+                            executeTests(deploymentDirectory, group)
                         }
                     }
                 }
             }
         }
+    }
+}
+
+def executeTests(deploymentDirectory, group) {
+    stage("Testing ${deploymentDirectory} with group ${group}") {
+        println "Executing test group ${group}"
+        sh '''
+             ./scripts/intg-test-deployment.sh ''' + deploymentDirectory + ''' ${product_repository} ${product_test_branch} ${product_test_script} ${group}
+        '''
+
     }
 }
 
