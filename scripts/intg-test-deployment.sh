@@ -42,7 +42,8 @@ function cloneTestRepo(){
     log_info "Cloning product repo to get test scripts"
     log_info "Product repo ${productRepository}"
 
-    if [ ! -d  "${productDirectory}" ]; then
+    if [ ! -d  "${deploymentDirectory}/${productDirectory}" ];
+     then
       git -C ${deploymentDirectory} clone ${cloneString} --branch ${productTestBranch}
       if [[ $? != 0 ]];
         then
