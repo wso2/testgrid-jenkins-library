@@ -28,6 +28,7 @@ currentScript=$(dirname $(realpath "$0"))
 deploymentDirectory="${WORKSPACE}/deployment/${deploymentName}"
 parameterFilePath="${deploymentDirectory}/parameters.json"
 testOutputDir="${deploymentDirectory}/outputs"
+productDirectory="product-apim"
 
 source ${currentScript}/common-functions.sh
 
@@ -39,16 +40,24 @@ function cloneTestRepo(){
     local cloneString=$(echo ${productRepository} | sed  's#https://#&'${githubUsername}':'${githubPassword}@'#')
 
     log_info "Cloning product repo to get test scripts"
-    git -C ${deploymentDirectory} clone ${cloneString} --branch ${productTestBranch}
-    if [[ $? != 0 ]];
+    log_info "Product repo ${productRepository}"
+
+    if [ ! -d  "${productDirectory}" ]; then
+      git -C ${deploymentDirectory} clone ${cloneString} --branch ${productTestBranch}
+      if [[ $? != 0 ]];
         then
-            log_error "Testing repo clone failed! Please check if the Git credentials or the test repo name is correct."
-            bash ${currentScript}/post-actions.sh ${deploymentName}
-            exit 1
+          log_error "Testing repo clone failed! Please check if the Git credentials or the test repo name is correct."
+          bash ${currentScript}/post-actions.sh ${deploymentName}
+          exit 1
         else
-            log_info "Cloning the test repo was successfull!"
-        fi
+          log_info "Cloning the test repo was successfull!"
+      fi
+    fi
+
     local repoName="$(basename ${productRepository} .git)"
+
+    log_info "Product repo name ${repoName}"
+
     productDirectoryLocation="${deploymentDirectory}/${repoName}"
 }
 
