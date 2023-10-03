@@ -185,7 +185,7 @@ def executeTests(deploymentDirectory, productTestGroup) {
     stage("Testing ${deploymentDirectory} with group ${productTestGroup}") {
         println "Executing test group ${productTestGroup} for ${product_repository}"
         sh '''
-             ./scripts/intg-test-deployment.sh ''' + deploymentDirectory + ''' ${product_repository} ${product_test_branch} ${product_test_script} ''' productTestGroup '''
+             ./scripts/intg-test-deployment.sh ''' + deploymentDirectory + ''' ${product_repository} ${product_test_branch} ${product_test_script} ''' + productTestGroup + '''
         '''
     }
 }
