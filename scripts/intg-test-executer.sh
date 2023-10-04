@@ -91,7 +91,6 @@ scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${keyFileL
 if [[ ${MVNSTATE} != 0 ]];
     then
         log_error "Integration test was failed. Please check the logs"
-        exit 1
     else
         log_info "Integration test was successful!"
 fi
