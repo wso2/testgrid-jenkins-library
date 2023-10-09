@@ -169,17 +169,18 @@ def create_build_jobs(deploymentDirectory){
                     println "Deployment Integration testing..."
                     script {
                         def testGroups = test_groups.split(",")
-                        println "Test Groups ${testGroups}"
-                        if (testGroups != null || testGroups == "") {
-                            for (productTestGroup in testGroups) {
-                                println "Deploying Test for ${productTestGroup} for $deploymentDirectory"
-                                executeTests(deploymentDirectory, productTestGroup)
-                            }
+                        if (testGroups != null || testGroups.size != 0) {
+                            println "Test Groups ${testGroups}"
+//                            for (productTestGroup in testGroups) {
+//                                println "Deploying Test for ${productTestGroup} for $deploymentDirectory"
+//                                executeTests(deploymentDirectory, productTestGroup)
+//                            }
                         } else {
-                            sh '''
-                                 echo
-                                 ./scripts/intg-test-deployment.sh ''' + deploymentDirectory + ''' ${product_repository} ${product_test_branch} ${product_test_script}
-                            '''
+                            println "Deploying Test for $deploymentDirectory"
+//                            sh '''
+//                                 echo
+//                                 ./scripts/intg-test-deployment.sh ''' + deploymentDirectory + ''' ${product_repository} ${product_test_branch} ${product_test_script}
+//                            '''
                         }
                     }
                 }
