@@ -16,7 +16,7 @@
 * under the License.
 *
 */
-
+import groovy.io.FileType
 import hudson.model.*
 
 def deploymentDirectories = []
