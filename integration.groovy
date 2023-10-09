@@ -16,7 +16,7 @@
 * under the License.
 *
 */
-import groovy.io.FileType
+
 import hudson.model.*
 
 def deploymentDirectories = []
@@ -169,7 +169,7 @@ def create_build_jobs(deploymentDirectory){
                     println "Deployment Integration testing..."
                     script {
                         def testGroups = test_groups.split(",")
-                        if (testGroups != null || testGroups.size != 0) {
+                        if (testGroups != null || testGroups.size() != 0) {
                             println "Test Groups ${testGroups}"
                             for (productTestGroup in testGroups) {
                                 println "Deploying Test for ${productTestGroup} for $deploymentDirectory"
