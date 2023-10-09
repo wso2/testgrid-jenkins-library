@@ -168,13 +168,13 @@ def create_build_jobs(deploymentDirectory){
                 stage("Testing ${deploymentDirectory}") {
                     println "Deployment Integration testing..."
                     script {
-                        def testGroups = test_groups.split(",")
-                        if (testGroups != null || testGroups.size() != 0) {
-                            println "Test Groups ${testGroups}"
-                            for (productTestGroup in testGroups) {
-                                println "Deploying Test for ${productTestGroup} for $deploymentDirectory"
-                                executeTests(deploymentDirectory, productTestGroup)
-                            }
+                        if (test_groups != "") {
+                            def testGroups = test_groups.split(",")
+                                println "Test Groups ${testGroups}"
+                                for (productTestGroup in testGroups) {
+                                    println "Deploying Test for ${productTestGroup} for $deploymentDirectory"
+                                    executeTests(deploymentDirectory, productTestGroup)
+                                }
                         } else {
                             println "Deploying Test for $deploymentDirectory"
                             sh '''
