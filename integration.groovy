@@ -167,12 +167,35 @@ def create_build_jobs(deploymentDirectory){
                 '''
                 stage("Testing ${deploymentDirectory}") {
                     println "Deployment Integration testing..."
-                    sh'''
-                        ./scripts/intg-test-deployment.sh '''+deploymentDirectory+''' ${product_repository} ${product_test_branch} ${product_test_script}
-                    '''
+                    script {
+                        if (test_groups != "") {
+                            def testGroups = test_groups.split(",")
+                                println "Test Groups ${testGroups}"
+                                for (productTestGroup in testGroups) {
+                                    println "Deploying Test for ${productTestGroup} for $deploymentDirectory"
+                                    executeTests(deploymentDirectory, productTestGroup)
+                                }
+                        } else {
+                            println "Deploying Test for $deploymentDirectory"
+                            sh '''
+                                 echo
+                                 ./scripts/intg-test-deployment.sh ''' + deploymentDirectory + ''' ${product_repository} ${product_test_branch} ${product_test_script}
+                            '''
+                        }
+                    }
                 }
             }
         }
+    }
+}
+
+def executeTests(deploymentDirectory, productTestGroup) {
+    stage("Testing ${deploymentDirectory} with ${productTestGroup}") {
+        println "Executing test ${productTestGroup} for ${product_repository}"
+        sh '''
+             echo
+             ./scripts/intg-test-deployment.sh ''' + deploymentDirectory + ''' ${product_repository} ${product_test_branch} ${product_test_script} ''' + productTestGroup + '''
+        '''
     }
 }
 
@@ -241,6 +264,10 @@ def sendEmail(deploymentDirectories, updateType) {
         <tr>
             <td>Databases</td>
             <td>${database_list}</td>
+        </tr>
+        <tr>
+            <td>Test Groups</td>
+            <td>${test_groups}</td>
         </tr>
         <tr>
             <td>JDKs</td>
