@@ -129,7 +129,7 @@ pipeline {
                             ),
                             string(
                                 name: 'kubernetes_repo_branch',
-                                defaultValue: '3.2.x-patch',
+                                defaultValue: '3.2.x-analytics',
                                 description: 'Branch name of the kubernetes repository.',
                                 trim: true
                             ),
