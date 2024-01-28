@@ -78,13 +78,13 @@ pipeline {
 			"""),
                             string(
                                 name: 'deployment_script_repo_url',
-                                defaultValue: 'https://github.com/wso2/apim-test-integration',
+                                defaultValue: 'https://github.com/chamilaadhi/apim-test-integration',
                                 description: 'Product deployment script repository.',
                                 trim: true
                             ),
                             string(
                                 name: 'deployment_script_repo_branch',
-                                defaultValue: '3.2.0-profile-automation',
+                                defaultValue: '3.2.0-profile-automation-fd',
                                 description: 'Branch name of the deployment script repository.',
                                 trim: true
                             ),
