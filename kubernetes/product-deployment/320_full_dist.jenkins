@@ -135,7 +135,7 @@ pipeline {
                             ),
                             string(
                                 name: 'path_to_helm_folder',
-                                defaultValue: 'advanced/am-pattern-2',
+                                defaultValue: 'advanced/am-pattern-3',
                                 description: 'Relative path of the helm folder in your helm repository.',
                                 trim: true
                             ),
