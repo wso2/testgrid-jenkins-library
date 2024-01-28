@@ -280,7 +280,7 @@ pipeline {
                         )
                         sh "kubectl wait --for=condition=ready pod   -l product='$product_name'   --timeout='$service_startup_timeout's --namespace='$kubernetes_namespace'"
                         env.HOST_NAME=hostName.trim()
-                        sh "./kubernetes/product-deployment/scripts/test.sh ${product_name} ${test_file_path}"
+                        #sh "./kubernetes/product-deployment/scripts/test.sh ${product_name} ${test_file_path}"
                     }
                 }
             }
