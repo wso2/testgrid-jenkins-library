@@ -57,7 +57,7 @@ pipeline {
                             ),
                             string(
                                 name: 'product_version',
-                                defaultValue: '4.2.0',
+                                defaultValue: '4.3.0',
                                 description: 'Product version',
                                 trim: true
                             ),
