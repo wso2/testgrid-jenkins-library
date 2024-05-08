@@ -123,13 +123,13 @@ pipeline {
                                 """),           
                             string(
                                 name: 'kubernetes_repo_url',
-                                defaultValue: 'https://github.com/wso2/kubernetes-apim',
+                                defaultValue: 'https://github.com/chamilaadhi/kubernetes-apim',
                                 description: "Product's kubernetes repository URL.",
                                 trim: true
                             ),
                             string(
                                 name: 'kubernetes_repo_branch',
-                                defaultValue: '4.2.x',
+                                defaultValue: '4.3.0-profile',
                                 description: 'Branch name of the kubernetes repository.',
                                 trim: true
                             ),
