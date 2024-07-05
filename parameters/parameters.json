@@ -21,7 +21,7 @@
         "S3AccessKeyID": "",
         "S3SecretAccessKey": "",
         "Region": "us-east-2",
-        "AMI": "ami-0c43f6c4aa82d8a9c",
+        "AMI": "ami-0fd859752ff4140e7",
         "CustomURL": ""
     }
 }
