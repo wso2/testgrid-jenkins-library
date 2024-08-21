@@ -65,8 +65,6 @@ fi
 aws s3 cp 's3://integration-testgrid-resources/testgrid-key.pem' ${keyFileLocation}
 chmod 400 ${keyFileLocation}
 
-sh-keyscan -v -H ${WSO2InstanceName} >> /home/ubuntu/.ssh/known_hosts 2>&1
-
 log_info "Copying ${TEST_SCRIPT_NAME} to remote ec2 instance"
 scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${keyFileLocation} ${TEST_SCRIPT_NAME} $instanceUser@${WSO2InstanceName}:/opt/testgrid/workspace/${TEST_SCRIPT_NAME}
 

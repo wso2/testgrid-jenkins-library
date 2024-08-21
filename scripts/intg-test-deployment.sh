@@ -74,6 +74,7 @@ function deploymentTest(){
     if [[ $? != 0 ]];
     then
         log_error "Executing post actions!"
+        bash ${currentScript}/post-actions.sh ${deploymentName}
         exit 1
     else
         log_info "Test Execution Passed!"
