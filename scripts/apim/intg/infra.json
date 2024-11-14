@@ -28,6 +28,10 @@
 		{
 			"name": "ADOPT_OPEN_JDK17",
 			"file_name": "OpenJDK17U-jdk_x64_linux_hotspot_17.0.5_8"
+		},
+		{
+			"name": "ADOPT_OPEN_JDK21",
+			"file_name": "OpenJDK21U-jdk_x64_linux_hotspot_21.0.2_13"
 		}
 	],
     "jdbc": 
