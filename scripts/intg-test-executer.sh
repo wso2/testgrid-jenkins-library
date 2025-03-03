@@ -52,7 +52,7 @@ fi
 
 wget -q ${SCRIPT_LOCATION}
 
-if [[ ${OperatingSystem} == "Ubuntu" ]]; 
+if [[ ${OperatingSystem} == "Ubuntu" || ${OperatingSystem} == "Ubuntu-ARM" ]]; 
 then
     instanceUser="ubuntu"
 elif [[ ${OperatingSystem} == "CentOS" ]]; 
@@ -61,6 +61,7 @@ then
 else
     instanceUser="ec2-user"
 fi
+
 aws s3 cp 's3://integration-testgrid-resources/testgrid-key.pem' ${keyFileLocation}
 chmod 400 ${keyFileLocation}
 

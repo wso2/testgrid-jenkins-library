@@ -31,11 +31,43 @@
 		},
 		{
 			"name": "ADOPT_OPEN_JDK21",
-			"file_name": "OpenJDK21U-jdk_x64_linux_hotspot_21.0.5_11"
+			"file_name": "OpenJDK21U-jdk_x64_linux_hotspot_21.0.2_13"
+		},
+		{
+			"name": "ADOPT_OPEN_JDK11_ARM",
+			"file_name": "OpenJDK11U-jdk_aarch64_linux_11.0.7_10"
+		},
+		{
+			"name": "ADOPT_OPEN_JDK17_ARM",
+			"file_name": "OpenJDK17U-jdk_aarch64_linux_hotspot_17.0.5_8"
+		},
+		{
+			"name": "ADOPT_OPEN_JDK21_ARM",
+			"file_name": "OpenJDK21U-jdk_aarch64_linux_hotspot_21.0.2_13"
 		}
 	],
     "jdbc": 
     [
+		{
+			"name": "db2-se",
+			"file_name": "db2jcc4",
+			"driver": "com.ibm.db2.jcc.DB2Driver",
+			"database": [
+				{
+					"name": "WSO2IDENTITY_DB",
+					"url": "jdbc:db2://DB_HOST:50000/WSO2IDENTITY_DB:retrieveMessagesFromServerOnGetMessage=true;",
+					"username": "DB_USERNAME",
+					"password": "DB_PASSWORD"
+				},
+				{
+					"name": "WSO2SHARED_DB",
+					"url": "jdbc:db2://DB_HOST:50000/WSO2SHARED_DB:retrieveMessagesFromServerOnGetMessage=true;",
+					"username": "DB_USERNAME",
+					"password": "DB_PASSWORD"
+				}
+			],
+			"validation_query": "SELECT 1 FROM SYSIBM.SYSDUMMY1"
+		},
         {
 			"name": "mysql",
 			"file_name": "mysql-connector-java-8.0.28",
@@ -51,6 +83,26 @@
 				{
 					"name": "WSO2SHARED_DB",
 					"url": "jdbc:mysql://DB_HOST:3306/WSO2SHARED_DB?autoReconnect=true&amp;useSSL=false",
+					"username": "DB_USERNAME",
+					"password": "DB_PASSWORD"
+				}
+			],
+			"validation_query": "SELECT 1"
+		},
+		{
+			"name": "mariadb",
+			"file_name": "mariadb-java-client-3.5.1",
+			"driver": "org.mariadb.jdbc.Driver",
+			"database": [
+				{
+					"name": "WSO2IDENTITY_DB",
+					"url": "jdbc:mysql://DB_HOST:3306/WSO2IDENTITY_DB?permitMysqlScheme&autoReconnect=true&useSSL=false",
+					"username": "DB_USERNAME",
+					"password": "DB_PASSWORD"
+				},
+				{
+					"name": "WSO2SHARED_DB",
+					"url": "jdbc:mysql://DB_HOST:3306/WSO2SHARED_DB?permitMysqlScheme&autoReconnect=true&useSSL=false",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				}
@@ -101,6 +153,27 @@
 		},
 		{
 			"name": "oracle-se2",
+			"file_name": "ojdbc8",
+			"driver": "oracle.jdbc.OracleDriver",
+            "database": 
+            [
+                {
+					"name": "WSO2IDENTITY_DB",
+					"url": "jdbc:oracle:thin:@DB_HOST:1521/WSO2IDENTITY_DB",
+					"username": "WSO2AM_COMMON_DB",
+					"password": "DB_PASSWORD"
+				},
+				{
+					"name": "WSO2SHARED_DB",
+					"url": "jdbc:oracle:thin:@DB_HOST:1521/WSO2SHARED_DB",
+					"username": "DB_USERNAME",
+					"password": "DB_PASSWORD"
+				}
+			],
+			"validation_query": "SELECT 1 FROM DUAL"
+		},
+		{
+			"name": "oracle-se2-cdb",
 			"file_name": "ojdbc8",
 			"driver": "oracle.jdbc.OracleDriver",
             "database": 
