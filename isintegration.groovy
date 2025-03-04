@@ -31,14 +31,12 @@ stages {
     stage('Clone CFN repo') {
         steps {
             script {
-                cfn_repo_url="https://github.com/Miranlfk/testgrid.git"
-                cfn_repo_branch="master2"
-                if (apim_pre_release.toBoolean()){
-                    cfn_repo_branch="apim-pre-release"
+                cfn_repo_url="https://github.com/wso2/testgrid.git"
+                cfn_repo_branch="master"
+                if (pre_release.toBoolean()){
+                    updateType="pre-release"
                 }
-                if (use_wum.toBoolean()){
-                    updateType="wum"
-                }else{
+                else{
                     updateType="u2"
                 }
                 dir("testgrid") {
@@ -249,16 +247,12 @@ def sendEmail(deploymentDirectories, updateType) {
             <td>${product_version}</td>
         </tr>
         <tr>
-            <td>Used WUM as Update</td>
-            <td>${use_wum}</td>
-        </tr>
-        <tr>
             <td>Used Staging as Update</td>
             <td>${use_staging}</td>
         </tr>
         <tr>
-            <td>Used APIM pre-release</td>
-            <td>${apim_pre_release}</td>
+            <td>Used IAM pre-release</td>
+            <td>${pre_release}</td>
         </tr>
         <tr>
             <td>Operating Systems</td>
@@ -300,14 +294,7 @@ def sendEmail(deploymentDirectories, updateType) {
         </div>
         """
     subject="[TestGrid][${updateType.toUpperCase()}][${product.toUpperCase()}:${product_version}][INTG]-Build ${currentBuild.currentResult}-#${env.BUILD_NUMBER}"
-    senderEmailGroup=""
-    if(product.equals("wso2am") || product.equals("ei") || product.equals("esb") || product.equals("mi")){
-        senderEmailGroup = "integration-builder@wso2.com"
-    }else if(product.equals("is")) {
-        senderEmailGroup = "iam-builder@wso2.com"
-    }else if(product.equals("ob")) {
-        senderEmailGroup = "bfsi-group@wso2.com"
-    }
+    senderEmailGroup="iam-builder@wso2.com"
     emailext(to: "${senderEmailGroup},builder@wso2.org",
             subject: subject,
             body: content, mimeType: 'text/html')
