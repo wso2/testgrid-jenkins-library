@@ -160,7 +160,7 @@
                 {
 					"name": "WSO2IDENTITY_DB",
 					"url": "jdbc:oracle:thin:@DB_HOST:1521/WSO2IDENTITY_DB",
-					"username": "WSO2AM_COMMON_DB",
+					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				},
 				{
@@ -181,7 +181,7 @@
                 {
 					"name": "WSO2IDENTITY_DB",
 					"url": "jdbc:oracle:thin:@DB_HOST:1521/WSO2IDENTITY_DB",
-					"username": "WSO2AM_COMMON_DB",
+					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				},
 				{
