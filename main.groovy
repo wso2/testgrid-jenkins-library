@@ -92,7 +92,7 @@ stages {
                         ./scripts/write-parameter-file.sh "TESTGRID_EMAIL_PASSWORD" ${testgridEmailPassword} "${WORKSPACE}/parameters/parameters.json"
                     '''
                 }
-                withCredentials([usernamePassword(credentialsId: 'WSO2_GITHUB_TOKEN', usernameVariable: 'githubUserName', passwordVariable: 'githubPassword')]) 
+                withCredentials([usernamePassword(credentialsId: 'WSO2_GITHUB_TOKEN', usernameVariable: 'githubUserName', passwordVariable: 'githubPassword')])
                 {
                     sh '''
                        echo "Writting Github Username to parameter file"
@@ -223,7 +223,7 @@ def sendEmail(deploymentDirectories, updateType) {
     for (deploymentDirectory in deploymentDirectories){
         deployments = deployments + deploymentDirectory + "<br>"
     }
-    
+
     if (currentBuild.currentResult.equals("SUCCESS")){
         headerColour = "#05B349"
     }else{
@@ -318,7 +318,7 @@ def sendEmail(deploymentDirectories, updateType) {
     }else if(product.equals("is")) {
         senderEmailGroup = "iam-builder@wso2.com"
     }else if(product.equals("ob")) {
-        senderEmailGroup = "bfsi-group@wso2.com"
+        senderEmailGroup = "solutions-group@wso2.com"
     }
     emailext(to: "${senderEmailGroup},builder@wso2.org",
             subject: subject,
