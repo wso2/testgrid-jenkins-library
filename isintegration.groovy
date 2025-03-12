@@ -21,9 +21,6 @@ import hudson.model.*
 
 def deploymentDirectories = []
 def updateType = ""
-def s3BucketName = "testgrid-pipeline-logs"
-def s3BuildLogPath = ""
-def s3PathConstructor = ""
 
 pipeline {
 agent {label 'pipeline-agent'}
@@ -119,16 +116,6 @@ stages {
                     echo --- Preparing parameter files for deployments! ---
                     ./scripts/deployment-builder.sh ${product} ${product_version} '''+updateType+'''
                 '''
-                //Generate S3 Log output path
-                s3BuildLogPath = "${s3BucketName}/artifacts/jobs${s3PathConstructor}/${product}-${product_version}/build-${BUILD_NUMBER}"
-                println "Your Logs will be uploaded to: s3://"+s3BuildLogPath
-                sh'''
-                    echo "Writting S3 Log uploading endpoint to parameter file"
-                    ./scripts/write-parameter-file.sh "S3OutputBucketLocation" '''+s3BuildLogPath+''' "${WORKSPACE}/parameters/parameters.json"
-                    echo "Writing to parameter file completed!"
-                    echo --- Preparing parameter files for deployments! ---
-                    ./scripts/deployment-builder.sh ${product} ${product_version} '''+updateType+'''
-                '''
             }
         }
     }
@@ -158,15 +145,8 @@ stages {
 post {
     always {
         sh '''
-            echo "Arranging the log files!"
-            parameters_directory="${WORKSPACE}/parameters/parameters.json"
-
-            localLogDir="build-${BUILD_NUMBER}"
-            mkdir -p ${localLogDir}
-            aws s3 cp s3://'''+s3BuildLogPath+'''/ ${localLogDir} --recursive --quiet
             echo "Job is completed... Deleting the workspace directories!"
         '''
-        archiveArtifacts artifacts: "build-${env.BUILD_NUMBER}/**/*.*", fingerprint: true
         script {
             sendEmail(deploymentDirectories, updateType)
         }
@@ -188,12 +168,6 @@ def create_build_jobs(deploymentDirectory){
                     sh'''
                         ./scripts/intg-test-deployment.sh '''+deploymentDirectory+''' ${product_repository} ${product_test_branch} ${product_test_script}
                     '''
-                }
-                stage("Uploading results to ${deploymentDirectory}") {
-                        println "Upoading logs..."
-                        sh'''
-                            ./scripts/post-actions.sh '''+deploymentDirectory+'''
-                        '''
                 }
             }
         }
