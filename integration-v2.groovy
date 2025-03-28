@@ -49,8 +49,8 @@ void createDeploymentPatterns(String product, String productVersion,
                                 String[] osArray, String[] jdkArray, def databaseList) {
     println "Creating the deployment patterns by using infrastructure combination!"
     
-    for (String os : osArray) {
-        for (String jdk : jdkArray) {
+    for (String os : osList) {
+        for (String jdk : jdkList) {
             for (def db : databaseList) {
                 String dbEngine = db.dbEngine
                 String dbEngineVersion = db.dbEngineVersion
