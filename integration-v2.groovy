@@ -66,6 +66,8 @@ void createDeploymentPatterns(String product, String productVersion,
                     directory: deploymentDirName,
                 ]
 
+                println "Deployment pattern created: ${deploymentPattern}"
+
                 deploymentPatterns.add(deploymentPattern)
             }
         }
