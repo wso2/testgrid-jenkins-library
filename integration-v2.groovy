@@ -48,6 +48,7 @@ String githubCredentialId = "WSO2_GITHUB_TOKEN"
 void createDeploymentPatterns(String product, String productVersion, 
                                 String[] osArray, String[] jdkArray, def databaseList) {
     println "Creating the deployment patterns by using infrastructure combination!"
+    printpn "DB list: ${databaseList}"
     
     for (String os : osList) {
         for (String jdk : jdkList) {
