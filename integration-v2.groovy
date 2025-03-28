@@ -23,8 +23,8 @@ String product = params.product
 String productVersion = params.productVersion
 String productDeploymentRegion = params.productDeploymentRegion
 String[] osList = params.osList
-Strin[]g jdkList = params.jdkList
-def databaseList = params.databaseList ?// Each object in databaseList should have db_engine and db_engine_version properties
+String[] jdkList = params.jdkList
+def databaseList = params.databaseList // Each object in databaseList should have dbEngine and dbEngineVersion properties
 String albCertArn = params.albCertArn
 String productRepository = params.productRepository
 String productTestBranch = params.productTestBranch
@@ -36,13 +36,41 @@ Boolean apimPreRelease = params.apimPreRelease
 String testGroups = params.testGroups
 
 // Default values
-String[] deploymentDirectories = []
+String[] deploymentPatterns = []
 String updateType = "u2"
 String tfRepoUrl = "https://github.com/kavindasr/iac-aws-wso2-products.git"
 String tfRepoBranch = "apim-intg"
 String tfDirectory = "iac-aws-wso2-products"
 
+String githubCredentialId = "WSO2_GITHUB_TOKEN"
 
+// Create deployment patterns for all combinations of OS, JDK, and database
+void createDeploymentPatterns(String product, String productVersion, 
+                                String[] osArray, String[] jdkArray, def databaseList) {
+    println "Creating the deployment patterns by using infrastructure combination!"
+    
+    for (String os : osArray) {
+        for (String jdk : jdkArray) {
+            for (def db : databaseList) {
+                String dbEngine = db.dbEngine
+                String dbEngineVersion = db.dbEngineVersion
+                String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}-${db_engine}-${db_engine_version}"
+                
+                def deploymentPattern = [
+                    product: product,
+                    version: productVersion,
+                    os: os,
+                    jdk: jdk,
+                    dbEngine: dbEngine,
+                    dbEngineVersion: dbEngineVersion,
+                    directory: deploymentDirName,
+                ]
+
+                deploymentPatterns.add(deploymentPattern)
+            }
+        }
+    }
+}
 
 pipeline {
     agent {label 'pipeline-agent'}
@@ -52,11 +80,24 @@ pipeline {
             steps {
                 script {
                     dir(tfDirectory) {
-                        git branch: "${tf_repo_branch}",
-                        credentialsId: "WSO2_GITHUB_TOKEN",
-                        url: "${tf_repo_url}"
+                        git branch: "${tfRepoBranch}",
+                        credentialsId: githubCredentialId,
+                        url: "${tfRepoUrl}"
                     }
                 }
+            }
+        }
+
+        stage('Preparation') {
+            createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList)
+
+            println "Deployment patterns created: ${deploymentPatterns}"
+        }
+        
+        post {
+            always {
+                println "Job is completed... Deleting the workspace directories!"
+                cleanWs deleteDirs: true, notFailBuild: true
             }
         }
     }
