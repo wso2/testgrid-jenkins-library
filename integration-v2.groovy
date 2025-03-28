@@ -89,16 +89,19 @@ pipeline {
         }
 
         stage('Preparation') {
-            createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList)
+            steps {
+                createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList)
 
-            println "Deployment patterns created: ${deploymentPatterns}"
+                println "Deployment patterns created: ${deploymentPatterns}"
+
+            }
         }
-        
-        post {
+    }
+
+    post {
             always {
                 println "Job is completed... Deleting the workspace directories!"
                 cleanWs deleteDirs: true, notFailBuild: true
             }
         }
-    }
 }
