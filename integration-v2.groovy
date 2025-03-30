@@ -49,6 +49,39 @@ def dbEngineVersions = [
     "aurora-mysql": "8.0.mysql_aurora.3.02.2",
 ]
 
+// Create deployment patterns for all combinations of OS, JDK, and database
+def createDeploymentPatterns(String product, String productVersion, 
+                                String[] osArray, String[] jdkArray, String[] databaseList) {
+    println "Creating the deployment patterns by using infrastructure combination!"
+    
+    for (String os : osList) {
+        for (String jdk : jdkList) {
+            for (def db : databaseList) {
+                // String dbEngineVersion = dbEngineVersions[db]
+                if (dbEngineVersion == null) {
+                    println "DB engine version not found for ${db}. Skipping..."
+                    continue
+                }
+                // String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}-${db}-${dbEngineVersion}"
+                
+                def deploymentPattern = [
+                    product: product,
+                    version: productVersion,
+                    os: os,
+                    jdk: jdk,
+                    dbEngine: db,
+                    dbEngineVersion: dbEngineVersion,
+                    directory: deploymentDirName,
+                ]
+
+                println "Deployment pattern created: ${deploymentPattern}"
+
+                deploymentPatterns.add(deploymentPattern)
+            }
+        }
+    }
+}
+
 pipeline {
     agent {label 'pipeline-agent'}
 
@@ -68,7 +101,7 @@ pipeline {
         stage('Preparation') {
             steps {
                 script {
-                    def results = createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList, dbEngineVersions)
+                    def results = createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList)
 
                     println "Deployment patterns created: ${deploymentPatterns}"
                 }
@@ -82,37 +115,4 @@ pipeline {
                 cleanWs deleteDirs: true, notFailBuild: true
             }
         }
-}
-
-// Create deployment patterns for all combinations of OS, JDK, and database
-def createDeploymentPatterns(String product, String productVersion, 
-                                String[] osArray, String[] jdkArray, String[] databaseList, def dbEngineVersions) {
-    println "Creating the deployment patterns by using infrastructure combination!"
-    
-    for (String os : osList) {
-        for (String jdk : jdkList) {
-            for (def db : databaseList) {
-                String dbEngineVersion = dbEngineVersions[db]
-                if (dbEngineVersion == null) {
-                    println "DB engine version not found for ${db}. Skipping..."
-                    continue
-                }
-                String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}-${db}-${dbEngineVersion}"
-                
-                def deploymentPattern = [
-                    product: product,
-                    version: productVersion,
-                    os: os,
-                    jdk: jdk,
-                    dbEngine: db,
-                    dbEngineVersion: dbEngineVersion,
-                    directory: deploymentDirName,
-                ]
-
-                println "Deployment pattern created: ${deploymentPattern}"
-
-                deploymentPatterns.add(deploymentPattern)
-            }
-        }
-    }
 }
