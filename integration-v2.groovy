@@ -100,11 +100,9 @@ pipeline {
 
         stage('Preparation') {
             steps {
-                script {
-                    createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList, dbEngineVersions)
+                createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList, dbEngineVersions)
 
-                    println "Deployment patterns created: ${deploymentPatterns}"
-                }
+                println "Deployment patterns created: ${deploymentPatterns}"
             }
         }
     }
