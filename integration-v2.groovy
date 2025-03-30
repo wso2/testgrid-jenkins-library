@@ -26,7 +26,7 @@ String productVersion = params.productVersion
 String productDeploymentRegion = params.productDeploymentRegion
 String[] osList = params.osList
 String[] jdkList = params.jdkList
-def databaseList = readJSON(text: params.databaseList) // Each object in databaseList should have dbEngine and dbEngineVersion properties
+String databaseList = params.databaseList
 String albCertArn = params.albCertArn
 String productRepository = params.productRepository
 String productTestBranch = params.productTestBranch
@@ -45,19 +45,24 @@ String tfRepoBranch = "apim-intg"
 String tfDirectory = "iac-aws-wso2-products"
 
 String githubCredentialId = "WSO2_GITHUB_TOKEN"
+def dbEngineVersions = [
+    "aurora-mysql": "8.0.mysql_aurora.3.02.2",
+]
 
 // Create deployment patterns for all combinations of OS, JDK, and database
 void createDeploymentPatterns(String product, String productVersion, 
                                 String[] osArray, String[] jdkArray, def databaseList) {
     println "Creating the deployment patterns by using infrastructure combination!"
-    printpn "DB list: ${databaseList}"
     
     for (String os : osList) {
         for (String jdk : jdkList) {
             for (def db : databaseList) {
-                String dbEngine = db.dbEngine
-                String dbEngineVersion = db.dbEngineVersion
-                String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}-${db_engine}-${db_engine_version}"
+                String dbEngineVersion = dbEngineVersions[db]
+                if (dbEngine == null) {
+                    println "DB engine version not found for ${db}. Skipping..."
+                    continue
+                }
+                String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}-${db}-${dbEngineVersion}"
                 
                 def deploymentPattern = [
                     product: product,
