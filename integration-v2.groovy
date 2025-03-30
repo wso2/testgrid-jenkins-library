@@ -58,10 +58,10 @@ def createDeploymentPatterns(String product, String productVersion,
         for (String jdk : jdkList) {
             for (def db : databaseList) {
                 // String dbEngineVersion = dbEngineVersions[db]
-                if (dbEngineVersion == null) {
-                    println "DB engine version not found for ${db}. Skipping..."
-                    continue
-                }
+                // if (dbEngineVersion == null) {
+                //     println "DB engine version not found for ${db}. Skipping..."
+                //     continue
+                // }
                 // String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}-${db}-${dbEngineVersion}"
                 
                 def deploymentPattern = [
@@ -70,7 +70,7 @@ def createDeploymentPatterns(String product, String productVersion,
                     os: os,
                     jdk: jdk,
                     dbEngine: db,
-                    dbEngineVersion: dbEngineVersion,
+                    // dbEngineVersion: dbEngineVersion,
                     directory: deploymentDirName,
                 ]
 
