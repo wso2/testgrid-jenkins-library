@@ -50,7 +50,7 @@ def dbEngineVersions = [
 ]
 
 // Create deployment patterns for all combinations of OS, JDK, and database
-void createDeploymentPatterns(String product, String productVersion, 
+def createDeploymentPatterns(String product, String productVersion, 
                                 String[] osArray, String[] jdkArray, String[] databaseList, def dbEngineVersions) {
     println "Creating the deployment patterns by using infrastructure combination!"
     
