@@ -101,7 +101,10 @@ pipeline {
         stage('Preparation') {
             steps {
                 script {
-                    def results = createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList,dbEngineVersions, deploymentPatterns)
+                    println "JDK List: ${jdkList}"
+                    println "OS List: ${osList}"
+                    println "Database List: ${databaseList}"
+                    createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList,dbEngineVersions, deploymentPatterns)
 
                     println "Deployment patterns created: ${deploymentPatterns}"
                 }
