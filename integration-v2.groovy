@@ -51,12 +51,12 @@ def dbEngineVersions = [
 
 // Create deployment patterns for all combinations of OS, JDK, and database
 def createDeploymentPatterns(String product, String productVersion, 
-                                String[] osArray, String[] jdkArray, String[] databaseList, def dbEngineVersions, def deploymentPatterns) {
+                                String[] osList, String[] jdkList, String[] databaseList, def dbEngineVersions, def deploymentPatterns) {
     println "Creating the deployment patterns by using infrastructure combination!"
     
     for (String os : osList) {
         for (String jdk : jdkList) {
-            for (def db : databaseList) {
+            for (String db : databaseList) {
                 String dbEngineVersion = dbEngineVersions[db]
                 if (dbEngineVersion == null) {
                     println "DB engine version not found for ${db}. Skipping..."
