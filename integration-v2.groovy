@@ -38,7 +38,7 @@ Boolean apimPreRelease = params.apimPreRelease
 String testGroups = params.testGroups
 
 // Default values
-String[] deploymentPatterns = []
+def deploymentPatterns = []
 String updateType = "u2"
 String tfRepoUrl = "https://github.com/kavindasr/iac-aws-wso2-products.git"
 String tfRepoBranch = "apim-intg"
@@ -58,7 +58,7 @@ void createDeploymentPatterns(String product, String productVersion,
         for (String jdk : jdkList) {
             for (def db : databaseList) {
                 String dbEngineVersion = dbEngineVersions[db]
-                if (dbEngine == null) {
+                if (dbEngineVersion == null) {
                     println "DB engine version not found for ${db}. Skipping..."
                     continue
                 }
@@ -69,7 +69,7 @@ void createDeploymentPatterns(String product, String productVersion,
                     version: productVersion,
                     os: os,
                     jdk: jdk,
-                    dbEngine: dbEngine,
+                    dbEngine: db,
                     dbEngineVersion: dbEngineVersion,
                     directory: deploymentDirName,
                 ]
@@ -100,10 +100,11 @@ pipeline {
 
         stage('Preparation') {
             steps {
-                createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList)
+                script {
+                    createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList)
 
-                println "Deployment patterns created: ${deploymentPatterns}"
-
+                    println "Deployment patterns created: ${deploymentPatterns}"
+                }
             }
         }
     }
