@@ -71,7 +71,7 @@ def createDeploymentPatterns(String product, String productVersion,
                     jdk: jdk,
                     dbEngine: db,
                     // dbEngineVersion: dbEngineVersion,
-                    directory: deploymentDirName,
+                    // directory: deploymentDirName,
                 ]
 
                 println "Deployment pattern created: ${deploymentPattern}"
