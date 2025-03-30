@@ -24,9 +24,9 @@ import groovy.json.JsonOutput
 String product = params.product
 String productVersion = params.productVersion
 String productDeploymentRegion = params.productDeploymentRegion
-String[] osList = params.osList
-String[] jdkList = params.jdkList
-String databaseList = params.databaseList
+String[] osList = params.osList?.split(',') ?: []
+String[] jdkList = params.jdkList?.split(',') ?: []
+String[] databaseList = params.databaseList?.split(',') ?: []
 String albCertArn = params.albCertArn
 String productRepository = params.productRepository
 String productTestBranch = params.productTestBranch
@@ -51,18 +51,18 @@ def dbEngineVersions = [
 
 // Create deployment patterns for all combinations of OS, JDK, and database
 def createDeploymentPatterns(String product, String productVersion, 
-                                String[] osArray, String[] jdkArray, String[] databaseList, deploymentPatterns) {
+                                String[] osArray, String[] jdkArray, String[] databaseList, def dbEngineVersions, def deploymentPatterns) {
     println "Creating the deployment patterns by using infrastructure combination!"
     
     for (String os : osList) {
         for (String jdk : jdkList) {
             for (def db : databaseList) {
-                // String dbEngineVersion = dbEngineVersions[db]
-                // if (dbEngineVersion == null) {
-                //     println "DB engine version not found for ${db}. Skipping..."
-                //     continue
-                // }
-                // String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}-${db}-${dbEngineVersion}"
+                String dbEngineVersion = dbEngineVersions[db]
+                if (dbEngineVersion == null) {
+                    println "DB engine version not found for ${db}. Skipping..."
+                    continue
+                }
+                String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}-${db}-${dbEngineVersion}"
                 
                 def deploymentPattern = [
                     product: product,
@@ -70,8 +70,8 @@ def createDeploymentPatterns(String product, String productVersion,
                     os: os,
                     jdk: jdk,
                     dbEngine: db,
-                    // dbEngineVersion: dbEngineVersion,
-                    // directory: deploymentDirName,
+                    dbEngineVersion: dbEngineVersion,
+                    directory: deploymentDirName,
                 ]
 
                 println "Deployment pattern created: ${deploymentPattern}"
@@ -101,7 +101,7 @@ pipeline {
         stage('Preparation') {
             steps {
                 script {
-                    def results = createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList, deploymentPatterns)
+                    def results = createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList,dbEngineVersions, deploymentPatterns)
 
                     println "Deployment patterns created: ${deploymentPatterns}"
                 }
