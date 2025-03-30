@@ -51,7 +51,7 @@ def dbEngineVersions = [
 
 // Create deployment patterns for all combinations of OS, JDK, and database
 def createDeploymentPatterns(String product, String productVersion, 
-                                String[] osArray, String[] jdkArray, String[] databaseList) {
+                                String[] osArray, String[] jdkArray, String[] databaseList, deploymentPatterns) {
     println "Creating the deployment patterns by using infrastructure combination!"
     
     for (String os : osList) {
@@ -101,7 +101,7 @@ pipeline {
         stage('Preparation') {
             steps {
                 script {
-                    def results = createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList)
+                    def results = createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList, deploymentPatterns)
 
                     println "Deployment patterns created: ${deploymentPatterns}"
                 }
