@@ -85,7 +85,7 @@ def createDeploymentPatterns(String product, String productVersion,
 }
 
 pipeline {
-    agent {label 'pipeline-agent'}
+    agent {label 'pipeline-kubernetes-agent'}
 
     stages {
         stage('Clone Terraform repo') {
@@ -153,6 +153,31 @@ pipeline {
                 }
             }
         }
+
+        // stage('Terraform Apply') {
+        //     steps {
+        //         script {
+        //             withCredentials([[
+        //                 $class: 'AmazonWebServicesCredentialsBinding',
+        //                 credentialsId: params.awsCred,
+        //                 accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+        //                 secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+        //             ]]) { 
+        //                 for (def pattern : deploymentPatterns) {
+        //                     def deploymentDirName = pattern.directory
+        //                     dir("${deploymentDirName}") {
+        //                         println "Running Terraform apply for ${deploymentDirName}..."
+        //                         sh """
+        //                             terraform apply -auto-approve -var="product=${pattern.product}" \
+        //                                 -var="dbEngine=${pattern.dbEngine}" \
+        //                                 -var="dbEngineVersion=${pattern.dbEngineVersion}"
+        //                         """
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     post {
