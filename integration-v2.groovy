@@ -87,11 +87,6 @@ def createDeploymentPatterns(String product, String productVersion,
 pipeline {
     agent {label 'pipeline-agent'}
 
-    environment {
-        AWS_ACCESS_KEY_ID = params.awsAccessKey
-        AWS_SECRET_ACCESS_KEY = params.awsSecretAccessKey
-    }
-
     stages {
         stage('Clone Terraform repo') {
             steps {
@@ -133,19 +128,27 @@ pipeline {
         stage('Terraform Plan') {
             steps {
                 script {
-                    for (def pattern : deploymentPatterns) {
-                        def deploymentDirName = pattern.directory
-                        dir("${deploymentDirName}") {
-                            println "Running Terraform plan for ${deploymentDirName}..."
-                            sh """
-                                terraform init -backend-config="bucket=${tfS3Bucket}" \
-                                    -backend-config="region=${tfS3region}" \
-                                    -backend-config="key=${deploymentDirName}.tfstate"
-                                
-                                terraform plan -var="product=${pattern.product}" \
-                                    -var="dbEngine=${pattern.dbEngine}" \
-                                    -var="dbEngineVersion=${pattern.dbEngineVersion}"
-                            """
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: params.awsCred,
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        
+                        for (def pattern : deploymentPatterns) {
+                            def deploymentDirName = pattern.directory
+                            dir("${deploymentDirName}") {
+                                println "Running Terraform plan for ${deploymentDirName}..."
+                                sh """
+                                    terraform init -backend-config="bucket=${tfS3Bucket}" \
+                                        -backend-config="region=${tfS3region}" \
+                                        -backend-config="key=${deploymentDirName}.tfstate"
+                                    
+                                    terraform plan -var="product=${pattern.product}" \
+                                        -var="dbEngine=${pattern.dbEngine}" \
+                                        -var="dbEngineVersion=${pattern.dbEngineVersion}"
+                                """
+                            }
                         }
                     }
                 }
