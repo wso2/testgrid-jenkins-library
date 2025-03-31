@@ -122,20 +122,17 @@ pipeline {
                         }
                     }
 
-                    // print user and user group
-                    def user = sh(script: 'whoami', returnStdout: true).trim()
-                    def userGroup = sh(script: 'id -g', returnStdout: true).trim()
-                    println "User: ${user}"
-                    println "User Group: ${userGroup}"
-                    // Print OS information
-                    def osName = sh(script: 'uname -a', returnStdout: true).trim()
-                    println "Operating System: ${osName}"
-                    // Print OS release information
-                    try {
-                        def osRelease = sh(script: 'cat /etc/os-release', returnStdout: true).trim()
-                        println "OS Release Information: \n${osRelease}"
-                    } catch (Exception e) {
-                        println "Could not read OS release: ${e.message}"
+                    // Install Terraform if not already installed
+                    if (!fileExists('/usr/local/bin/terraform')) {
+                        println "Terraform not found. Installing..."
+                        sh """
+                            curl -LO https://releases.hashicorp.com/terraform/1.11.3/terraform_1.11.3_linux_amd64.zip
+                            unzip terraform_1.11.3_linux_amd64.zip
+                            sudo mv terraform /usr/local/bin/
+                            terraform version
+                        """
+                    } else {
+                        println "Terraform is already installed."
                     }
                 }
             }
