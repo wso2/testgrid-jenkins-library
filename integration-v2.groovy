@@ -133,8 +133,7 @@ pipeline {
                         credentialsId: params.awsCred,
                         accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                         secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                    ]]) {
-                        
+                    ]]) { 
                         for (def pattern : deploymentPatterns) {
                             def deploymentDirName = pattern.directory
                             dir("${deploymentDirName}") {
