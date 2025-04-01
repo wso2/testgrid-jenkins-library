@@ -63,6 +63,7 @@ def dbEngineVersions = [
 ]
 
 // Create deployment patterns for all combinations of OS, JDK, and database
+@NonCPS
 def createDeploymentPatterns(String product, String productVersion, 
                                 String[] osList, String[] jdkList, String[] databaseList, def dbEngineVersions, def deploymentPatterns) {
     println "Creating the deployment patterns by using infrastructure combination!"
@@ -83,9 +84,9 @@ def createDeploymentPatterns(String product, String productVersion,
                 ])
             }
             String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}"
-            String dbEnginesJson = dbEngines.collect { "{ \"engine\": \"${it.engine}\", \"version\": \"${it.version}\" }" }.join(", ")
-            dbEnginesJson = "[${dbEnginesJson}]"
-            // String dbEnginesJson = JsonOutput.toJson(dbEngines)
+            // String dbEnginesJson = dbEngines.collect { "{ \"engine\": \"${it.engine}\", \"version\": \"${it.version}\" }" }.join(", ")
+            // dbEnginesJson = "[${dbEnginesJson}]"
+            String dbEnginesJson = JsonOutput.toJson(dbEngines)
             def deploymentPattern = [
                 id: count++,
                 product: product,
