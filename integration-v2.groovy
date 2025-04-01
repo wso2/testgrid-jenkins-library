@@ -40,6 +40,7 @@ String tfS3Bucket = params.tfS3Bucket
 String tfS3region = params.tfS3region
 Boolean onlyDestroyResources = params.onlyDestroyResources?: false
 String dbPassword = params.dbPassword
+String project = params.project
 
 // Default values
 def deploymentPatterns = []
@@ -175,6 +176,7 @@ pipeline {
                                         -backend-config="key=${deploymentDirName}.tfstate"
                                     
                                     terraform plan \
+                                        -var="project=${project}" \
                                         -var="client_name=dev-${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_engine=${pattern.dbEngine}" \
@@ -205,6 +207,7 @@ pipeline {
                                 println "Running Terraform apply for ${deploymentDirName}..."
                                 sh """
                                     terraform apply -auto-approve \
+                                        -var="project=${project}" \
                                         -var="client_name=dev-${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=${dbPassword}" \
