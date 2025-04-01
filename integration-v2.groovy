@@ -82,7 +82,7 @@ def createDeploymentPatterns(String product, String productVersion,
                     version: dbEngineVersion
                 ])
             }
-            String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}-${db}-${dbEngineVersion}"
+            String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}-${dbEngineVersion}"
                 
             def deploymentPattern = [
                 id: count++,
