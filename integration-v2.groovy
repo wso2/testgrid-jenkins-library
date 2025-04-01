@@ -44,9 +44,14 @@ String dbPassword = params.dbPassword
 // Default values
 def deploymentPatterns = []
 String updateType = "u2"
+// Terraform repository details
 String tfRepoUrl = "https://github.com/kavindasr/iac-aws-wso2-products.git"
 String tfRepoBranch = "apim-intg"
 String tfDirectory = "iac-aws-wso2-products"
+// Helm repository details
+String helmRepoUrl = "https://github.com/kavindasr/helm-apim.git"
+String helmRepoBranch = "apim-intg"
+String helmDirectory = "helm-apim"
 
 String githubCredentialId = "WSO2_GITHUB_TOKEN"
 def dbEngineVersions = [
@@ -92,13 +97,19 @@ pipeline {
     agent {label 'pipeline-kubernetes-agent'}
 
     stages {
-        stage('Clone Terraform repo') {
+        stage('Clone repos') {
             steps {
                 script {
                     dir(tfDirectory) {
                         git branch: "${tfRepoBranch}",
                         credentialsId: githubCredentialId,
                         url: "${tfRepoUrl}"
+                    }
+
+                    dir(helmDirectory) {
+                        git branch: "${helmRepoBranch}",
+                        credentialsId: githubCredentialId,
+                        url: "${helmRepoUrl}"
                     }
                 }
             }
