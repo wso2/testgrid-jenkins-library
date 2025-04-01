@@ -61,6 +61,8 @@ def dbEngineVersions = [
     "aurora-mysql": "8.0.mysql_aurora.3.04.0",
     "aurora-postgresql": "16.6",
 ]
+// Parse JSON
+def jsonSlurper = new groovy.json.JsonSlurper()
 
 // Create deployment patterns for all combinations of OS, JDK, and database
 def createDeploymentPatterns(String product, String productVersion, 
@@ -183,7 +185,7 @@ pipeline {
                                         -var="client_name=dev-${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=${dbPassword}" \
-                                        -var="db_engine_options=${pattern.dbEngines}"
+                                        -var="db_engine_options=${JsonOutput.toJson(pattern.dbEngines)}"
                                 """
                             }
                         }
@@ -214,13 +216,11 @@ pipeline {
                                         -var="client_name=${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=${dbPassword}" \
-                                        -var="db_engine_options=${pattern.dbEngines}"
+                                        -var="db_engine_options=${JsonOutput.toJson(pattern.dbEngines)}"
                                 """
                                 
                                 // Capture all outputs as JSON
                                 def terraformOutput = sh(script: "terraform output -json", returnStdout: true).trim()
-                                // Parse the JSON
-                                def jsonSlurper = new groovy.json.JsonSlurper()
                                 def terraformOutputJson = jsonSlurper.parseText(terraformOutput)
                                 
                                 // Extract database writer endpoint
@@ -290,7 +290,7 @@ pipeline {
                                         -var="client_name=${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=${dbPassword}" \
-                                        -var="db_engine_options=${pattern.dbEngines}"
+                                        -var="db_engine_options=${JsonOutput.toJson(pattern.dbEngines)}"
                                 """
                             }
                         }
