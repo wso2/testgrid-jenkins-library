@@ -86,7 +86,6 @@ def createDeploymentPatterns(String product, String productVersion,
             String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}"
             // String dbEnginesJson = dbEngines.collect { "{ \"engine\": \"${it.engine}\", \"version\": \"${it.version}\" }" }.join(", ")
             // dbEnginesJson = "[${dbEnginesJson}]"
-            String dbEnginesJson = JsonOutput.toJson(dbEngines)
             def deploymentPattern = [
                 id: count++,
                 product: product,
@@ -94,7 +93,6 @@ def createDeploymentPatterns(String product, String productVersion,
                 os: os,
                 jdk: jdk,
                 dbEngines: dbEngines,
-                dbEnginesJson: dbEnginesJson,
             ]
             deploymentPatterns.add(deploymentPattern)
         }
@@ -187,7 +185,7 @@ pipeline {
                                         -var="client_name=dev-${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=$dbPassword" \
-                                        -var="db_engine_options=${pattern.dbEnginesJson}"
+                                        -var="db_engine_options=${JsonOutput.toJson(pattern.dbEngines)}"
                                 """
                             }
                         }
@@ -218,7 +216,7 @@ pipeline {
                                         -var="client_name=${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=$dbPassword" \
-                                        -var="db_engine_options=${pattern.dbEnginesJson}"
+                                        -var="db_engine_options=${JsonOutput.toJson(pattern.dbEngines)}"
                                 """
                                 
                                 // Capture all outputs as JSON
@@ -293,7 +291,7 @@ pipeline {
                                         -var="client_name=${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=$dbPassword" \
-                                        -var="db_engine_options=${pattern.dbEnginesJson}"
+                                        -var="db_engine_options=${JsonOutput.toJson(pattern.dbEngines)}"
                                 """
                             }
                         }
