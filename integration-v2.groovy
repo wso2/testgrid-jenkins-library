@@ -170,35 +170,49 @@ pipeline {
             }
         }
 
-        // stage('Terraform Apply') {
-        //     steps {
-        //         script {
-        //             withCredentials([[
-        //                 $class: 'AmazonWebServicesCredentialsBinding',
-        //                 credentialsId: params.awsCred,
-        //                 accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-        //                 secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-        //             ]]) { 
-        //                 for (def pattern : deploymentPatterns) {
-        //                     def deploymentDirName = pattern.directory
-        //                     dir("${deploymentDirName}") {
-        //                         println "Running Terraform apply for ${deploymentDirName}..."
-        //                         sh """
-        //                             terraform apply -auto-approve -var="product=${pattern.product}" \
-        //                                 -var="dbEngine=${pattern.dbEngine}" \
-        //                                 -var="dbEngineVersion=${pattern.dbEngineVersion}"
-        //                         """
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Terraform Apply') {
+            steps {
+                script {
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: params.awsCred,
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) { 
+                        for (def pattern : deploymentPatterns) {
+                            def deploymentDirName = pattern.directory
+                            dir("${deploymentDirName}") {
+                                println "Running Terraform apply for ${deploymentDirName}..."
+                                sh """
+                                    terraform apply -auto-approve \ 
+                                        -var="client_name=dev-${pattern.id}" \
+                                        -var="db_engine=${pattern.dbEngine}" \
+                                        -var="db_engine_version=${pattern.dbEngineVersion}"
+                                """
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     post {
             always {
                 println "Job is completed... Deleting the workspace directories!"
+                // Destroy the created resources
+                for (def pattern : deploymentPatterns) {
+                    def deploymentDirName = pattern.directory
+                    dir("${deploymentDirName}") {
+                        println "Destroying resources for ${deploymentDirName}..."
+                        sh """
+                            terraform destroy -auto-approve \
+                                -var="client_name=dev-${pattern.id}" \
+                                -var="db_engine=${pattern.dbEngine}" \
+                                -var="db_engine_version=${pattern.dbEngineVersion}"
+                        """
+                    }
+                }
                 cleanWs deleteDirs: true, notFailBuild: true
             }
         }
