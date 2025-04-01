@@ -64,7 +64,7 @@ def dbEngineVersions = [
 
 // Create deployment patterns for all combinations of OS, JDK, and database
 def createDeploymentPatterns(String product, String productVersion, 
-                                String[] osList, String[] jdkList, String[] databaseList, def dbEngineVersions, def deploymentPatterns, def databaseEngines) {
+                                String[] osList, String[] jdkList, String[] databaseList, def dbEngineVersions, def deploymentPatterns) {
     println "Creating the deployment patterns by using infrastructure combination!"
     
     int count = 1
@@ -77,7 +77,7 @@ def createDeploymentPatterns(String product, String productVersion,
                     println "DB engine version not found for ${db}. Skipping..."
                     continue
                 }
-                databaseEngines.add([
+                dbEngines.add([
                     engine: db,
                     version: dbEngineVersion
                 ])
@@ -125,7 +125,7 @@ pipeline {
                     println "JDK List: ${jdkList}"
                     println "OS List: ${osList}"
                     println "Database List: ${databaseList}"
-                    createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList,dbEngineVersions, deploymentPatterns, databaseEngines)
+                    createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList,dbEngineVersions, deploymentPatterns)
 
                     println "Deployment patterns created: ${deploymentPatterns}"
 
@@ -183,7 +183,7 @@ pipeline {
                                         -var="client_name=dev-${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=${dbPassword}" \
-                                        -var="db_engine_options=${databaseEngines}"
+                                        -var="db_engine_options=${pattern.dbEngines}"
                                 """
                             }
                         }
@@ -214,7 +214,7 @@ pipeline {
                                         -var="client_name=${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=${dbPassword}" \
-                                        -var="db_engine_options=${databaseEngines}"
+                                        -var="db_engine_options=${pattern.dbEngines}"
                                 """
                                 
                                 // Capture all outputs as JSON
@@ -290,7 +290,7 @@ pipeline {
                                         -var="client_name=${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=${dbPassword}" \
-                                        -var="db_engine_options=${databaseEngines}"
+                                        -var="db_engine_options=${pattern.dbEngines}"
                                 """
                             }
                         }
