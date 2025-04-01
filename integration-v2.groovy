@@ -87,7 +87,7 @@ def createDeploymentPatterns(String product, String productVersion,
 }
 
 pipeline {
-    agent {label 'pipeline-agent'}
+    agent {label 'pipeline-kubernetes-agent'}
 
     stages {
         stage('Clone Terraform repo') {
