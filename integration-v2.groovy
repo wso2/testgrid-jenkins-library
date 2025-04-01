@@ -57,15 +57,25 @@ String helmRepoBranch = "apim-intg"
 String helmDirectory = "helm-apim"
 
 String githubCredentialId = "WSO2_GITHUB_TOKEN"
-def dbEngineVersions = [
-    "aurora-mysql": "8.0.mysql_aurora.3.04.0",
-    "aurora-postgresql": "16.6",
+def dbEngineList = [
+    aurora-mysql: [
+        version:"8.0.mysql_aurora.3.04.0",
+        dbDriver: "com.mysql.cj.jdbc.Driver",
+        driverUrl: "https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.29/mysql-connector-java-8.0.29.jar",
+        dbType: "mysql"
+        ],
+    aurora-postgresql: [
+        version: "16.6",
+        dbDriver: "org.postgresql.Driver"
+        driverUrl: "https://repo1.maven.org/maven2/org/postgresql/postgresql/42.3.6/postgresql-42.3.6.jar"
+        dbType: "postgresql"
+    ],
 ]
 
 // Create deployment patterns for all combinations of OS, JDK, and database
 @NonCPS
 def createDeploymentPatterns(String product, String productVersion, 
-                                String[] osList, String[] jdkList, String[] databaseList, def dbEngineVersions, def deploymentPatterns) {
+                                String[] osList, String[] jdkList, String[] databaseList, def dbEngineList, def deploymentPatterns) {
     println "Creating the deployment patterns by using infrastructure combination!"
     
     int count = 1
@@ -73,14 +83,14 @@ def createDeploymentPatterns(String product, String productVersion,
         for (String jdk : jdkList) {
             def dbEngines = []
             for (String db : databaseList) {
-                String dbEngineVersion = dbEngineVersions[db]?.toString()
+                def dbDetails = dbEngineList[db]
                 if (dbEngines == null) {
                     println "DB engine version not found for ${db}. Skipping..."
                     continue
                 }
                 dbEngines.add([
                     engine: db,
-                    version: dbEngineVersion
+                    version: dbDetails.version,
                 ])
             }
             String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}"
@@ -127,7 +137,7 @@ pipeline {
                     println "JDK List: ${jdkList}"
                     println "OS List: ${osList}"
                     println "Database List: ${databaseList}"
-                    createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList,dbEngineVersions, deploymentPatterns)
+                    createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList, dbEngineList, deploymentPatterns)
 
                     println "Deployment patterns created: ${deploymentPatterns}"
 
@@ -257,14 +267,23 @@ pipeline {
                                     aws eks --region ${productDeploymentRegion} \
                                     update-kubeconfig --name ${project}-${pattern.id}-${tfEnvironment}-${productDeploymentRegion}-eks \
                                     --alias ${pattern.directory}
+
+                                    # Install nginx ingress controller
+                                    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.4/deploy/static/provider/aws/deploy.yaml || { echo "failed to install nginx ingress controller." ; exit 1 ; }
+
+                                    # Delete Nginx admission if it exists.
+                                    kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission || echo "WARNING : Failed to delete nginx admission."
+
+                                    # Wait for nginx to come alive.
+                                    kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=480s ||  { echo 'Nginx service is not ready within the expected time limit.';  exit 1; }
                                 """
                             }
                         }
                     }
                 }
-            }
-                                    
+            }                        
         }
+        stage
         stage('Destroy Cloud Resources') {
             when {
                 expression { destroyResources || onlyDestroyResources }
