@@ -59,39 +59,40 @@ String helmDirectory = "helm-apim"
 String githubCredentialId = "WSO2_GITHUB_TOKEN"
 def dbEngineVersions = [
     "aurora-mysql": "8.0.mysql_aurora.3.04.0",
+    "aurora-postgresql": "16.6",
 ]
 
 // Create deployment patterns for all combinations of OS, JDK, and database
 def createDeploymentPatterns(String product, String productVersion, 
-                                String[] osList, String[] jdkList, String[] databaseList, def dbEngineVersions, def deploymentPatterns) {
+                                String[] osList, String[] jdkList, String[] databaseList, def dbEngineVersions, def deploymentPatterns, def databaseEngines) {
     println "Creating the deployment patterns by using infrastructure combination!"
     
     int count = 1
     for (String os : osList) {
         for (String jdk : jdkList) {
+            def dbEngines = []
             for (String db : databaseList) {
                 String dbEngineVersion = dbEngineVersions[db]
-                if (dbEngineVersion == null) {
+                if (dbEngines == null) {
                     println "DB engine version not found for ${db}. Skipping..."
                     continue
                 }
-                String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}-${db}-${dbEngineVersion}"
-                
-                def deploymentPattern = [
-                    id: count++,
-                    product: product,
-                    version: productVersion,
-                    os: os,
-                    jdk: jdk,
-                    dbEngine: db,
-                    dbEngineVersion: dbEngineVersion,
-                    directory: deploymentDirName,
-                ]
-
-                println "Deployment pattern created: ${deploymentPattern}"
-
-                deploymentPatterns.add(deploymentPattern)
+                databaseEngines.add([
+                    engine: db,
+                    version: dbEngineVersion
+                ])
             }
+            String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}-${db}-${dbEngineVersion}"
+                
+            def deploymentPattern = [
+                id: count++,
+                product: product,
+                version: productVersion,
+                os: os,
+                jdk: jdk,
+                dbEngines: dbEngines,
+            ]
+            deploymentPatterns.add(deploymentPattern)
         }
     }
 }
@@ -124,7 +125,7 @@ pipeline {
                     println "JDK List: ${jdkList}"
                     println "OS List: ${osList}"
                     println "Database List: ${databaseList}"
-                    createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList,dbEngineVersions, deploymentPatterns)
+                    createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList,dbEngineVersions, deploymentPatterns, databaseEngines)
 
                     println "Deployment patterns created: ${deploymentPatterns}"
 
@@ -181,8 +182,8 @@ pipeline {
                                         -var="project=${project}" \
                                         -var="client_name=dev-${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
-                                        -var="db_engine=${pattern.dbEngine}" \
-                                        -var="db_engine_version=${pattern.dbEngineVersion}"
+                                        -var="db_password=${dbPassword}" \
+                                        -var="db_engine_options=${databaseEngines}"
                                 """
                             }
                         }
@@ -213,8 +214,7 @@ pipeline {
                                         -var="client_name=${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=${dbPassword}" \
-                                        -var="db_engine=${pattern.dbEngine}" \
-                                        -var="db_engine_version=${pattern.dbEngineVersion}"
+                                        -var="db_engine_options=${databaseEngines}"
                                 """
                                 
                                 // Capture all outputs as JSON
@@ -224,7 +224,7 @@ pipeline {
                                 def terraformOutputJson = jsonSlurper.parseText(terraformOutput)
                                 
                                 // Extract database writer endpoint
-                                def dbWriterEndpoint = terraformOutputJson.database_writer_endpoint?.value
+                                def dbWriterEndpoint = terraformOutputJson
                                 println "Database Writer Endpoint: ${dbWriterEndpoint}"
                                 
                                 // Store the outputs in the pattern object for later use
@@ -286,11 +286,11 @@ pipeline {
                                 println "Destroying resources for ${deploymentDirName}..."
                                 sh """
                                     terraform destroy -auto-approve \
+                                        -var="project=${project}" \
                                         -var="client_name=${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=${dbPassword}" \
-                                        -var="db_engine=${pattern.dbEngine}" \
-                                        -var="db_engine_version=${pattern.dbEngineVersion}"
+                                        -var="db_engine_options=${databaseEngines}"
                                 """
                             }
                         }
