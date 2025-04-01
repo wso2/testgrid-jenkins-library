@@ -223,11 +223,11 @@ pipeline {
                                 def terraformOutputJson = jsonSlurper.parseText(terraformOutput)
                                 
                                 // Extract database writer endpoint
-                                def dbWriterEndpoint = terraformOutputJson
-                                println "Database Writer Endpoint: ${dbWriterEndpoint}"
+                                def dbWriterEndpoints = terraformOutputJson.db_writer_endpoints?.value
+                                println "Database Writer Endpoints: ${dbWriterEndpoint}"
                                 
-                                // Store the outputs in the pattern object for later use
-                                pattern.dbEndpoint = dbWriterEndpoint
+                                // Convert LazyMap to HashMap
+                                pattern.dbEndpoints = new HashMap(terraformOutputJson)
 
                             }
                         }
