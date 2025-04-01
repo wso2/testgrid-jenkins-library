@@ -61,8 +61,6 @@ def dbEngineVersions = [
     "aurora-mysql": "8.0.mysql_aurora.3.04.0",
     "aurora-postgresql": "16.6",
 ]
-// Parse JSON
-def jsonSlurper = new groovy.json.JsonSlurper()
 
 // Create deployment patterns for all combinations of OS, JDK, and database
 def createDeploymentPatterns(String product, String productVersion, 
@@ -173,6 +171,7 @@ pipeline {
                     ]]) { 
                         for (def pattern : deploymentPatterns) {
                             def deploymentDirName = pattern.directory
+                            def jsonSlurper = new groovy.json.JsonSlurper()
                             dir("${deploymentDirName}") {
                                 println "Running Terraform plan for ${deploymentDirName}..."
                                 sh """
@@ -208,6 +207,7 @@ pipeline {
                     ]]) { 
                         for (def pattern : deploymentPatterns) {
                             def deploymentDirName = pattern.directory
+                            def jsonSlurper = new groovy.json.JsonSlurper()                           
                             dir("${deploymentDirName}") {
                                 println "Running Terraform apply for ${deploymentDirName}..."
                                 sh """
@@ -282,6 +282,7 @@ pipeline {
                         // Destroy the created resources
                         for (def pattern : deploymentPatterns) {
                             def deploymentDirName = pattern.directory
+                            def jsonSlurper = new groovy.json.JsonSlurper()
                             dir("${deploymentDirName}") {
                                 println "Destroying resources for ${deploymentDirName}..."
                                 sh """
