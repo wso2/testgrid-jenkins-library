@@ -157,8 +157,8 @@ pipeline {
                                         -backend-config="key=${deploymentDirName}.tfstate"
                                     
                                     terraform plan -var="product=${pattern.product}" \
-                                        -var="dbEngine=${pattern.dbEngine}" \
-                                        -var="dbEngineVersion=${pattern.dbEngineVersion}"
+                                        -var="db_engine=${pattern.dbEngine}" \
+                                        -var="db_engine_version=${pattern.dbEngineVersion}"
                                 """
                             }
                         }
