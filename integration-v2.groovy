@@ -185,7 +185,7 @@ pipeline {
                             dir("${deploymentDirName}") {
                                 println "Running Terraform apply for ${deploymentDirName}..."
                                 sh """
-                                    terraform apply -auto-approve \ 
+                                    terraform apply -auto-approve \
                                         -var="client_name=dev-${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_engine=${pattern.dbEngine}" \
