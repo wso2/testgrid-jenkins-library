@@ -252,9 +252,11 @@ pipeline {
                             def deploymentDirName = pattern.directory
                             dir("${deploymentDirName}") {
                                 println "Configuring EKS for ${deploymentDirName}..."
+                                // EKS cluster name follows this pattern defined in the AWS Terraform modules:
+                                // https://github.com/wso2/aws-terraform-modules/blob/c9820b842ff2227c10bd22f4ff076461d972d520/modules/aws/EKS-Cluster/eks.tf#L21
                                 sh """
                                     aws eks --region ${productDeploymentRegion} \
-                                    update-kubeconfig --name ${project}-dev-${pattern.id}-${tfEnvironment}-${productDeploymentRegion}-eks \
+                                    update-kubeconfig --name ${project}-${pattern.id}-${tfEnvironment}-${productDeploymentRegion}-eks \
                                     --alias ${pattern.directory}
                                 """
                             }
