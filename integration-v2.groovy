@@ -202,19 +202,26 @@ pipeline {
     post {
             always {
                 script {
-                    println "Job is completed... Deleting the workspace directories!"
-                    // Destroy the created resources
-                    for (def pattern : deploymentPatterns) {
-                        def deploymentDirName = pattern.directory
-                        dir("${deploymentDirName}") {
-                            println "Destroying resources for ${deploymentDirName}..."
-                            sh """
-                                terraform destroy -auto-approve \
-                                    -var="client_name=dev-${pattern.id}" \
-                                    -var="region=${productDeploymentRegion}" \
-                                    -var="db_engine=${pattern.dbEngine}" \
-                                    -var="db_engine_version=${pattern.dbEngineVersion}"
-                            """
+                     withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: params.awsCred,
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) { 
+                        println "Job is completed... Deleting the workspace directories!"
+                        // Destroy the created resources
+                        for (def pattern : deploymentPatterns) {
+                            def deploymentDirName = pattern.directory
+                            dir("${deploymentDirName}") {
+                                println "Destroying resources for ${deploymentDirName}..."
+                                sh """
+                                    terraform destroy -auto-approve \
+                                        -var="client_name=dev-${pattern.id}" \
+                                        -var="region=${productDeploymentRegion}" \
+                                        -var="db_engine=${pattern.dbEngine}" \
+                                        -var="db_engine_version=${pattern.dbEngineVersion}"
+                                """
+                            }
                         }
                     }
                 }
