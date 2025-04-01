@@ -72,7 +72,7 @@ def createDeploymentPatterns(String product, String productVersion,
         for (String jdk : jdkList) {
             def dbEngines = []
             for (String db : databaseList) {
-                String dbEngineVersion = dbEngineVersions[db]
+                String dbEngineVersion = dbEngineVersions[db]?.toString()
                 if (dbEngines == null) {
                     println "DB engine version not found for ${db}. Skipping..."
                     continue
@@ -83,9 +83,9 @@ def createDeploymentPatterns(String product, String productVersion,
                 ])
             }
             String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}"
-            // String dbEnginesJson = dbEngines.collect { "{ \"engine\": \"${it.engine}\", \"version\": \"${it.version}\" }" }.join(", ")
-            // dbEnginesJson = "[${dbEnginesJson}]"
-            String dbEnginesJson = JsonOutput.toJson(dbEngines)
+            String dbEnginesJson = dbEngines.collect { "{ \"engine\": \"${it.engine}\", \"version\": \"${it.version}\" }" }.join(", ")
+            dbEnginesJson = "[${dbEnginesJson}]"
+            // String dbEnginesJson = JsonOutput.toJson(dbEngines)
             def deploymentPattern = [
                 id: count++,
                 product: product,
