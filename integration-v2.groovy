@@ -39,6 +39,7 @@ String testGroups = params.testGroups
 String tfS3Bucket = params.tfS3Bucket
 String tfS3region = params.tfS3region
 Boolean onlyDestroyResources = params.onlyDestroyResources?: false
+String dbPassword = params.dbPassword
 
 // Default values
 def deploymentPatterns = []
@@ -195,6 +196,7 @@ pipeline {
                                     terraform apply -auto-approve \
                                         -var="client_name=dev-${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
+                                        -var="db_password=${dbPassword}" \
                                         -var="db_engine=${pattern.dbEngine}" \
                                         -var="db_engine_version=${pattern.dbEngineVersion}"
                                 """
@@ -225,6 +227,7 @@ pipeline {
                                     terraform destroy -auto-approve \
                                         -var="client_name=dev-${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
+                                        -var="db_password=${dbPassword}" \
                                         -var="db_engine=${pattern.dbEngine}" \
                                         -var="db_engine_version=${pattern.dbEngineVersion}"
                                 """
