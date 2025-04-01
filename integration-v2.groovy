@@ -160,6 +160,7 @@ pipeline {
                                     
                                     terraform plan \
                                         -var="client_name=dev-${pattern.id}" \
+                                        -var="region=${productDeploymentRegion}" \
                                         -var="db_engine=${pattern.dbEngine}" \
                                         -var="db_engine_version=${pattern.dbEngineVersion}"
                                 """
@@ -186,6 +187,7 @@ pipeline {
                                 sh """
                                     terraform apply -auto-approve \ 
                                         -var="client_name=dev-${pattern.id}" \
+                                        -var="region=${productDeploymentRegion}" \
                                         -var="db_engine=${pattern.dbEngine}" \
                                         -var="db_engine_version=${pattern.dbEngineVersion}"
                                 """
@@ -208,6 +210,7 @@ pipeline {
                         sh """
                             terraform destroy -auto-approve \
                                 -var="client_name=dev-${pattern.id}" \
+                                -var="region=${productDeploymentRegion}" \
                                 -var="db_engine=${pattern.dbEngine}" \
                                 -var="db_engine_version=${pattern.dbEngineVersion}"
                         """
