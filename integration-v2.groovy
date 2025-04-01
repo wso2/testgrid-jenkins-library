@@ -59,7 +59,7 @@ String helmDirectory = "helm-apim"
 String githubCredentialId = "WSO2_GITHUB_TOKEN"
 def dbEngineVersions = [
     "aurora-mysql": "8.0.mysql_aurora.3.04.0",
-    "aurora-postgresql": "a16.6",
+    "aurora-postgresql": "16.6",
 ]
 
 // Create deployment patterns for all combinations of OS, JDK, and database
