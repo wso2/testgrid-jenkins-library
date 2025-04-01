@@ -49,7 +49,7 @@ String tfDirectory = "iac-aws-wso2-products"
 
 String githubCredentialId = "WSO2_GITHUB_TOKEN"
 def dbEngineVersions = [
-    "aurora-mysql": "8.0.mysql_aurora.3.02.2",
+    "aurora-mysql": "8.0.mysql_aurora.3.04.0",
 ]
 
 // Create deployment patterns for all combinations of OS, JDK, and database
