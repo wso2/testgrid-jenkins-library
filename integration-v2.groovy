@@ -40,7 +40,7 @@ String tfS3Bucket = params.tfS3Bucket
 String tfS3region = params.tfS3region
 Boolean onlyDestroyResources = params.onlyDestroyResources?: false
 String dbPassword = params.dbPassword
-String project = params.project
+String project = params.project?: "wso2"
 
 // Default values
 def deploymentPatterns = []
