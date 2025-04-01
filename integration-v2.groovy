@@ -40,8 +40,8 @@ String tfS3Bucket = params.tfS3Bucket
 String tfS3region = params.tfS3region
 String dbPassword = params.dbPassword
 String project = params.project?: "wso2"
-Boolean onlyDestroyResources = params.onlyDestroyResources?: false
-Boolean destroyResources = params.destroyResources?: true
+Boolean onlyDestroyResources = params.onlyDestroyResources
+Boolean destroyResources = params.destroyResources
 
 // Default values
 def deploymentPatterns = []
@@ -210,12 +210,26 @@ pipeline {
                                 sh """
                                     terraform apply -auto-approve \
                                         -var="project=${project}" \
-                                        -var="client_name=dev-${pattern.id}" \
+                                        -var="client_name=${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=${dbPassword}" \
                                         -var="db_engine=${pattern.dbEngine}" \
                                         -var="db_engine_version=${pattern.dbEngineVersion}"
                                 """
+                                
+                                // Capture all outputs as JSON
+                                def terraformOutput = sh(script: "terraform output -json", returnStdout: true).trim()
+                                // Parse the JSON
+                                def jsonSlurper = new groovy.json.JsonSlurper()
+                                def terraformOutputJson = jsonSlurper.parseText(terraformOutput)
+                                
+                                // Extract database writer endpoint
+                                def dbWriterEndpoint = terraformOutputJson.database_writer_endpoint?.value
+                                println "Database Writer Endpoint: ${dbWriterEndpoint}"
+                                
+                                // Store the outputs in the pattern object for later use
+                                pattern.dbEndpoint = dbWriterEndpoint
+
                             }
                         }
                     }
@@ -270,7 +284,7 @@ pipeline {
                                 println "Destroying resources for ${deploymentDirName}..."
                                 sh """
                                     terraform destroy -auto-approve \
-                                        -var="client_name=dev-${pattern.id}" \
+                                        -var="client_name=${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=${dbPassword}" \
                                         -var="db_engine=${pattern.dbEngine}" \
