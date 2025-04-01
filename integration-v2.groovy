@@ -184,8 +184,7 @@ pipeline {
                                         -var="project=${project}" \
                                         -var="client_name=dev-${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
-                                        -var="db_password=$dbPassword" \
-                                        -var="db_engine_options=${JsonOutput.toJson(pattern.dbEngines)}"
+                                        -var="db_password=$dbPassword"
                                 """
                             }
                         }
@@ -215,8 +214,7 @@ pipeline {
                                         -var="project=${project}" \
                                         -var="client_name=${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
-                                        -var="db_password=$dbPassword" \
-                                        -var="db_engine_options=${JsonOutput.toJson(pattern.dbEngines)}"
+                                        -var="db_password=$dbPassword"
                                 """
                                 
                                 // Capture all outputs as JSON
@@ -290,8 +288,7 @@ pipeline {
                                         -var="project=${project}" \
                                         -var="client_name=${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
-                                        -var="db_password=$dbPassword" \
-                                        -var="db_engine_options=${JsonOutput.toJson(pattern.dbEngines)}"
+                                        -var="db_password=$dbPassword"
                                 """
                             }
                         }
