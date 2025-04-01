@@ -49,6 +49,7 @@ String updateType = "u2"
 String tfRepoUrl = "https://github.com/kavindasr/iac-aws-wso2-products.git"
 String tfRepoBranch = "apim-intg"
 String tfDirectory = "iac-aws-wso2-products"
+String tfEnvironment = "dev"
 // Helm repository details
 String helmRepoUrl = "https://github.com/kavindasr/helm-apim.git"
 String helmRepoBranch = "apim-intg"
@@ -220,6 +221,34 @@ pipeline {
                 }
             }
         }
+        stage('Configure EKS cluster') {
+            when {
+                expression { !onlyDestroyResources }
+            }
+            steps {
+                script {
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: params.awsCred,
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) { 
+                        for (def pattern : deploymentPatterns) {
+                            def deploymentDirName = pattern.directory
+                            dir("${deploymentDirName}") {
+                                println "Configuring EKS for ${deploymentDirName}..."
+                                sh """
+                                    aws eks --region ${productDeploymentRegion} \
+                                    update-kubeconfig --name ${project}-${pattern.id}-${tfEnvironment}-${productDeploymentRegion}-eks \
+                                    --alias ${pattern.deploymentDirName}
+                                """
+                            }
+                        }
+                    }
+                }
+            }
+                                    
+        }
     }
 
     post {
@@ -239,7 +268,7 @@ pipeline {
                                 println "Destroying resources for ${deploymentDirName}..."
                                 sh """
                                     terraform destroy -auto-approve \
-                                        -var="client_name=dev-${pattern.id}" \
+                                        -var="client_name=${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=${dbPassword}" \
                                         -var="db_engine=${pattern.dbEngine}" \
