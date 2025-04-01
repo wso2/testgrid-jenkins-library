@@ -83,7 +83,8 @@ def createDeploymentPatterns(String product, String productVersion,
                 ])
             }
             String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}"
-                
+            String dbEnginesJson = dbEngines.collect { "{ \"engine\": \"${it.engine}\", \"version\": \"${it.version}\" }" }.join(", ")
+            dbEnginesJson = "[${dbEnginesJson}]"
             def deploymentPattern = [
                 id: count++,
                 product: product,
@@ -91,6 +92,7 @@ def createDeploymentPatterns(String product, String productVersion,
                 os: os,
                 jdk: jdk,
                 dbEngines: dbEngines,
+                dbEnginesJson: dbEnginesJson,
             ]
             deploymentPatterns.add(deploymentPattern)
         }
@@ -171,7 +173,6 @@ pipeline {
                     ]]) { 
                         for (def pattern : deploymentPatterns) {
                             def deploymentDirName = pattern.directory
-                            def jsonSlurper = new groovy.json.JsonSlurper()
                             dir("${deploymentDirName}") {
                                 println "Running Terraform plan for ${deploymentDirName}..."
                                 sh """
@@ -184,7 +185,7 @@ pipeline {
                                         -var="client_name=dev-${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=${dbPassword}" \
-                                        -var="db_engine_options=${JsonOutput.toJson(pattern.dbEngines)}"
+                                        -var="db_engine_options=${pattern.dbEnginesJson}"
                                 """
                             }
                         }
@@ -207,7 +208,6 @@ pipeline {
                     ]]) { 
                         for (def pattern : deploymentPatterns) {
                             def deploymentDirName = pattern.directory
-                            def jsonSlurper = new groovy.json.JsonSlurper()                           
                             dir("${deploymentDirName}") {
                                 println "Running Terraform apply for ${deploymentDirName}..."
                                 sh """
@@ -216,11 +216,12 @@ pipeline {
                                         -var="client_name=${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=${dbPassword}" \
-                                        -var="db_engine_options=${JsonOutput.toJson(pattern.dbEngines)}"
+                                        -var="db_engine_options=${pattern.dbEnginesJson}"
                                 """
                                 
                                 // Capture all outputs as JSON
                                 def terraformOutput = sh(script: "terraform output -json", returnStdout: true).trim()
+                                def jsonSlurper = new groovy.json.JsonSlurper()                           
                                 def terraformOutputJson = jsonSlurper.parseText(terraformOutput)
                                 
                                 // Extract database writer endpoint
@@ -282,7 +283,6 @@ pipeline {
                         // Destroy the created resources
                         for (def pattern : deploymentPatterns) {
                             def deploymentDirName = pattern.directory
-                            def jsonSlurper = new groovy.json.JsonSlurper()
                             dir("${deploymentDirName}") {
                                 println "Destroying resources for ${deploymentDirName}..."
                                 sh """
@@ -291,7 +291,7 @@ pipeline {
                                         -var="client_name=${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=${dbPassword}" \
-                                        -var="db_engine_options=${JsonOutput.toJson(pattern.dbEngines)}"
+                                        -var="db_engine_options=${pattern.dbEnginesJson}"
                                 """
                             }
                         }
