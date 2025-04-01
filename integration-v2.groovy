@@ -37,7 +37,7 @@ Boolean useStaging = params.useStaging
 Boolean apimPreRelease = params.apimPreRelease
 String testGroups = params.testGroups
 String tfS3Bucket = params.tfS3Bucket
-String tfS3region = params.tfS3Region
+String tfS3region = params.tfS3region
 
 // Default values
 def deploymentPatterns = []
