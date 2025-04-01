@@ -38,6 +38,7 @@ Boolean apimPreRelease = params.apimPreRelease
 String testGroups = params.testGroups
 String tfS3Bucket = params.tfS3Bucket
 String tfS3region = params.tfS3region
+Boolean onlyDestroyResources = params.onlyDestroyResources?: false
 
 // Default values
 def deploymentPatterns = []
@@ -172,6 +173,9 @@ pipeline {
         }
 
         stage('Terraform Apply') {
+            when {
+                expression { !onlyDestroyResources }
+            }
             steps {
                 script {
                     withCredentials([[
