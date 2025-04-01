@@ -56,6 +56,7 @@ def createDeploymentPatterns(String product, String productVersion,
                                 String[] osList, String[] jdkList, String[] databaseList, def dbEngineVersions, def deploymentPatterns) {
     println "Creating the deployment patterns by using infrastructure combination!"
     
+    int count = 1
     for (String os : osList) {
         for (String jdk : jdkList) {
             for (String db : databaseList) {
@@ -67,6 +68,7 @@ def createDeploymentPatterns(String product, String productVersion,
                 String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}-${db}-${dbEngineVersion}"
                 
                 def deploymentPattern = [
+                    id: count++,
                     product: product,
                     version: productVersion,
                     os: os,
@@ -156,7 +158,8 @@ pipeline {
                                         -backend-config="region=${tfS3region}" \
                                         -backend-config="key=${deploymentDirName}.tfstate"
                                     
-                                    terraform plan -var="product=${pattern.product}" \
+                                    terraform plan \
+                                        -var="client_name=dev-${pattern.id}" \
                                         -var="db_engine=${pattern.dbEngine}" \
                                         -var="db_engine_version=${pattern.dbEngineVersion}"
                                 """
