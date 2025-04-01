@@ -224,7 +224,7 @@ pipeline {
                                 
                                 // Extract database writer endpoint
                                 def dbWriterEndpoints =new HashMap(terraformOutputJson)?.db_writer_endpoints?.value
-                                println "Database Writer Endpoints: ${dbWriterEndpoint}"
+                                println "Database Writer Endpoints: ${dbWriterEndpoints}"
                                 
                                 // Convert LazyMap to HashMap
                                 pattern.dbEndpoints = dbWriterEndpoints
