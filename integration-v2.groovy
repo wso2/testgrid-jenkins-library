@@ -208,9 +208,6 @@ pipeline {
         }
 
         stage('Terraform Plan') {
-            when {
-                expression { !onlyDestroyResources }
-            }
             steps {
                 script {
                     withCredentials([[
