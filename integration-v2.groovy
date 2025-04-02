@@ -262,7 +262,8 @@ pipeline {
                                         -var="db_password=$dbPassword"
                                 """
                                 
-                                def dbWriterEndpoints = sh(script: "terraform output -json | jq -r '.database_writer_endpoints.value'", returnStdout: true).trim()
+                                def dbWriterEndpointsJson = sh(script: "terraform output -json | jq -r '.database_writer_endpoints'", returnStdout: true).trim()
+                                def dbWriterEndpoints = new groovy.json.JsonSlurper().parseText(dbWriterEndpointsJson)
                                 if (!dbWriterEndpoints) {
                                     error "DB Writer Endpoints are null or empty for ${deploymentDirName}. Please check the Terraform output."
                                 }
