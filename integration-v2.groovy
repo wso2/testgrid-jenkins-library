@@ -266,10 +266,13 @@ pipeline {
                                 def terraformOutput = sh(script: "terraform output -json", returnStdout: true).trim()
                                 def jsonSlurper = new groovy.json.JsonSlurper()                           
                                 def terraformOutputJson = jsonSlurper.parseText(terraformOutput)
+
+                                println "Terraform Output: ${terraformOutputJson}"
                                 
                                 // Extract database writer endpoint
-                                def dbWriterEndpoints =new HashMap(terraformOutputJson)?.db_writer_endpoints?.value
-                                println "Database Writer Endpoints: ${dbWriterEndpoints}"
+                                def dbWriterEndpoints =new HashMap(terraformOutputJson)
+                                println "DB Writer Endpoints: ${dbWriterEndpoints}"
+                                println "Database Writer Endpoints: ${dbWriterEndpoints?.db_writer_endpoints?.value}"
                                 
                                 // Convert LazyMap to HashMap
                                 pattern.dbEndpoints = dbWriterEndpoints
