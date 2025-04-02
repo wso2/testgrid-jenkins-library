@@ -110,6 +110,7 @@ def createDeploymentPatterns(String product, String productVersion,
                 os: os,
                 jdk: jdk,
                 dbEngines: dbEngines,
+                directory: deploymentDirName,
             ]
             deploymentPatterns.add(deploymentPattern)
         }
