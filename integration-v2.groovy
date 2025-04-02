@@ -337,7 +337,9 @@ pipeline {
                         for (def pattern : deploymentPatterns) {
                                 def deploymentDirName = pattern.directory
                                 dir("${deploymentDirName}") {
+                                    println "pattern: ${pattern}"
                                     pattern.dbEngines.eachWithIndex { dbEngine, index ->
+                                        println "DB Engine: ${dbEngine} at index ${index}"
                                         String dbEngineName = dbEngine.engine
                                         String endpoint = pattern.dbEndpoints[index]
                                         def namespace = "${pattern.id}-${dbEngineName}"
