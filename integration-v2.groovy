@@ -306,7 +306,7 @@ pipeline {
                                     --alias ${pattern.directory}
 
                                     # Install nginx ingress controller
-                                    kubectl apply -f https://raw.githubusercontent.com/kavindasr/testgrid-jenkins-library/refs/heads/apim-intg/scripts/apim/ingress-controller.yaml || { echo "failed to install nginx ingress controller." ; exit 1 ; }
+                                    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.4/deploy/static/provider/aws/deploy.yaml || { echo "failed to install nginx ingress controller." ; exit 1 ; }
 
                                     # Delete Nginx admission if it exists.
                                     kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission || echo "WARNING : Failed to delete nginx admission."
