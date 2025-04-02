@@ -118,27 +118,24 @@ def createDeploymentPatterns(String product, String productVersion,
 }
 
 @NonCPS
-def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String dbPassword, String apimIntgDirectory) {
+def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String dbPassword) {
     println "Executing DB scripts for ${dbEngine} at ${dbEndpoint}..."
-    dir("${apimIntgDirectory}") {
-        // Add your DB script execution logic here
-        if (dbEngine == "aurora-mysql") {
-            // Execute MySQL scripts
-            sh """
-                mysql -h ${dbEndpoint} -u ${dbUser} -p${dbPassword} < ./dbscripts/mysql.sql
+    if (dbEngine == "aurora-mysql") {
+        // Execute MySQL scripts
+        sh """
+            mysql -h ${dbEndpoint} -u ${dbUser} -p${dbPassword} < ./dbscripts/mysql.sql
 
-                mysql -h ${dbEndpoint} -u ${dbUser} -p${dbPassword} < ./dbscripts/apimgt/mysql.sql
-            """
-        } else if (dbEngine == "aurora-postgresql") {
-            // Execute PostgreSQL scripts
-            sh """
-                PGPASSWORD=${dbPassword} psql -h ${dbEndpoint} -U ${dbUser} -d mydatabase -f ./dbscripts/postgresql.sql
+            mysql -h ${dbEndpoint} -u ${dbUser} -p${dbPassword} < ./dbscripts/apimgt/mysql.sql
+        """
+    } else if (dbEngine == "aurora-postgresql") {
+        // Execute PostgreSQL scripts
+        sh """
+            PGPASSWORD=${dbPassword} psql -h ${dbEndpoint} -U ${dbUser} -d mydatabase -f ./dbscripts/postgresql.sql
 
-                PGPASSWORD=${dbPassword} psql -h ${dbEndpoint} -U ${dbUser} -d mydatabase -f ./dbscripts/apimgt/postgresql.sql
-            """
-        } else {
-            println "Unsupported DB engine: ${dbEngine}"
-        }
+            PGPASSWORD=${dbPassword} psql -h ${dbEndpoint} -U ${dbUser} -d mydatabase -f ./dbscripts/apimgt/postgresql.sql
+        """
+    } else {
+        println "Unsupported DB engine: ${dbEngine}"
     }
 }
 
@@ -348,7 +345,9 @@ pipeline {
                                         println "Namespace created: ${namespace}"
 
                                         // Execute DB scripts
-                                        executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword, apimIntgDirectory)
+                                        dir("${apimIntgDirectory}") {
+                                            executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword)
+                                        }
 
                                         dir("${helmDirectory}") {
                                             // Install the product using Helm
