@@ -91,7 +91,7 @@ def createDeploymentPatterns(String product, String productVersion,
             def dbEngines = []
             for (String db : databaseList) {
                 def dbDetails = dbEngineList[db]
-                if (dbEngines == null) {
+                if (dbDetails == null) {
                     println "DB engine version not found for ${db}. Skipping..."
                     continue
                 }
