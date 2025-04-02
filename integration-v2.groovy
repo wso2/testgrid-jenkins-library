@@ -120,6 +120,10 @@ def createDeploymentPatterns(String product, String productVersion,
 @NonCPS
 def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String dbPassword) {
     println "Executing DB scripts for ${dbEngine} at ${dbEndpoint}..."
+    println "Current working directory:"
+    sh "pwd"
+
+    sh "ls -la"
     if (dbEngine == "aurora-mysql") {
         // Execute MySQL scripts
         sh """
