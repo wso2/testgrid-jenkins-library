@@ -262,14 +262,14 @@ pipeline {
                                         -var="db_password=$dbPassword"
                                 """
                                 
-                                def dbWriterEndpointsJson = sh(script: "terraform output -json | jq -r '.database_writer_endpoints'", returnStdout: true).trim()
+                                def dbWriterEndpointsJson = sh(script: "terraform output -json | jq -r '.database_writer_endpoints.value'", returnStdout: true).trim()
                                 def dbWriterEndpoints = new groovy.json.JsonSlurper().parseText(dbWriterEndpointsJson)
                                 if (!dbWriterEndpoints) {
                                     error "DB Writer Endpoints are null or empty for ${deploymentDirName}. Please check the Terraform output."
                                 }
                                 println "DB Writer Endpoints: ${dbWriterEndpoints}"
                                 // Convert LazyMap to HashMap
-                                pattern.dbEndpoints = dbWriterEndpoints
+                                pattern.dbEndpoints = new HashMap<>(dbWriterEndpoints)
 
                             }
                         }
@@ -338,7 +338,7 @@ pipeline {
                                     pattern.dbEngines.eachWithIndex { dbEngine, index ->
                                         println "DB Engine: ${dbEngine} at index ${index}"
                                         String dbEngineName = dbEngine.engine
-                                        String endpoint = pattern.dbEndpoints[index]
+                                        String endpoint = pattern.dbEndpoints["${dbEngineName}-${dbEngineList[dbEngineName].version}"]
                                         def namespace = "${pattern.id}-${dbEngineName}"
                                         sh """
                                             # Change context
