@@ -40,12 +40,15 @@ String tfS3Bucket = params.tfS3Bucket
 String tfS3region = params.tfS3region
 String dbPassword = params.dbPassword
 String project = params.project?: "wso2"
+String dockerRegistry = params.dockerRegistry?: "docker.io"
 Boolean onlyDestroyResources = params.onlyDestroyResources
 Boolean destroyResources = params.destroyResources
 
 // Default values
 def deploymentPatterns = []
 String updateType = "u2"
+String hostName = ""
+String dbUser = "wso2carbon"
 // Terraform repository details
 String tfRepoUrl = "https://github.com/kavindasr/iac-aws-wso2-products.git"
 String tfRepoBranch = "apim-intg"
@@ -55,6 +58,10 @@ String tfEnvironment = "dev"
 String helmRepoUrl = "https://github.com/kavindasr/helm-apim.git"
 String helmRepoBranch = "apim-intg"
 String helmDirectory = "helm-apim"
+// APIM Test Integration repository details
+String apimIntgRepoUrl = "https://github.com:wso2/apim-test-integration.git"
+String apimIntgRepoBranch = "4.5.0-profile-automation"
+String apimIntgDirectory = "apim-test-integration"
 
 String githubCredentialId = "WSO2_GITHUB_TOKEN"
 def dbEngineList = [
@@ -109,6 +116,31 @@ def createDeploymentPatterns(String product, String productVersion,
     }
 }
 
+@NonCPS
+def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String dbPassword) {
+    println "Executing DB scripts for ${dbEngine} at ${dbEndpoint}..."
+    dir("${apimIntgDirectory}") {
+        // Add your DB script execution logic here
+        if (dbEngine == "aurora-mysql") {
+            // Execute MySQL scripts
+            sh """
+                mysql -h ${dbEndpoint} -u ${dbUser} -p${dbPassword} < ./dbscripts/mysql.sql
+
+                mysql -h ${dbEndpoint} -u ${dbUser} -p${dbPassword} < ./dbscripts/apimgt/mysql.sql
+            """
+        } else if (dbEngine == "aurora-postgresql") {
+            // Execute PostgreSQL scripts
+            sh """
+                PGPASSWORD=${dbPassword} psql -h ${dbEndpoint} -U ${dbUser} -d mydatabase -f ./dbscripts/postgresql.sql
+
+                PGPASSWORD=${dbPassword} psql -h ${dbEndpoint} -U ${dbUser} -d mydatabase -f ./dbscripts/apimgt/postgresql.sql
+            """
+        } else {
+            println "Unsupported DB engine: ${dbEngine}"
+        }
+    }
+}
+
 pipeline {
     agent {label 'pipeline-kubernetes-agent'}
 
@@ -126,6 +158,11 @@ pipeline {
                         git branch: "${helmRepoBranch}",
                         credentialsId: githubCredentialId,
                         url: "${helmRepoUrl}"
+                    }
+                    dir(apimIntgDirectory) {
+                        git branch: "${apimIntgRepoBranch}",
+                        credentialsId: githubCredentialId,
+                        url: "${apimIntgRepoUrl}"
                     }
                 }
             }
@@ -277,11 +314,67 @@ pipeline {
                                     # Wait for nginx to come alive.
                                     kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=480s ||  { echo 'Nginx service is not ready within the expected time limit.';  exit 1; }
                                 """
+
+                                hostName = sh(script: "kubectl -n ingress-nginx get svc ingress-nginx-controller -o json | jq -r '.status.loadBalancer.ingress[0].hostname'", returnStdout: true).trim()
+                                println "Ingress Host Name: ${hostName}"
+                                pattern.hostName = hostName
                             }
                         }
                     }
                 }
             }                        
+        }
+        stage('Deploy the cluster') {
+            when {
+                expression { !onlyDestroyResources }
+            }
+            steps {
+                script {
+                    for (def pattern : deploymentPatterns) {
+                            def deploymentDirName = pattern.directory
+                            dir("${deploymentDirName}") {
+                                pattern.dbEngines.eachWithIndex { dbEngine, index ->
+                                    String dbEngineName = dbEngine.engine
+                                    String endpoint = pattern.dbEndpoints[index]
+                                    def namespace = "${pattern.id}-${dbEngineName}"
+                                    sh """
+                                        # Change context
+                                        kubectl config use-context ${pattern.directory}
+
+                                        # Create a namespace for the deployment
+                                        kubectl create namespace ${namespace} || echo "Namespace ${namespace} already exists."
+                                    """
+                                    println "Namespace created: ${namespace}"
+
+                                    // Execute DB scripts
+                                    executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword)
+
+                                    dir("${helmDirectory}") {
+                                        // Install the product using Helm
+                                        sh """
+                                            # Deploy wso2am-acp
+                                            echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
+                                            helm install apim-acp ./distributed/control-plane \
+                                                --namespace ${namespace} \
+                                                --set wso2.deployment.image.registry=${dockerRegistry} \
+                                                --set wso2.deployment.image.repository=kavindasr/wso2am-gw:rc2 \
+                                                --set wso2.apim.configurations.databases.type=${dbEngineList[dbEngineName].dbType} \
+                                                --set wso2.apim.configurations.databases.jdbc.driver=${dbEngineList[dbEngineName].dbDriver} \
+                                                --set wso2.apim.configurations.databases.apim_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/apim_db \
+                                                --set wso2.apim.configurations.databases.apim_db.username=${dbUser} \
+                                                --set wso2.apim.configurations.databases.apim_db.password=${dbPassword} \
+                                                --set wso2.apim.configurations.databases.shared_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db \
+                                                --set wso2.apim.configurations.databases.shared_db.username=${dbUser} \
+                                                --set wso2.apim.configurations.databases.shared_db.password=${dbPassword}
+                                        """
+                                        
+                                }
+                            }
+                        }
+                    }
+
+                }
+            }
         }
         stage
         stage('Destroy Cloud Resources') {
