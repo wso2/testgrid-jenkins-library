@@ -66,7 +66,7 @@ String apimIntgDirectory = "apim-test-integration"
 String githubCredentialId = "WSO2_GITHUB_TOKEN"
 def dbEngineList = [
     "aurora-mysql": [
-        version:"8.0.mysql_aurora.3.04.0",
+        version: "8.0.mysql_aurora.3.04.0",
         dbDriver: "com.mysql.cj.jdbc.Driver",
         driverUrl: "https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.29/mysql-connector-java-8.0.29.jar",
         dbType: "mysql"
