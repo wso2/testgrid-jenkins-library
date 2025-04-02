@@ -328,49 +328,55 @@ pipeline {
             }
             steps {
                 script {
-                    for (def pattern : deploymentPatterns) {
-                            def deploymentDirName = pattern.directory
-                            dir("${deploymentDirName}") {
-                                pattern.dbEngines.eachWithIndex { dbEngine, index ->
-                                    String dbEngineName = dbEngine.engine
-                                    String endpoint = pattern.dbEndpoints[index]
-                                    def namespace = "${pattern.id}-${dbEngineName}"
-                                    sh """
-                                        # Change context
-                                        kubectl config use-context ${pattern.directory}
-
-                                        # Create a namespace for the deployment
-                                        kubectl create namespace ${namespace} || echo "Namespace ${namespace} already exists."
-                                    """
-                                    println "Namespace created: ${namespace}"
-
-                                    // Execute DB scripts
-                                    executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword)
-
-                                    dir("${helmDirectory}") {
-                                        // Install the product using Helm
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: params.awsCred,
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        for (def pattern : deploymentPatterns) {
+                                def deploymentDirName = pattern.directory
+                                dir("${deploymentDirName}") {
+                                    pattern.dbEngines.eachWithIndex { dbEngine, index ->
+                                        String dbEngineName = dbEngine.engine
+                                        String endpoint = pattern.dbEndpoints[index]
+                                        def namespace = "${pattern.id}-${dbEngineName}"
                                         sh """
-                                            # Deploy wso2am-acp
-                                            echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
-                                            helm install apim-acp ./distributed/control-plane \
-                                                --namespace ${namespace} \
-                                                --set wso2.deployment.image.registry=${dockerRegistry} \
-                                                --set wso2.deployment.image.repository=kavindasr/wso2am-gw:rc2 \
-                                                --set wso2.apim.configurations.databases.type=${dbEngineList[dbEngineName].dbType} \
-                                                --set wso2.apim.configurations.databases.jdbc.driver=${dbEngineList[dbEngineName].dbDriver} \
-                                                --set wso2.apim.configurations.databases.apim_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/apim_db \
-                                                --set wso2.apim.configurations.databases.apim_db.username=${dbUser} \
-                                                --set wso2.apim.configurations.databases.apim_db.password=${dbPassword} \
-                                                --set wso2.apim.configurations.databases.shared_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db \
-                                                --set wso2.apim.configurations.databases.shared_db.username=${dbUser} \
-                                                --set wso2.apim.configurations.databases.shared_db.password=${dbPassword}
+                                            # Change context
+                                            kubectl config use-context ${pattern.directory}
+
+                                            # Create a namespace for the deployment
+                                            kubectl create namespace ${namespace} || echo "Namespace ${namespace} already exists."
                                         """
-                                        
+                                        println "Namespace created: ${namespace}"
+
+                                        // Execute DB scripts
+                                        executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword)
+
+                                        dir("${helmDirectory}") {
+                                            // Install the product using Helm
+                                            sh """
+                                                # Deploy wso2am-acp
+                                                echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
+                                                helm install apim-acp ./distributed/control-plane \
+                                                    --namespace ${namespace} \
+                                                    --set wso2.deployment.image.registry=${dockerRegistry} \
+                                                    --set wso2.deployment.image.repository=kavindasr/wso2am-gw:rc2 \
+                                                    --set wso2.apim.configurations.databases.type=${dbEngineList[dbEngineName].dbType} \
+                                                    --set wso2.apim.configurations.databases.jdbc.driver=${dbEngineList[dbEngineName].dbDriver} \
+                                                    --set wso2.apim.configurations.databases.apim_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/apim_db \
+                                                    --set wso2.apim.configurations.databases.apim_db.username=${dbUser} \
+                                                    --set wso2.apim.configurations.databases.apim_db.password=${dbPassword} \
+                                                    --set wso2.apim.configurations.databases.shared_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db \
+                                                    --set wso2.apim.configurations.databases.shared_db.username=${dbUser} \
+                                                    --set wso2.apim.configurations.databases.shared_db.password=${dbPassword}
+                                            """
+                                            
+                                    }
                                 }
                             }
-                        }
+                        }                     
                     }
-
                 }
             }
         }
