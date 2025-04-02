@@ -262,16 +262,11 @@ pipeline {
                                         -var="db_password=$dbPassword"
                                 """
                                 
-                                // Capture all outputs as JSON
-                                def terraformOutput = sh(script: "terraform output -json", returnStdout: true).trim()
-                                def jsonSlurper = new groovy.json.JsonSlurper()                           
-                                def terraformOutputJson = jsonSlurper.parseText(terraformOutput)
-
-                                // Convert LazyMap to HashMap
-                                def dbWriterEndpoints = new HashMap(terraformOutputJson)
+                                def dbWriterEndpoints = sh(script: "terraform output -json | jq -r '.database_writer_endpoints.value'", returnStdout: true).trim()
+                                if (!dbWriterEndpoints) {
+                                    error "DB Writer Endpoints are null or empty for ${deploymentDirName}. Please check the Terraform output."
+                                }
                                 println "DB Writer Endpoints: ${dbWriterEndpoints}"
-                                println "Database Writer Endpoints: ${dbWriterEndpoints?.db_writer_endpoints?.value}"
-                                
                                 // Convert LazyMap to HashMap
                                 pattern.dbEndpoints = dbWriterEndpoints
 
