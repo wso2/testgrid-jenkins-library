@@ -376,7 +376,6 @@ pipeline {
                 }
             }
         }
-        stage
         stage('Destroy Cloud Resources') {
             when {
                 expression { destroyResources || onlyDestroyResources }
