@@ -229,7 +229,7 @@ pipeline {
                                     
                                     terraform plan \
                                         -var="project=${project}" \
-                                        -var="client_name=dev-${pattern.id}" \
+                                        -var="client_name=${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=$dbPassword"
                                 """
