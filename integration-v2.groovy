@@ -118,7 +118,7 @@ def createDeploymentPatterns(String product, String productVersion,
 }
 
 @NonCPS
-def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String dbPassword) {
+def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String dbPassword, String apimIntgDirectory) {
     println "Executing DB scripts for ${dbEngine} at ${dbEndpoint}..."
     dir("${apimIntgDirectory}") {
         // Add your DB script execution logic here
@@ -334,9 +334,7 @@ pipeline {
                         for (def pattern : deploymentPatterns) {
                                 def deploymentDirName = pattern.directory
                                 dir("${deploymentDirName}") {
-                                    println "pattern: ${pattern}"
                                     pattern.dbEngines.eachWithIndex { dbEngine, index ->
-                                        println "DB Engine: ${dbEngine} at index ${index}"
                                         String dbEngineName = dbEngine.engine
                                         String endpoint = pattern.dbEndpoints["${dbEngineName}-${dbEngineList[dbEngineName].version}"]
                                         def namespace = "${pattern.id}-${dbEngineName}"
@@ -350,7 +348,7 @@ pipeline {
                                         println "Namespace created: ${namespace}"
 
                                         // Execute DB scripts
-                                        executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword)
+                                        executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword, apimIntgDirectory)
 
                                         dir("${helmDirectory}") {
                                             // Install the product using Helm
