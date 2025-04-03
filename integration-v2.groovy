@@ -121,25 +121,26 @@ def createDeploymentPatterns(String product, String productVersion,
 def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String dbPassword) {
     println "Executing DB scripts for ${dbEngine} at ${dbEndpoint}..."
     println "Current working directory:"
-    sh "pwd"
+    String currentPath = sh(script: "pwd", returnStdout: true).trim()
 
-    sh "ls -la"
     if (dbEngine == "aurora-mysql") {
         // Execute MySQL scripts
+        println "Executing MySQL scripts..."
         sh """
-            mysql -h ${dbEndpoint} -u ${dbUser} -p${dbPassword} < ./dbscripts/mysql.sql
+            mysql -h ${dbEndpoint} -u ${dbUser} -p${dbPassword} < ${currentPath}/dbscripts/mysql.sql
 
-            mysql -h ${dbEndpoint} -u ${dbUser} -p${dbPassword} < ./dbscripts/apimgt/mysql.sql
+            mysql -h ${dbEndpoint} -u ${dbUser} -p${dbPassword} < ${currentPath}/dbscripts/apimgt/mysql.sql
         """
     } else if (dbEngine == "aurora-postgresql") {
         // Execute PostgreSQL scripts
+        println "Executing PostgreSQL scripts..."
         sh """
-            PGPASSWORD=${dbPassword} psql -h ${dbEndpoint} -U ${dbUser} -d mydatabase -f ./dbscripts/postgresql.sql
+            PGPASSWORD=${dbPassword} psql -h ${dbEndpoint} -U ${dbUser} -d mydatabase -f ${currentPath}/dbscripts/postgresql.sql
 
-            PGPASSWORD=${dbPassword} psql -h ${dbEndpoint} -U ${dbUser} -d mydatabase -f ./dbscripts/apimgt/postgresql.sql
+            PGPASSWORD=${dbPassword} psql -h ${dbEndpoint} -U ${dbUser} -d mydatabase -f ${currentPath}/dbscripts/apimgt/postgresql.sql
         """
     } else {
-        println "Unsupported DB engine: ${dbEngine}"
+        error "Unsupported DB engine: ${dbEngine}"
     }
 }
 
@@ -350,15 +351,21 @@ pipeline {
 
                                         // Execute DB scripts
                                         dir("${apimIntgDirectory}") {
-                                            executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword)
+                                            try {
+                                                executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword)
+                                            } catch (Exception e) {
+                                                // Improvement: Handle each DB engine in seperate stages
+                                                println "Error executing DB scripts: ${e.message}"
+                                                continue
                                         }
 
                                         dir("${helmDirectory}") {
                                             // Install the product using Helm
+                                            String currentPath = sh(script: "pwd", returnStdout: true).trim()
                                             sh """
                                                 # Deploy wso2am-acp
                                                 echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
-                                                helm install apim-acp ./distributed/control-plane \
+                                                helm install apim-acp ${currentPath}/distributed/control-plane \
                                                     --namespace ${namespace} \
                                                     --set wso2.deployment.image.registry=${dockerRegistry} \
                                                     --set wso2.deployment.image.repository=kavindasr/wso2am-gw:rc2 \
