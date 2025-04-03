@@ -43,6 +43,7 @@ String project = params.project?: "wso2"
 String dockerRegistry = params.dockerRegistry?: "docker.io"
 Boolean onlyDestroyResources = params.onlyDestroyResources
 Boolean destroyResources = params.destroyResources
+Boolean skipTfApply = params.skipTfApply
 
 // Default values
 def deploymentPatterns = []
@@ -243,7 +244,7 @@ pipeline {
 
         stage('Terraform Apply') {
             when {
-                expression { !onlyDestroyResources }
+                expression { !onlyDestroyResources || skipTfApply }
             }
             steps {
                 script {
