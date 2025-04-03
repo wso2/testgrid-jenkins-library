@@ -211,7 +211,7 @@ if (!fileExists('/usr/bin/docker')) {
 def installDBClients() {
     println "Installing database client tools..."
     sh """
-        sudo apt-get update
+        sudo apt-get update || echo "Failed to update package list, continuing..."
         sudo apt-get install -y mysql-client postgresql-client
     """
 }
