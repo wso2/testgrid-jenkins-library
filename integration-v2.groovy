@@ -127,6 +127,8 @@ def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String d
         // Execute MySQL scripts
         println "Executing MySQL scripts..."
         sh """
+            pwd
+            ls
             mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -e "CREATE DATABASE IF NOT EXISTS shared_db CHARACTER SET latin1;"
             mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -e "CREATE DATABASE IF NOT EXISTS apim_db CHARACTER SET latin1;"
             mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -Dshared_db < ${currentPath}/dbscripts/mysql.sql
