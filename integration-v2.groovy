@@ -402,7 +402,7 @@ pipeline {
                         accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                         secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                     ]]) {
-                        String currentPath = sh(script: "pwd", returnStdout: true).trim()
+                        String pwd = sh(script: "pwd", returnStdout: true).trim()
                         for (def pattern : deploymentPatterns) {
                                 def deploymentDirName = pattern.directory
                                 dir("${deploymentDirName}") {
@@ -423,7 +423,7 @@ pipeline {
                                         try {
                                             println "Listing files in the current directory..."
                                             sh "ls -al"
-                                            executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword, "${currentPath}/${apimIntgDirectory}")
+                                            executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword, "${pwd}/${apimIntgDirectory}")
                                         } catch (Exception e) {
                                             // Improvement: Handle each DB engine in seperate stages
                                             println "Error executing DB scripts: ${e.message}"
