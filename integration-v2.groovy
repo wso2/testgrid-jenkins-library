@@ -117,7 +117,6 @@ def createDeploymentPatterns(String product, String productVersion,
     }
 }
 
-@NonCPS
 def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String dbPassword) {
     println "Executing DB scripts for ${dbEngine} at ${dbEndpoint}..."
     println "Current working directory:"
@@ -127,17 +126,19 @@ def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String d
         // Execute MySQL scripts
         println "Executing MySQL scripts..."
         sh """
-            mysql -h ${dbEndpoint} -u ${dbUser} -p${dbPassword} < ${currentPath}/dbscripts/mysql.sql
-
-            mysql -h ${dbEndpoint} -u ${dbUser} -p${dbPassword} < ${currentPath}/dbscripts/apimgt/mysql.sql
+            mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -e "CREATE DATABASE IF NOT EXISTS shared_db CHARACTER SET latin1;"
+            mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -e "CREATE DATABASE IF NOT EXISTS apim_db CHARACTER SET latin1;"
+            mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -Dshared_db < ${currentPath}/dbscripts/mysql.sql
+            mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -Dapim_db < ${currentPath}/dbscripts/apimgt/mysql.sql
         """
     } else if (dbEngine == "aurora-postgresql") {
         // Execute PostgreSQL scripts
         println "Executing PostgreSQL scripts..."
         sh """
-            PGPASSWORD=${dbPassword} psql -h ${dbEndpoint} -U ${dbUser} -d mydatabase -f ${currentPath}/dbscripts/postgresql.sql
-
-            PGPASSWORD=${dbPassword} psql -h ${dbEndpoint} -U ${dbUser} -d mydatabase -f ${currentPath}/dbscripts/apimgt/postgresql.sql
+            PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d postgres -c "CREATE DATABASE shared_db ENCODING 'LATIN1';"
+            PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d postgres -c "CREATE DATABASE apim_db ENCODING 'LATIN1';"
+            PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d shared_db -f ${currentPath}/dbscripts/postgresql.sql
+            PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d apim_db -f ${currentPath}/dbscripts/apimgt/postgresql.sql
         """
     } else {
         error "Unsupported DB engine: ${dbEngine}"
