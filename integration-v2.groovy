@@ -120,15 +120,12 @@ def createDeploymentPatterns(String product, String productVersion,
 
 def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String dbPassword) {
     println "Executing DB scripts for ${dbEngine} at ${dbEndpoint}..."
-    println "Current working directory:"
     String currentPath = sh(script: "pwd", returnStdout: true).trim()
 
     if (dbEngine == "aurora-mysql") {
         // Execute MySQL scripts
         println "Executing MySQL scripts..."
         sh """
-            pwd
-            ls
             mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -e "CREATE DATABASE IF NOT EXISTS shared_db CHARACTER SET latin1;"
             mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -e "CREATE DATABASE IF NOT EXISTS apim_db CHARACTER SET latin1;"
             mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -Dshared_db < ${currentPath}/dbscripts/mysql.sql
@@ -425,6 +422,8 @@ pipeline {
                                         // Execute DB scripts
                                         dir("${apimIntgDirectory}") {
                                             try {
+                                                println "Listing files in the current directory..."
+                                                sh "ls -al"
                                                 executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword)
                                             } catch (Exception e) {
                                                 // Improvement: Handle each DB engine in seperate stages
