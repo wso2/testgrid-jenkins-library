@@ -302,7 +302,7 @@ pipeline {
 
         stage('Terraform Apply') {
             when {
-                expression { !onlyDestroyResources || skipTfApply }
+                expression { !(onlyDestroyResources && !skipTfApply) }
             }
             steps {
                 script {
