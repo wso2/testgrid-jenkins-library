@@ -23,6 +23,7 @@ String wso2_product = params.wso2_product
 String wso2_product_version = params.wso2_product_version
 String update_level = params.update_level
 Boolean skip_update = params.skip_update
+String awsCred = params.awsCred
 
 // Default values
 String dockerDirectory = "docker"
@@ -58,7 +59,12 @@ pipeline {
         stage('download-product-packs-from-s3') {
             steps {
                 script {
-                    //withCredentials([usernamePassword(credentialsId: 'aws-s3-wso2-installers-resources',passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: params.awsCred,
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
                         sh """
                         export WSO2_PRODUCT='$wso2_product'
                         export WSO2_PRODUCT_VERSION='$wso2_product_version'
@@ -66,7 +72,7 @@ pipeline {
                         unzip -q ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}.zip
                         rm -rf ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}.zip
                         """
-//                        }
+                    }
                 }
             }
         }
