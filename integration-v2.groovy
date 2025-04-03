@@ -205,11 +205,26 @@ if (!fileExists('/usr/bin/docker')) {
 }
 
 def installDBClients() {
-    println "Installing database client tools..."
-    sh """
-        sudo apt-get update || echo "Failed to update package list, continuing..."
-        sudo apt-get install -y mysql-client postgresql-client
-    """
+    println "Checking and installing database client tools if not already installed..."
+    if (!fileExists('/usr/bin/mysql')) {
+        println "MySQL client not found. Installing..."
+        sh """
+            sudo apt-get update || echo "Failed to update package list, continuing..."
+            sudo apt-get install -y mysql-client
+        """
+    } else {
+        println "MySQL client is already installed."
+    }
+
+    if (!fileExists('/usr/bin/psql')) {
+        println "PostgreSQL client not found. Installing..."
+        sh """
+            sudo apt-get update || echo "Failed to update package list, continuing..."
+            sudo apt-get install -y postgresql-client
+        """
+    } else {
+        println "PostgreSQL client is already installed."
+    }
 }
 
 pipeline {
