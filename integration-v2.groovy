@@ -314,7 +314,7 @@ pipeline {
             when {
                 anyOf {
                     expression { !onlyDestroyResources }
-                    expression { skipTfApply }
+                    expression { !skipTfApply }
                 }
             }
             steps {
