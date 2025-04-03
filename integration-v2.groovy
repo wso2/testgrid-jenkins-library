@@ -332,6 +332,16 @@ pipeline {
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=$dbPassword"
                                 """
+                                
+                                def dbWriterEndpointsJson = sh(script: "terraform output -json | jq -r '.database_writer_endpoints.value'", returnStdout: true).trim()
+                                def dbWriterEndpoints = new groovy.json.JsonSlurper().parseText(dbWriterEndpointsJson)
+                                if (!dbWriterEndpoints) {
+                                    error "DB Writer Endpoints are null or empty for ${deploymentDirName}. Please check the Terraform output."
+                                }
+                                println "DB Writer Endpoints: ${dbWriterEndpoints}"
+                                // Convert LazyMap to HashMap
+                                pattern.dbEndpoints = new HashMap<>(dbWriterEndpoints)
+
                             }
                         }
                     }
@@ -353,17 +363,6 @@ pipeline {
                         for (def pattern : deploymentPatterns) {
                             def deploymentDirName = pattern.directory
                             dir("${deploymentDirName}") {
-                                // Extract terraform output for the EKS cluster
-                                def dbWriterEndpointsJson = sh(script: "terraform output -json | jq -r '.database_writer_endpoints.value'", returnStdout: true).trim()
-                                // def dbWriterEndpoints = new groovy.json.JsonSlurper().parseText(dbWriterEndpointsJson)
-                                def dbWriterEndpoints = new groovy.json.JsonSlurperClassic().parseText(dbWriterEndpointsJson)
-                                if (!dbWriterEndpoints) {
-                                    error "DB Writer Endpoints are null or empty for ${deploymentDirName}. Please check the Terraform output."
-                                }
-                                println "DB Writer Endpoints: ${dbWriterEndpoints}"
-                                // Convert LazyMap to HashMap
-                                pattern.dbEndpoints = new HashMap<>(dbWriterEndpoints.collectEntries { k, v -> [(k): v] })
-
                                 println "Configuring EKS for ${deploymentDirName}..."
                                 // EKS cluster name follows this pattern defined in the AWS Terraform modules:
                                 // https://github.com/wso2/aws-terraform-modules/blob/c9820b842ff2227c10bd22f4ff076461d972d520/modules/aws/EKS-Cluster/eks.tf#L21
