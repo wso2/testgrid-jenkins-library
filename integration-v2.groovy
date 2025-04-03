@@ -355,7 +355,8 @@ pipeline {
                             dir("${deploymentDirName}") {
                                 // Extract terraform output for the EKS cluster
                                 def dbWriterEndpointsJson = sh(script: "terraform output -json | jq -r '.database_writer_endpoints.value'", returnStdout: true).trim()
-                                def dbWriterEndpoints = new groovy.json.JsonSlurper().parseText(dbWriterEndpointsJson)
+                                // def dbWriterEndpoints = new groovy.json.JsonSlurper().parseText(dbWriterEndpointsJson)
+                                def dbWriterEndpoints = new groovy.json.JsonSlurperClassic().parseText(dbWriterEndpointsJson)
                                 if (!dbWriterEndpoints) {
                                     error "DB Writer Endpoints are null or empty for ${deploymentDirName}. Please check the Terraform output."
                                 }
