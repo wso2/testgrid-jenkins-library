@@ -357,6 +357,7 @@ pipeline {
                                                 // Improvement: Handle each DB engine in seperate stages
                                                 println "Error executing DB scripts: ${e.message}"
                                                 continue
+                                            }
                                         }
 
                                         dir("${helmDirectory}") {
