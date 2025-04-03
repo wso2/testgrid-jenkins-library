@@ -149,7 +149,7 @@ def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String d
 }
 
 pipeline {
-    agent {label 'pipeline-kubernetes-agent'}
+    agent {label 'pipeline-agent'}
 
     stages {
         stage('Clone repos') {
