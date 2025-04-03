@@ -118,9 +118,8 @@ def createDeploymentPatterns(String product, String productVersion,
     }
 }
 
-def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String dbPassword) {
+def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String dbPassword, String scriptPath) {
     println "Executing DB scripts for ${dbEngine} at ${dbEndpoint}..."
-    String currentPath = sh(script: "pwd", returnStdout: true).trim()
 
     if (dbEngine == "aurora-mysql") {
         // Execute MySQL scripts
@@ -128,8 +127,8 @@ def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String d
         sh """
             mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -e "CREATE DATABASE IF NOT EXISTS shared_db CHARACTER SET latin1;"
             mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -e "CREATE DATABASE IF NOT EXISTS apim_db CHARACTER SET latin1;"
-            mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -Dshared_db < ${currentPath}/dbscripts/mysql.sql
-            mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -Dapim_db < ${currentPath}/dbscripts/apimgt/mysql.sql
+            mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -Dshared_db < ${scriptPath}/dbscripts/mysql.sql
+            mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -Dapim_db < ${scriptPath}/dbscripts/apimgt/mysql.sql
         """
     } else if (dbEngine == "aurora-postgresql") {
         // Execute PostgreSQL scripts
@@ -137,8 +136,8 @@ def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String d
         sh """
             PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d postgres -c "CREATE DATABASE shared_db ENCODING 'LATIN1';"
             PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d postgres -c "CREATE DATABASE apim_db ENCODING 'LATIN1';"
-            PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d shared_db -f ${currentPath}/dbscripts/postgresql.sql
-            PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d apim_db -f ${currentPath}/dbscripts/apimgt/postgresql.sql
+            PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d shared_db -f ${scriptPath}/dbscripts/postgresql.sql
+            PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d apim_db -f ${scriptPath}/dbscripts/apimgt/postgresql.sql
         """
     } else {
         error "Unsupported DB engine: ${dbEngine}"
@@ -403,6 +402,7 @@ pipeline {
                         accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                         secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                     ]]) {
+                        String currentPath = sh(script: "pwd", returnStdout: true).trim()
                         for (def pattern : deploymentPatterns) {
                                 def deploymentDirName = pattern.directory
                                 dir("${deploymentDirName}") {
@@ -420,16 +420,14 @@ pipeline {
                                         println "Namespace created: ${namespace}"
 
                                         // Execute DB scripts
-                                        dir("${apimIntgDirectory}") {
-                                            try {
-                                                println "Listing files in the current directory..."
-                                                sh "ls -al"
-                                                executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword)
-                                            } catch (Exception e) {
-                                                // Improvement: Handle each DB engine in seperate stages
-                                                println "Error executing DB scripts: ${e.message}"
-                                                continue
-                                            }
+                                        try {
+                                            println "Listing files in the current directory..."
+                                            sh "ls -al"
+                                            executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword, "${currentPath}/${apimIntgDirectory}")
+                                        } catch (Exception e) {
+                                            // Improvement: Handle each DB engine in seperate stages
+                                            println "Error executing DB scripts: ${e.message}"
+                                            continue
                                         }
 
                                         dir("${helmDirectory}") {
