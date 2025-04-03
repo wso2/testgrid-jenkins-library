@@ -208,6 +208,14 @@ if (!fileExists('/usr/bin/docker')) {
     }
 }
 
+def installDBClients() {
+    println "Installing database client tools..."
+    sh """
+        sudo apt-get update
+        sudo apt-get install -y mysql-client postgresql-client
+    """
+}
+
 pipeline {
     agent {label 'pipeline-agent'}
 
@@ -265,6 +273,8 @@ pipeline {
                     installKubectl()
                     // Install Helm if not already installed
                     installHelm()
+                    // Install database client tools
+                    installDBClients()
                 }
             }
         }
