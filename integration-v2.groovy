@@ -38,6 +38,7 @@ Boolean apimPreRelease = params.apimPreRelease
 String testGroups = params.testGroups
 String tfS3Bucket = params.tfS3Bucket
 String tfS3region = params.tfS3region
+String awsCred = params.awsCred
 String dbPassword = params.dbPassword
 String project = params.project?: "wso2"
 String dockerRegistry = params.dockerRegistry?: "docker.io"
@@ -419,53 +420,48 @@ pipeline {
                     ]]) {
                         String pwd = sh(script: "pwd", returnStdout: true).trim()
                         for (def pattern : deploymentPatterns) {
-                                def deploymentDirName = pattern.directory
-                                dir("${deploymentDirName}") {
-                                    pattern.dbEngines.eachWithIndex { dbEngine, index ->
-                                        String dbEngineName = dbEngine.engine
-                                        String endpoint = pattern.dbEndpoints["${dbEngineName}-${dbEngineList[dbEngineName].version}"]
-                                        def namespace = "${pattern.id}-${dbEngineName}"
-                                        sh """
-                                            # Change context
-                                            kubectl config use-context ${pattern.directory}
+                            def deploymentDirName = pattern.directory
+                            dir("${deploymentDirName}") {
+                                pattern.dbEngines.eachWithIndex { dbEngine, index ->
+                                    String dbEngineName = dbEngine.engine
+                                    String endpoint = pattern.dbEndpoints["${dbEngineName}-${dbEngineList[dbEngineName].version}"]
+                                    def namespace = "${pattern.id}-${dbEngineName}"
+                                    sh """
+                                        # Change context
+                                        kubectl config use-context ${pattern.directory}
 
-                                            # Create a namespace for the deployment
-                                            kubectl create namespace ${namespace} || echo "Namespace ${namespace} already exists."
-                                        """
-                                        println "Namespace created: ${namespace}"
+                                        # Create a namespace for the deployment
+                                        kubectl create namespace ${namespace} || echo "Namespace ${namespace} already exists."
+                                    """
+                                    println "Namespace created: ${namespace}"
 
-                                        // Execute DB scripts
-                                        try {
-                                            println "Listing files in the current directory..."
-                                            sh "ls -al"
-                                            executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword, "${pwd}/${apimIntgDirectory}")
-                                        } catch (Exception e) {
-                                            // Improvement: Handle each DB engine in seperate stages
-                                            println "Error executing DB scripts: ${e.message}"
-                                            continue
-                                        }
-
-                                        dir("${helmDirectory}") {
-                                            // Install the product using Helm
-                                            String currentPath = sh(script: "pwd", returnStdout: true).trim()
-                                            sh """
-                                                # Deploy wso2am-acp
-                                                echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
-                                                helm install apim-acp ${currentPath}/distributed/control-plane \
-                                                    --namespace ${namespace} \
-                                                    --set wso2.deployment.image.registry=${dockerRegistry} \
-                                                    --set wso2.deployment.image.repository=kavindasr/wso2am-gw:rc2 \
-                                                    --set wso2.apim.configurations.databases.type=${dbEngineList[dbEngineName].dbType} \
-                                                    --set wso2.apim.configurations.databases.jdbc.driver=${dbEngineList[dbEngineName].dbDriver} \
-                                                    --set wso2.apim.configurations.databases.apim_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/apim_db \
-                                                    --set wso2.apim.configurations.databases.apim_db.username=${dbUser} \
-                                                    --set wso2.apim.configurations.databases.apim_db.password=${dbPassword} \
-                                                    --set wso2.apim.configurations.databases.shared_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db \
-                                                    --set wso2.apim.configurations.databases.shared_db.username=${dbUser} \
-                                                    --set wso2.apim.configurations.databases.shared_db.password=${dbPassword}
-                                            """
-                                            
+                                    // Execute DB scripts
+                                    try {
+                                        executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword, "${pwd}/${apimIntgDirectory}")
+                                    } catch (Exception e) {
+                                        // Improvement: Handle each DB engine in seperate stages
+                                        println "Error executing DB scripts: ${e.message}"
+                                        continue
                                     }
+
+                                    String helmChartPath = "${pwd}/${helmDirectory}"
+                                    // Install the product using Helm
+                                    sh """
+                                        # Deploy wso2am-acp
+                                        echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
+                                        helm install apim-acp ${helmChartPath}/distributed/control-plane \
+                                            --namespace ${namespace} \
+                                            --set wso2.deployment.image.registry=${dockerRegistry} \
+                                            --set wso2.deployment.image.repository=kavindasr/wso2am-gw:rc2 \
+                                            --set wso2.apim.configurations.databases.type=${dbEngineList[dbEngineName].dbType} \
+                                            --set wso2.apim.configurations.databases.jdbc.driver=${dbEngineList[dbEngineName].dbDriver} \
+                                            --set wso2.apim.configurations.databases.apim_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/apim_db \
+                                            --set wso2.apim.configurations.databases.apim_db.username=${dbUser} \
+                                            --set wso2.apim.configurations.databases.apim_db.password=${dbPassword} \
+                                            --set wso2.apim.configurations.databases.shared_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db \
+                                            --set wso2.apim.configurations.databases.shared_db.username=${dbUser} \
+                                            --set wso2.apim.configurations.databases.shared_db.password=${dbPassword}
+                                    """
                                 }
                             }
                         }                     
