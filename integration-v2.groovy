@@ -360,8 +360,8 @@ pipeline {
                                     error "DB Writer Endpoints are null or empty for ${deploymentDirName}. Please check the Terraform output."
                                 }
                                 println "DB Writer Endpoints: ${dbWriterEndpoints}"
-                                pattern.dbEndpoints = [:]
-                                dbWriterEndpoints.each { k, v -> pattern.dbEndpoints[k] = v }
+                                // Convert LazyMap to HashMap
+                                pattern.dbEndpoints = new HashMap<>(dbWriterEndpoints.collectEntries { k, v -> [(k): v] })
 
                                 println "Configuring EKS for ${deploymentDirName}..."
                                 // EKS cluster name follows this pattern defined in the AWS Terraform modules:
