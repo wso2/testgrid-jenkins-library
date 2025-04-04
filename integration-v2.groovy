@@ -81,7 +81,6 @@ def dbEngineList = [
         dbType: "postgresql",
         port: 5432
         ],
-    ],
 ]
 
 // Create deployment patterns for all combinations of OS, JDK, and database
