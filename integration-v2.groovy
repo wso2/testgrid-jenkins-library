@@ -291,7 +291,37 @@ pipeline {
             }
         }
 
+        stage('Terraform Init') {
+            steps {
+                script {
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: params.awsCred,
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) { 
+                        for (def pattern : deploymentPatterns) {
+                            def deploymentDirName = pattern.directory
+                            dir("${deploymentDirName}") {
+                                println "Running Terraform init for ${deploymentDirName}..."
+                                sh """
+                                    terraform init -backend-config="bucket=${tfS3Bucket}" \
+                                        -backend-config="region=${tfS3region}" \
+                                        -backend-config="key=${deploymentDirName}.tfstate"
+                                """
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Terraform Plan') {
+            when {
+                allOf {
+                    expression { !onlyDestroyResources }
+                }
+            }
             steps {
                 script {
                     withCredentials([[
@@ -305,10 +335,6 @@ pipeline {
                             dir("${deploymentDirName}") {
                                 println "Running Terraform plan for ${deploymentDirName}..."
                                 sh """
-                                    terraform init -backend-config="bucket=${tfS3Bucket}" \
-                                        -backend-config="region=${tfS3region}" \
-                                        -backend-config="key=${deploymentDirName}.tfstate"
-                                    
                                     terraform plan \
                                         -var="project=${project}" \
                                         -var="client_name=${pattern.id}" \
