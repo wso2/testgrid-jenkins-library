@@ -473,6 +473,9 @@ pipeline {
                                     String helmChartPath = "${pwd}/${helmDirectory}"
                                     // Install the product using Helm
                                     sh """
+                                        # Delete existing release if it exists
+                                       helm list -n ${namespace} -q | xargs -n1 -I{} helm uninstall {} -n ${namespace} || echo "Failed to delete existing release."
+
                                         # Deploy wso2am-acp
                                         echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
                                         helm install apim-acp ${helmChartPath}/distributed/control-plane \
