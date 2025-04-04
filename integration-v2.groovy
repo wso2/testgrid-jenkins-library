@@ -514,6 +514,10 @@ pipeline {
                             dir("${deploymentDirName}") {
                                 println "Destroying resources for ${deploymentDirName}..."
                                 sh """
+                                    kubectl delete -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.4/deploy/static/provider/aws/deploy.yaml || echo "Failed to delete ingress controller."
+
+                                    kubectl wait --namespace ingress-nginx --for=delete pod --selector=app.kubernetes.io/component=controller --timeout=480s || echo "Ingress controller pods were not deleted within the expected time limit."
+                                    
                                     terraform destroy -auto-approve \
                                         -var="project=${project}" \
                                         -var="client_name=${pattern.id}" \
