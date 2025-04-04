@@ -24,9 +24,9 @@ import groovy.json.JsonOutput
 String product = params.product
 String productVersion = params.productVersion
 String productDeploymentRegion = params.productDeploymentRegion
-String[] osList = params.osList?.collect { it.trim() } ?: []
-String[] jdkList = params.jdkList?.collect { it.trim() } ?: []
-String[] databaseList = params.databaseList?.collect { it.trim() } ?: []
+String[] osList = params.osList?.split(',')?.collect { it.trim() } ?: []
+String[] jdkList = params.jdkList?.split(',')?.collect { it.trim() } ?: []
+String[] databaseList = params.databaseList?.split(',')?.collect { it.trim() } ?: []
 String albCertArn = params.albCertArn
 String productRepository = params.productRepository
 String productTestBranch = params.productTestBranch
