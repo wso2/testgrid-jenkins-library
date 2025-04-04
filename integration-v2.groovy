@@ -71,13 +71,16 @@ def dbEngineList = [
         version: "8.0.mysql_aurora.3.04.0",
         dbDriver: "com.mysql.cj.jdbc.Driver",
         driverUrl: "https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.29/mysql-connector-java-8.0.29.jar",
-        dbType: "mysql"
+        dbType: "mysql",
+        port: 3306
         ],
     "aurora-postgresql": [
         version: "16.6",
         dbDriver: "org.postgresql.Driver",
         driverUrl: "https://repo1.maven.org/maven2/org/postgresql/postgresql/42.3.6/postgresql-42.3.6.jar",
-        dbType: "postgresql"
+        dbType: "postgresql",
+        port: 5432
+        ],
     ],
 ]
 
