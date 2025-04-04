@@ -352,10 +352,7 @@ pipeline {
 
         stage('Terraform Apply') {
             when {
-                allOf {
-                    expression { !onlyDestroyResources }
-                    expression { !skipTfApply }
-                }
+                expression { !onlyDestroyResources && !skipTfApply }
             }
             steps {
                 script {
@@ -376,16 +373,6 @@ pipeline {
                                         -var="region=${productDeploymentRegion}" \
                                         -var="db_password=$dbPassword"
                                 """
-                                
-                                def dbWriterEndpointsJson = sh(script: "terraform output -json | jq -r '.database_writer_endpoints.value'", returnStdout: true).trim()
-                                def dbWriterEndpoints = new groovy.json.JsonSlurperClassic().parseText(dbWriterEndpointsJson)
-                                if (!dbWriterEndpoints) {
-                                    error "DB Writer Endpoints are null or empty for ${deploymentDirName}. Please check the Terraform output."
-                                }
-                                println "DB Writer Endpoints: ${dbWriterEndpoints}"
-                                // Convert LazyMap to HashMap
-                                pattern.dbEndpoints = new HashMap<>(dbWriterEndpoints)
-
                             }
                         }
                     }
@@ -450,6 +437,15 @@ pipeline {
                         for (def pattern : deploymentPatterns) {
                             def deploymentDirName = pattern.directory
                             dir("${deploymentDirName}") {
+                                def dbWriterEndpointsJson = sh(script: "terraform output -json | jq -r '.database_writer_endpoints.value'", returnStdout: true).trim()
+                                def dbWriterEndpoints = new groovy.json.JsonSlurperClassic().parseText(dbWriterEndpointsJson)
+                                if (!dbWriterEndpoints) {
+                                    error "DB Writer Endpoints are null or empty for ${deploymentDirName}. Please check the Terraform output."
+                                }
+                                println "DB Writer Endpoints: ${dbWriterEndpoints}"
+                                // Convert LazyMap to HashMap
+                                pattern.dbEndpoints = dbWriterEndpoints
+
                                 pattern.dbEngines.eachWithIndex { dbEngine, index ->
                                     String dbEngineName = dbEngine.engine
                                     String endpoint = pattern.dbEndpoints["${dbEngineName}-${dbEngineList[dbEngineName].version}"]
