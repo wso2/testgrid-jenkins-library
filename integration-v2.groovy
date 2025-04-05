@@ -18,8 +18,6 @@
 *
 */
 
-import groovy.json.JsonOutput
-
 // Input parameters
 String product = params.product
 String productVersion = params.productVersion
