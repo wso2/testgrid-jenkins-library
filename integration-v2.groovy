@@ -537,7 +537,8 @@ pipeline {
 
     post {
             always {
-                cleanWs deleteDirs: true, notFailBuild: true
+            sh "rm -f **/.terraform.tfstate.lock.info || true"
+            cleanWs deleteDirs: true
             }
         }
 }
