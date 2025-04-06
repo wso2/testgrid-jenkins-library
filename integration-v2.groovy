@@ -505,16 +505,16 @@ pipeline {
                                             echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
                                             helm install apim-acp ${helmChartPath}/distributed/control-plane \
                                                 --namespace ${namespace} \
-                                                --set wso2.deployment.image.registry=${dockerRegistry} \
-                                                --set wso2.deployment.image.repository=kavindasr/wso2am-acp:rc2 \
-                                                --set wso2.apim.configurations.databases.type=${dbEngineList[dbEngineName].dbType} \
-                                                --set wso2.apim.configurations.databases.jdbc.driver=${dbEngineList[dbEngineName].dbDriver} \
-                                                --set wso2.apim.configurations.databases.apim_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/apim_db \
-                                                --set wso2.apim.configurations.databases.apim_db.username=${dbUser} \
-                                                --set wso2.apim.configurations.databases.apim_db.password=${dbPassword} \
-                                                --set wso2.apim.configurations.databases.shared_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db \
-                                                --set wso2.apim.configurations.databases.shared_db.username=${dbUser} \
-                                                --set wso2.apim.configurations.databases.shared_db.password=${dbPassword}
+                                                --set wso2.deployment.image.registry="${dockerRegistry}" \
+                                                --set wso2.deployment.image.repository="kavindasr/wso2am-acp:rc2" \
+                                                --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineName].dbType}" \
+                                                --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineName].dbDriver}" \
+                                                --set wso2.apim.configurations.databases.apim_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/apim_db?useSSL=false" \
+                                                --set wso2.apim.configurations.databases.apim_db.username="${dbUser}" \
+                                                --set wso2.apim.configurations.databases.apim_db.password="${dbPassword}" \
+                                                --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db?useSSL=false" \
+                                                --set wso2.apim.configurations.databases.shared_db.username="${dbUser}" \
+                                                --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
                                             
                                             # Wait for the deployment to be ready
                                             kubectl wait --for=condition=ready --timeout=300s pod -l deployment=apim-acp-wso2am-acp \
@@ -524,16 +524,16 @@ pipeline {
                                             echo "Deploying WSO2 API Manager - Traffic Manager in ${namespace} namespace..."
                                             helm install apim-tm ${helmChartPath}/distributed/traffic-manager \
                                                 --namespace ${namespace} \
-                                                --set wso2.deployment.image.registry=${dockerRegistry} \
-                                                --set wso2.deployment.image.repository=kavindasr/wso2am-tm:rc2 \
-                                                --set wso2.apim.configurations.databases.type=${dbEngineList[dbEngineName].dbType} \
-                                                --set wso2.apim.configurations.databases.jdbc.driver=${dbEngineList[dbEngineName].dbDriver} \
-                                                --set wso2.apim.configurations.databases.apim_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/apim_db \
-                                                --set wso2.apim.configurations.databases.apim_db.username=${dbUser} \
-                                                --set wso2.apim.configurations.databases.apim_db.password=${dbPassword} \
-                                                --set wso2.apim.configurations.databases.shared_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db \
-                                                --set wso2.apim.configurations.databases.shared_db.username=${dbUser} \
-                                                --set wso2.apim.configurations.databases.shared_db.password=${dbPassword}
+                                                --set wso2.deployment.image.registry="${dockerRegistry}" \
+                                                --set wso2.deployment.image.repository="kavindasr/wso2am-tm:rc2" \
+                                                --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineName].dbType}" \
+                                                --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineName].dbDriver}" \
+                                                --set wso2.apim.configurations.databases.apim_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/apim_db?useSSL=false" \
+                                                --set wso2.apim.configurations.databases.apim_db.username="${dbUser}" \
+                                                --set wso2.apim.configurations.databases.apim_db.password="${dbPassword}" \
+                                                --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db?useSSL=false" \
+                                                --set wso2.apim.configurations.databases.shared_db.username="${dbUser}" \
+                                                --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
 
                                             # Wait for the deployment to be ready
                                             kubectl wait --for=condition=ready --timeout=300s pod -l deployment=apim-tm-wso2am-tm \
@@ -543,13 +543,13 @@ pipeline {
                                             echo "Deploying WSO2 API Manager - Gateway in ${namespace} namespace..."
                                             helm install apim-universal-gw ${helmChartPath}/distributed/gateway \
                                                 --namespace ${namespace} \
-                                                --set wso2.deployment.image.registry=${dockerRegistry} \
-                                                --set wso2.deployment.image.repository=kavindasr/wso2am-universal-gw:rc2 \
-                                                --set wso2.apim.configurations.databases.type=${dbEngineList[dbEngineName].dbType} \
-                                                --set wso2.apim.configurations.databases.jdbc.driver=${dbEngineList[dbEngineName].dbDriver} \
-                                                --set wso2.apim.configurations.databases.shared_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db \
-                                                --set wso2.apim.configurations.databases.shared_db.username=${dbUser} \
-                                                --set wso2.apim.configurations.databases.shared_db.password=${dbPassword}
+                                                --set wso2.deployment.image.registry="${dockerRegistry}" \
+                                                --set wso2.deployment.image.repository="kavindasr/wso2am-universal-gw:rc2" \
+                                                --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineName].dbType}" \
+                                                --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineName].dbDriver}" \
+                                                --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db?useSSL=false" \
+                                                --set wso2.apim.configurations.databases.shared_db.username="${dbUser}" \
+                                                --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
                                             
                                             # Wait for the deployment to be ready
                                             #kubectl wait --for=condition=ready --timeout=300s pod -l deployment=apim-universal-gw-wso2am-gw \
