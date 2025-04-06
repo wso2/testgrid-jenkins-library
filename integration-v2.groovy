@@ -515,6 +515,45 @@ pipeline {
                                                 --set wso2.apim.configurations.databases.shared_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db \
                                                 --set wso2.apim.configurations.databases.shared_db.username=${dbUser} \
                                                 --set wso2.apim.configurations.databases.shared_db.password=${dbPassword}
+                                            
+                                            # Wait for the deployment to be ready
+                                            kubectl wait --for=condition=ready --timeout=600s pod -l deployment=apim-acp-wso2am-acp \
+                                            -n ${namespace} || echo "Pods with label deployment=apim-acp-wso2am-acp are not ready within the expected time limit."
+
+                                            # Deploy wso2am-tm
+                                            echo "Deploying WSO2 API Manager - Traffic Manager in ${namespace} namespace..."
+                                            helm install apim-tm ${helmChartPath}/distributed/traffic-manager \
+                                                --namespace ${namespace} \
+                                                --set wso2.deployment.image.registry=${dockerRegistry} \
+                                                --set wso2.deployment.image.repository=kavindasr/wso2am-gw:rc2 \
+                                                --set wso2.apim.configurations.databases.type=${dbEngineList[dbEngineName].dbType} \
+                                                --set wso2.apim.configurations.databases.jdbc.driver=${dbEngineList[dbEngineName].dbDriver} \
+                                                --set wso2.apim.configurations.databases.apim_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/apim_db \
+                                                --set wso2.apim.configurations.databases.apim_db.username=${dbUser} \
+                                                --set wso2.apim.configurations.databases.apim_db.password=${dbPassword} \
+                                                --set wso2.apim.configurations.databases.shared_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db \
+                                                --set wso2.apim.configurations.databases.shared_db.username=${dbUser} \
+                                                --set wso2.apim.configurations.databases.shared_db.password=${dbPassword}
+
+                                            # Wait for the deployment to be ready
+                                            kubectl wait --for=condition=ready --timeout=600s pod -l deployment=apim-tm-wso2am-tm \
+                                            -n ${namespace} || echo "Pods with label deployment=apim-tm-wso2am-tm are not ready within the expected time limit."
+
+                                            # Deploy wso2am-gw
+                                            echo "Deploying WSO2 API Manager - Gateway in ${namespace} namespace..."
+                                            helm install apim-universal-gw ${helmChartPath}/distributed/gateway \
+                                                --namespace ${namespace} \
+                                                --set wso2.deployment.image.registry=${dockerRegistry} \
+                                                --set wso2.deployment.image.repository=kavindasr/wso2am-universal-gw:rc2 \
+                                                --set wso2.apim.configurations.databases.type=${dbEngineList[dbEngineName].dbType} \
+                                                --set wso2.apim.configurations.databases.jdbc.driver=${dbEngineList[dbEngineName].dbDriver} \
+                                                --set wso2.apim.configurations.databases.shared_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db \
+                                                --set wso2.apim.configurations.databases.shared_db.username=${dbUser} \
+                                                --set wso2.apim.configurations.databases.shared_db.password=${dbPassword}
+                                            
+                                            # Wait for the deployment to be ready
+                                            #kubectl wait --for=condition=ready --timeout=600s pod -l deployment=apim-universal-gw-wso2am-gw \
+                                            #-n ${namespace} || echo "Pods with label deployment=apim-universal-gw-wso2am-gw are not ready within the expected time limit."
                                         """
                                     }
                                 }
