@@ -255,313 +255,320 @@ def stringifyJson(Map jsonMap) {
 pipeline {
     agent {label 'pipeline-agent'}
 
-    stages {
-        stage('Clone repos') {
-            steps {
-                script {
-                    dir(tfDirectory) {
-                        git branch: "${tfRepoBranch}",
-                        credentialsId: githubCredentialId,
-                        url: "${tfRepoUrl}"
-                    }
+    try {
+        stages {
+            stage('Clone repos') {
+                steps {
+                    script {
+                        dir(tfDirectory) {
+                            git branch: "${tfRepoBranch}",
+                            credentialsId: githubCredentialId,
+                            url: "${tfRepoUrl}"
+                        }
 
-                    dir(helmDirectory) {
-                        git branch: "${helmRepoBranch}",
-                        credentialsId: githubCredentialId,
-                        url: "${helmRepoUrl}"
-                    }
-                    dir(apimIntgDirectory) {
-                        git branch: "${apimIntgRepoBranch}",
-                        credentialsId: githubCredentialId,
-                        url: "${apimIntgRepoUrl}"
-                    }
-                }
-            }
-        }
-
-        stage('Preparation') {
-            steps {
-                script {
-                    println "JDK List: ${jdkList}"
-                    println "OS List: ${osList}"
-                    println "Database List: ${databaseList}"
-                    createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList, dbEngineList, deploymentPatterns)
-
-                    println "Deployment patterns created: ${deploymentPatterns}"
-
-                    // Create directories for each deployment pattern
-                    for (def pattern : deploymentPatterns) {
-                        def deploymentDirName = pattern.directory
-                        println "Creating directory: ${deploymentDirName}"
-                        sh "mkdir -p ${deploymentDirName}"
-                        
-                        // Copy the Terraform files to the respective directories
-                        dir("${deploymentDirName}") {
-                            sh "cp -r ../${tfDirectory}/* ."
+                        dir(helmDirectory) {
+                            git branch: "${helmRepoBranch}",
+                            credentialsId: githubCredentialId,
+                            url: "${helmRepoUrl}"
+                        }
+                        dir(apimIntgDirectory) {
+                            git branch: "${apimIntgRepoBranch}",
+                            credentialsId: githubCredentialId,
+                            url: "${apimIntgRepoUrl}"
                         }
                     }
-
-                    // Install Terraform if not already installed
-                    installTerraform()
-                    // Install Docker if not already installed
-                    installDocker()
-                    // Install kubectl if not already installed
-                    installKubectl()
-                    // Install Helm if not already installed
-                    installHelm()
-                    // Install database client tools
-                    installDBClients()
                 }
             }
-        }
 
-        stage('Terraform Init') {
-            steps {
-                script {
-                    withCredentials([[
-                        $class: 'AmazonWebServicesCredentialsBinding',
-                        credentialsId: params.awsCred,
-                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                    ]]) { 
+            stage('Preparation') {
+                steps {
+                    script {
+                        println "JDK List: ${jdkList}"
+                        println "OS List: ${osList}"
+                        println "Database List: ${databaseList}"
+                        createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList, dbEngineList, deploymentPatterns)
+
+                        println "Deployment patterns created: ${deploymentPatterns}"
+
+                        // Create directories for each deployment pattern
                         for (def pattern : deploymentPatterns) {
                             def deploymentDirName = pattern.directory
+                            println "Creating directory: ${deploymentDirName}"
+                            sh "mkdir -p ${deploymentDirName}"
+                            
+                            // Copy the Terraform files to the respective directories
                             dir("${deploymentDirName}") {
-                                println "Running Terraform init for ${deploymentDirName}..."
-                                sh """
-                                    terraform init -backend-config="bucket=${tfS3Bucket}" \
-                                        -backend-config="region=${tfS3region}" \
-                                        -backend-config="key=${deploymentDirName}.tfstate"
-                                """
+                                sh "cp -r ../${tfDirectory}/* ."
+                            }
+                        }
+
+                        // Install Terraform if not already installed
+                        installTerraform()
+                        // Install Docker if not already installed
+                        installDocker()
+                        // Install kubectl if not already installed
+                        installKubectl()
+                        // Install Helm if not already installed
+                        installHelm()
+                        // Install database client tools
+                        installDBClients()
+                    }
+                }
+            }
+
+            stage('Terraform Init') {
+                steps {
+                    script {
+                        withCredentials([[
+                            $class: 'AmazonWebServicesCredentialsBinding',
+                            credentialsId: params.awsCred,
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ]]) { 
+                            for (def pattern : deploymentPatterns) {
+                                def deploymentDirName = pattern.directory
+                                dir("${deploymentDirName}") {
+                                    println "Running Terraform init for ${deploymentDirName}..."
+                                    sh """
+                                        terraform init -backend-config="bucket=${tfS3Bucket}" \
+                                            -backend-config="region=${tfS3region}" \
+                                            -backend-config="key=${deploymentDirName}.tfstate"
+                                    """
+                                }
                             }
                         }
                     }
                 }
             }
-        }
 
-        stage('Terraform Plan') {
-            when {
-                allOf {
+            stage('Terraform Plan') {
+                when {
+                    allOf {
+                        expression { !onlyDestroyResources }
+                    }
+                }
+                steps {
+                    script {
+                        withCredentials([[
+                            $class: 'AmazonWebServicesCredentialsBinding',
+                            credentialsId: params.awsCred,
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ]]) { 
+                            for (def pattern : deploymentPatterns) {
+                                def deploymentDirName = pattern.directory
+                                dir("${deploymentDirName}") {
+                                    println "Running Terraform plan for ${deploymentDirName}..."
+                                    sh """
+                                        terraform plan \
+                                            -var="project=${project}" \
+                                            -var="client_name=${pattern.id}" \
+                                            -var="region=${productDeploymentRegion}" \
+                                            -var="db_password=$dbPassword"
+                                    """
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            stage('Terraform Apply') {
+                when {
+                    expression { !onlyDestroyResources && !skipTfApply }
+                }
+                steps {
+                    script {
+                        withCredentials([[
+                            $class: 'AmazonWebServicesCredentialsBinding',
+                            credentialsId: params.awsCred,
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ]]) { 
+                            for (def pattern : deploymentPatterns) {
+                                def deploymentDirName = pattern.directory
+                                dir("${deploymentDirName}") {
+                                    println "Running Terraform apply for ${deploymentDirName}..."
+                                    sh """
+                                        terraform apply -auto-approve \
+                                            -var="project=${project}" \
+                                            -var="client_name=${pattern.id}" \
+                                            -var="region=${productDeploymentRegion}" \
+                                            -var="db_password=$dbPassword"
+                                    """
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            stage('Configure EKS cluster') {
+                when {
                     expression { !onlyDestroyResources }
                 }
-            }
-            steps {
-                script {
-                    withCredentials([[
-                        $class: 'AmazonWebServicesCredentialsBinding',
-                        credentialsId: params.awsCred,
-                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                    ]]) { 
-                        for (def pattern : deploymentPatterns) {
-                            def deploymentDirName = pattern.directory
-                            dir("${deploymentDirName}") {
-                                println "Running Terraform plan for ${deploymentDirName}..."
-                                sh """
-                                    terraform plan \
-                                        -var="project=${project}" \
-                                        -var="client_name=${pattern.id}" \
-                                        -var="region=${productDeploymentRegion}" \
-                                        -var="db_password=$dbPassword"
-                                """
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('Terraform Apply') {
-            when {
-                expression { !onlyDestroyResources && !skipTfApply }
-            }
-            steps {
-                script {
-                    withCredentials([[
-                        $class: 'AmazonWebServicesCredentialsBinding',
-                        credentialsId: params.awsCred,
-                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                    ]]) { 
-                        for (def pattern : deploymentPatterns) {
-                            def deploymentDirName = pattern.directory
-                            dir("${deploymentDirName}") {
-                                println "Running Terraform apply for ${deploymentDirName}..."
-                                sh """
-                                    terraform apply -auto-approve \
-                                        -var="project=${project}" \
-                                        -var="client_name=${pattern.id}" \
-                                        -var="region=${productDeploymentRegion}" \
-                                        -var="db_password=$dbPassword"
-                                """
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        stage('Configure EKS cluster') {
-            when {
-                expression { !onlyDestroyResources }
-            }
-            steps {
-                script {
-                    withCredentials([[
-                        $class: 'AmazonWebServicesCredentialsBinding',
-                        credentialsId: params.awsCred,
-                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                    ]]) { 
-                        for (def pattern : deploymentPatterns) {
-                            def deploymentDirName = pattern.directory
-                            dir("${deploymentDirName}") {
-                                println "Configuring EKS for ${deploymentDirName}..."
-                                // EKS cluster name follows this pattern defined in the AWS Terraform modules:
-                                // https://github.com/wso2/aws-terraform-modules/blob/c9820b842ff2227c10bd22f4ff076461d972d520/modules/aws/EKS-Cluster/eks.tf#L21
-                                sh """
-                                    aws eks --region ${productDeploymentRegion} \
-                                    update-kubeconfig --name ${project}-${pattern.id}-${tfEnvironment}-${productDeploymentRegion}-eks \
-                                    --alias ${pattern.directory}
-
-                                    # Install nginx ingress controller
-                                    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.4/deploy/static/provider/aws/deploy.yaml || { echo "failed to install nginx ingress controller." ; exit 1 ; }
-
-                                    # Delete Nginx admission if it exists.
-                                    kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission || echo "WARNING : Failed to delete nginx admission."
-
-                                    # Wait for nginx to come alive.
-                                    kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=480s ||  { echo 'Nginx service is not ready within the expected time limit.';  exit 1; }
-                                """
-
-                                hostName = sh(script: "kubectl -n ingress-nginx get svc ingress-nginx-controller -o json | jq -r '.status.loadBalancer.ingress[0].hostname'", returnStdout: true).trim()
-                                println "Ingress Host Name: ${hostName}"
-                                pattern.hostName = hostName
-                            }
-                        }
-                    }
-                }
-            }                        
-        }
-        stage('Deploy the cluster') {
-            when {
-                expression { !onlyDestroyResources }
-            }
-            steps {
-                script {
-                    withCredentials([[
-                        $class: 'AmazonWebServicesCredentialsBinding',
-                        credentialsId: params.awsCred,
-                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                    ]]) {
-                        String pwd = sh(script: "pwd", returnStdout: true).trim()
-                        for (def pattern : deploymentPatterns) {
-                            def deploymentDirName = pattern.directory
-                            dir("${deploymentDirName}") {
-                                def dbWriterEndpointsJson = sh(script: "terraform output -json | jq -r '.database_writer_endpoints.value'", returnStdout: true).trim()
-                                def dbWriterEndpoints = parseJson(dbWriterEndpointsJson)
-                                if (!dbWriterEndpoints) {
-                                    error "DB Writer Endpoints are null or empty for ${deploymentDirName}. Please check the Terraform output."
-                                }
-                                println "DB Writer Endpoints: ${dbWriterEndpoints}"
-                                // Convert LazyMap to HashMap
-                                pattern.dbEndpoints = dbWriterEndpoints
-
-                                pattern.dbEngines.eachWithIndex { dbEngine, index ->
-                                    String dbEngineName = dbEngine.engine
-                                    String endpoint = pattern.dbEndpoints["${dbEngineName}-${dbEngineList[dbEngineName].version}"]
-                                    def namespace = "${pattern.id}-${dbEngineName}"
+                steps {
+                    script {
+                        withCredentials([[
+                            $class: 'AmazonWebServicesCredentialsBinding',
+                            credentialsId: params.awsCred,
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ]]) { 
+                            for (def pattern : deploymentPatterns) {
+                                def deploymentDirName = pattern.directory
+                                dir("${deploymentDirName}") {
+                                    println "Configuring EKS for ${deploymentDirName}..."
+                                    // EKS cluster name follows this pattern defined in the AWS Terraform modules:
+                                    // https://github.com/wso2/aws-terraform-modules/blob/c9820b842ff2227c10bd22f4ff076461d972d520/modules/aws/EKS-Cluster/eks.tf#L21
                                     sh """
-                                        # Change context
-                                        kubectl config use-context ${pattern.directory}
+                                        aws eks --region ${productDeploymentRegion} \
+                                        update-kubeconfig --name ${project}-${pattern.id}-${tfEnvironment}-${productDeploymentRegion}-eks \
+                                        --alias ${pattern.directory}
 
-                                        # Create a namespace for the deployment
-                                        kubectl create namespace ${namespace} || echo "Namespace ${namespace} already exists."
+                                        # Install nginx ingress controller
+                                        kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.4/deploy/static/provider/aws/deploy.yaml || { echo "failed to install nginx ingress controller." ; exit 1 ; }
+
+                                        # Delete Nginx admission if it exists.
+                                        kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission || echo "WARNING : Failed to delete nginx admission."
+
+                                        # Wait for nginx to come alive.
+                                        kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=480s ||  { echo 'Nginx service is not ready within the expected time limit.';  exit 1; }
                                     """
-                                    println "Namespace created: ${namespace}"
 
-                                    // Execute DB scripts
-                                    try {
-                                        executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword, "${pwd}/${apimIntgDirectory}")
-                                    } catch (Exception e) {
-                                        // Improvement: Handle each DB engine in seperate stages
-                                        println "Error executing DB scripts: ${e.message}"
-                                        continue
+                                    hostName = sh(script: "kubectl -n ingress-nginx get svc ingress-nginx-controller -o json | jq -r '.status.loadBalancer.ingress[0].hostname'", returnStdout: true).trim()
+                                    println "Ingress Host Name: ${hostName}"
+                                    pattern.hostName = hostName
+                                }
+                            }
+                        }
+                    }
+                }                        
+            }
+            stage('Deploy the cluster') {
+                when {
+                    expression { !onlyDestroyResources }
+                }
+                steps {
+                    script {
+                        withCredentials([[
+                            $class: 'AmazonWebServicesCredentialsBinding',
+                            credentialsId: params.awsCred,
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ]]) {
+                            String pwd = sh(script: "pwd", returnStdout: true).trim()
+                            for (def pattern : deploymentPatterns) {
+                                def deploymentDirName = pattern.directory
+                                dir("${deploymentDirName}") {
+                                    def dbWriterEndpointsJson = sh(script: "terraform output -json | jq -r '.database_writer_endpoints.value'", returnStdout: true).trim()
+                                    def dbWriterEndpoints = parseJson(dbWriterEndpointsJson)
+                                    if (!dbWriterEndpoints) {
+                                        error "DB Writer Endpoints are null or empty for ${deploymentDirName}. Please check the Terraform output."
                                     }
+                                    println "DB Writer Endpoints: ${dbWriterEndpoints}"
+                                    // Convert LazyMap to HashMap
+                                    pattern.dbEndpoints = dbWriterEndpoints
 
-                                    String helmChartPath = "${pwd}/${helmDirectory}"
-                                    // Install the product using Helm
-                                    sh """
-                                        # Delete existing release if it exists
-                                       helm list -n ${namespace} -q | xargs -n1 -I{} helm uninstall {} -n ${namespace} || echo "Failed to delete existing release."
+                                    pattern.dbEngines.eachWithIndex { dbEngine, index ->
+                                        String dbEngineName = dbEngine.engine
+                                        String endpoint = pattern.dbEndpoints["${dbEngineName}-${dbEngineList[dbEngineName].version}"]
+                                        def namespace = "${pattern.id}-${dbEngineName}"
+                                        sh """
+                                            # Change context
+                                            kubectl config use-context ${pattern.directory}
 
-                                        # Deploy wso2am-acp
-                                        echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
-                                        helm install apim-acp ${helmChartPath}/distributed/control-plane \
-                                            --namespace ${namespace} \
-                                            --set wso2.deployment.image.registry=${dockerRegistry} \
-                                            --set wso2.deployment.image.repository=kavindasr/wso2am-gw:rc2 \
-                                            --set wso2.apim.configurations.databases.type=${dbEngineList[dbEngineName].dbType} \
-                                            --set wso2.apim.configurations.databases.jdbc.driver=${dbEngineList[dbEngineName].dbDriver} \
-                                            --set wso2.apim.configurations.databases.apim_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/apim_db \
-                                            --set wso2.apim.configurations.databases.apim_db.username=${dbUser} \
-                                            --set wso2.apim.configurations.databases.apim_db.password=${dbPassword} \
-                                            --set wso2.apim.configurations.databases.shared_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db \
-                                            --set wso2.apim.configurations.databases.shared_db.username=${dbUser} \
-                                            --set wso2.apim.configurations.databases.shared_db.password=${dbPassword}
-                                    """
+                                            # Create a namespace for the deployment
+                                            kubectl create namespace ${namespace} || echo "Namespace ${namespace} already exists."
+                                        """
+                                        println "Namespace created: ${namespace}"
+
+                                        // Execute DB scripts
+                                        try {
+                                            executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword, "${pwd}/${apimIntgDirectory}")
+                                        } catch (Exception e) {
+                                            // Improvement: Handle each DB engine in seperate stages
+                                            println "Error executing DB scripts: ${e.message}"
+                                            continue
+                                        }
+
+                                        String helmChartPath = "${pwd}/${helmDirectory}"
+                                        // Install the product using Helm
+                                        sh """
+                                            # Delete existing release if it exists
+                                        helm list -n ${namespace} -q | xargs -n1 -I{} helm uninstall {} -n ${namespace} || echo "Failed to delete existing release."
+
+                                            # Deploy wso2am-acp
+                                            echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
+                                            helm install apim-acp ${helmChartPath}/distributed/control-plane \
+                                                --namespace ${namespace} \
+                                                --set wso2.deployment.image.registry=${dockerRegistry} \
+                                                --set wso2.deployment.image.repository=kavindasr/wso2am-gw:rc2 \
+                                                --set wso2.apim.configurations.databases.type=${dbEngineList[dbEngineName].dbType} \
+                                                --set wso2.apim.configurations.databases.jdbc.driver=${dbEngineList[dbEngineName].dbDriver} \
+                                                --set wso2.apim.configurations.databases.apim_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/apim_db \
+                                                --set wso2.apim.configurations.databases.apim_db.username=${dbUser} \
+                                                --set wso2.apim.configurations.databases.apim_db.password=${dbPassword} \
+                                                --set wso2.apim.configurations.databases.shared_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db \
+                                                --set wso2.apim.configurations.databases.shared_db.username=${dbUser} \
+                                                --set wso2.apim.configurations.databases.shared_db.password=${dbPassword}
+                                        """
+                                    }
                                 }
-                            }
-                        }                     
+                            }                     
+                        }
                     }
                 }
             }
-        }
-        stage('Destroy Cloud Resources') {
-            when {
-                expression { destroyResources || onlyDestroyResources }
-            }
-            steps {
-                script {
-                     withCredentials([[
-                        $class: 'AmazonWebServicesCredentialsBinding',
-                        credentialsId: params.awsCred,
-                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                    ]]) { 
-                        println "Job is completed... Deleting the workspace directories!"
-                        // Destroy the created resources
-                        for (def pattern : deploymentPatterns) {
-                            def deploymentDirName = pattern.directory
-                            dir("${deploymentDirName}") {
-                                println "Destroying resources for ${deploymentDirName}..."
-                                sh """
-                                    kubectl delete -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.4/deploy/static/provider/aws/deploy.yaml || echo "Failed to delete ingress controller."
+            stage('Destroy Cloud Resources') {
+                when {
+                    expression { destroyResources || onlyDestroyResources }
+                }
+                steps {
+                    script {
+                        withCredentials([[
+                            $class: 'AmazonWebServicesCredentialsBinding',
+                            credentialsId: params.awsCred,
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ]]) { 
+                            println "Job is completed... Deleting the workspace directories!"
+                            // Destroy the created resources
+                            for (def pattern : deploymentPatterns) {
+                                def deploymentDirName = pattern.directory
+                                dir("${deploymentDirName}") {
+                                    println "Destroying resources for ${deploymentDirName}..."
+                                    sh """
+                                        kubectl delete -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.4/deploy/static/provider/aws/deploy.yaml || echo "Failed to delete ingress controller."
 
-                                    kubectl wait --namespace ingress-nginx --for=delete pod --selector=app.kubernetes.io/component=controller --timeout=480s || echo "Ingress controller pods were not deleted within the expected time limit."
+                                        kubectl wait --namespace ingress-nginx --for=delete pod --selector=app.kubernetes.io/component=controller --timeout=480s || echo "Ingress controller pods were not deleted within the expected time limit."
 
-                                    terraform destroy -auto-approve \
-                                        -var="project=${project}" \
-                                        -var="client_name=${pattern.id}" \
-                                        -var="region=${productDeploymentRegion}" \
-                                        -var="db_password=$dbPassword"
-                                """
+                                        terraform destroy -auto-approve \
+                                            -var="project=${project}" \
+                                            -var="client_name=${pattern.id}" \
+                                            -var="region=${productDeploymentRegion}" \
+                                            -var="db_password=$dbPassword"
+                                    """
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
-
-    post {
+    } catch (Exception e) {
+        echo "An error occurred: ${e.message}"
+        currentBuild.result = 'FAILURE'
+        throw e
+    } finally {
         script {
-            try {
-                cleanWs()
-            } catch (Exception e) {
-                echo "Workspace cleanup failed: ${e.message}"
+            // Clean up the workspace
+            for (def pattern : deploymentPatterns) {
+                def deploymentDirName = pattern.directory
+                dir("${deploymentDirName}") {
+                    sh "rm -rf ${deploymentDirName}"
+                }
             }
+            cleanWs()
         }
     }
 }
