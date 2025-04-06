@@ -556,7 +556,7 @@ pipeline {
     }
 
     post {
-        script {
+        always {
             try {
                 cleanWs()
             } catch (Exception e) {
