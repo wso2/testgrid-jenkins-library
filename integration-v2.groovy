@@ -477,7 +477,7 @@ pipeline {
                                     }
                                     println "DB Writer Endpoints: ${dbWriterEndpoints}"
                                     // Convert LazyMap to HashMap
-                                    pattern.dbEndpoints = dbWriterEndpoints
+                                    pattern.dbEndpoints = new HashMap<>(dbWriterEndpoints)
 
                                     pattern.dbEngines.eachWithIndex { dbEngine, index ->
                                         String dbEngineName = dbEngine.engine
