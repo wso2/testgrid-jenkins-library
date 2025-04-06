@@ -506,7 +506,7 @@ pipeline {
                                             helm install apim-acp ${helmChartPath}/distributed/control-plane \
                                                 --namespace ${namespace} \
                                                 --set wso2.deployment.image.registry=${dockerRegistry} \
-                                                --set wso2.deployment.image.repository=kavindasr/wso2am-gw:rc2 \
+                                                --set wso2.deployment.image.repository=kavindasr/wso2am-acp:rc2 \
                                                 --set wso2.apim.configurations.databases.type=${dbEngineList[dbEngineName].dbType} \
                                                 --set wso2.apim.configurations.databases.jdbc.driver=${dbEngineList[dbEngineName].dbDriver} \
                                                 --set wso2.apim.configurations.databases.apim_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/apim_db \
@@ -517,7 +517,7 @@ pipeline {
                                                 --set wso2.apim.configurations.databases.shared_db.password=${dbPassword}
                                             
                                             # Wait for the deployment to be ready
-                                            kubectl wait --for=condition=ready --timeout=600s pod -l deployment=apim-acp-wso2am-acp \
+                                            kubectl wait --for=condition=ready --timeout=300s pod -l deployment=apim-acp-wso2am-acp \
                                             -n ${namespace} || echo "Pods with label deployment=apim-acp-wso2am-acp are not ready within the expected time limit."
 
                                             # Deploy wso2am-tm
@@ -525,7 +525,7 @@ pipeline {
                                             helm install apim-tm ${helmChartPath}/distributed/traffic-manager \
                                                 --namespace ${namespace} \
                                                 --set wso2.deployment.image.registry=${dockerRegistry} \
-                                                --set wso2.deployment.image.repository=kavindasr/wso2am-gw:rc2 \
+                                                --set wso2.deployment.image.repository=kavindasr/wso2am-tm:rc2 \
                                                 --set wso2.apim.configurations.databases.type=${dbEngineList[dbEngineName].dbType} \
                                                 --set wso2.apim.configurations.databases.jdbc.driver=${dbEngineList[dbEngineName].dbDriver} \
                                                 --set wso2.apim.configurations.databases.apim_db.url=jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/apim_db \
@@ -536,7 +536,7 @@ pipeline {
                                                 --set wso2.apim.configurations.databases.shared_db.password=${dbPassword}
 
                                             # Wait for the deployment to be ready
-                                            kubectl wait --for=condition=ready --timeout=600s pod -l deployment=apim-tm-wso2am-tm \
+                                            kubectl wait --for=condition=ready --timeout=300s pod -l deployment=apim-tm-wso2am-tm \
                                             -n ${namespace} || echo "Pods with label deployment=apim-tm-wso2am-tm are not ready within the expected time limit."
 
                                             # Deploy wso2am-gw
@@ -552,7 +552,7 @@ pipeline {
                                                 --set wso2.apim.configurations.databases.shared_db.password=${dbPassword}
                                             
                                             # Wait for the deployment to be ready
-                                            #kubectl wait --for=condition=ready --timeout=600s pod -l deployment=apim-universal-gw-wso2am-gw \
+                                            #kubectl wait --for=condition=ready --timeout=300s pod -l deployment=apim-universal-gw-wso2am-gw \
                                             #-n ${namespace} || echo "Pods with label deployment=apim-universal-gw-wso2am-gw are not ready within the expected time limit."
                                         """
                                     }
