@@ -23,7 +23,6 @@ String wso2_product = params.wso2_product
 String wso2_product_version = params.wso2_product_version
 String update_level = params.update_level
 Boolean skip_update = params.skip_update
-String aws_cred = params.aws_cred
 String s3_bucket = params.s3_bucket
 String docker_registry = params.docker_registry
 String docker_registry_credential = params.docker_registry_credential
@@ -71,7 +70,8 @@ pipeline {
                         sh """
                         export WSO2_PRODUCT='$wso2_product'
                         export WSO2_PRODUCT_VERSION='$wso2_product_version'
-                        aws s3 cp --quiet s3://${s3_bucket}/packs/${WSO2_PRODUCT}/${WSO2_PRODUCT_VERSION}/${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}.zip .
+                        # aws s3 cp --quiet s3://${s3_bucket}/packs/${WSO2_PRODUCT}/${WSO2_PRODUCT_VERSION}/${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}.zip .
+                        aws s3 cp --quiet s3://${s3_bucket}/packs/${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}.zip .
                         unzip -q ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}.zip
                         rm -rf ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}.zip
                         """
