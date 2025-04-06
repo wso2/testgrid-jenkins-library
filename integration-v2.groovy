@@ -527,7 +527,7 @@ pipeline {
                             }                     
                         }
                     } catch (Exception e) {
-                        println "Deployment failed: ${e.message}"
+                        println "Deployment failed: ${e}"
                         error "Deployment failed. Please check the logs for more details."
                     }
                 }
