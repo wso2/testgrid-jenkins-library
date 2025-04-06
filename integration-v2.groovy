@@ -557,10 +557,12 @@ pipeline {
 
     post {
         always {
-            try {
-                cleanWs()
-            } catch (Exception e) {
-                echo "Workspace cleanup failed: ${e.message}"
+            script {
+                try {
+                    cleanWs()
+                } catch (Exception e) {
+                    echo "Workspace cleanup failed: ${e.message}"
+                }
             }
         }
     }
