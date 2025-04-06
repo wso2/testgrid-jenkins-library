@@ -26,6 +26,7 @@ Boolean skip_update = params.skip_update
 String s3_bucket = params.s3_bucket
 String docker_registry = params.docker_registry
 String docker_registry_credential = params.docker_registry_credential
+String u2_credential = params.u2_credential
 
 // Default values
 String dockerDirectory = "docker"
@@ -78,7 +79,7 @@ pipeline {
             }
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'docker-image-build', passwordVariable: 'WUM_PASSWORD', usernameVariable: 'WUM_USERNAME')]) {
+                    withCredentials([usernamePassword(credentialsId: u2_credential, passwordVariable: 'WUM_PASSWORD', usernameVariable: 'WUM_USERNAME')]) {
                         def statusCode = sh(
                                 script: """
                                 chmod +x $WSO2_PRODUCT-$WSO2_PRODUCT_VERSION/bin/wso2update_linux
