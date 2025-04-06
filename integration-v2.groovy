@@ -493,13 +493,7 @@ pipeline {
                                         println "Namespace created: ${namespace}"
 
                                         // Execute DB scripts
-                                        try {
-                                            executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword, "${pwd}/${apimIntgDirectory}")
-                                        } catch (Exception e) {
-                                            // Improvement: Handle each DB engine in seperate stages
-                                            println "Error executing DB scripts: ${e.message}"
-                                            continue
-                                        }
+                                        executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword, "${pwd}/${apimIntgDirectory}")
 
                                         String helmChartPath = "${pwd}/${helmDirectory}"
                                         // Install the product using Helm
