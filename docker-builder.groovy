@@ -61,21 +61,14 @@ pipeline {
         stage('download-product-packs-from-s3') {
             steps {
                 script {
-                    withCredentials([[
-                        $class: 'AmazonWebServicesCredentialsBinding',
-                        credentialsId: 'AZURE_ACR_CREDENTIALS',
-                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                    ]]) {
-                        sh """
-                        export WSO2_PRODUCT='$wso2_product'
-                        export WSO2_PRODUCT_VERSION='$wso2_product_version'
-                        # aws s3 cp --quiet s3://${s3_bucket}/packs/${WSO2_PRODUCT}/${WSO2_PRODUCT_VERSION}/${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}.zip .
-                        aws s3 cp --quiet s3://${s3_bucket}/packs/${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}.zip .
-                        unzip -q ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}.zip
-                        rm -rf ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}.zip
-                        """
-                    }
+                    sh """
+                    export WSO2_PRODUCT='$wso2_product'
+                    export WSO2_PRODUCT_VERSION='$wso2_product_version'
+                    # aws s3 cp --quiet s3://${s3_bucket}/packs/${WSO2_PRODUCT}/${WSO2_PRODUCT_VERSION}/${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}.zip .
+                    aws s3 cp --quiet s3://${s3_bucket}/packs/${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}.zip .
+                    unzip -q ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}.zip
+                    rm -rf ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}.zip
+                    """
                 }
             }
         }
