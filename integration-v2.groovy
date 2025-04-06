@@ -584,6 +584,7 @@ pipeline {
         always {
             script {
                 try {
+                    println "Cleaning up the workspace..."
                     cleanWs()
                 } catch (Exception e) {
                     echo "Workspace cleanup failed: ${e.message}"
