@@ -247,7 +247,7 @@ def parseJson(String jsonString) {
     return new groovy.json.JsonSlurper().parseText(jsonString)
 }
 
-@NonCOPS
+@NonCPS
 def stringifyJson(Map jsonMap) {
     return new groovy.json.JsonBuilder(jsonMap).toPrettyString()
 }
