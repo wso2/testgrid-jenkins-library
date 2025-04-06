@@ -18,6 +18,8 @@
 *
 */
 
+import groovy.json.JsonSlurperClassic 
+
 // Input parameters
 String product = params.product
 String productVersion = params.productVersion
@@ -124,30 +126,36 @@ def createDeploymentPatterns(String product, String productVersion,
 def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String dbPassword, String scriptPath) {
     println "Executing DB scripts for ${dbEngine} at ${dbEndpoint}..."
 
-    if (dbEngine == "aurora-mysql") {
-        // Execute MySQL scripts
-        println "Executing MySQL scripts..."
-        sh """
-            mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -e "DROP DATABASE IF EXISTS shared_db;"
-            mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -e "DROP DATABASE IF EXISTS apim_db;"
-            mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -e "CREATE DATABASE IF NOT EXISTS shared_db CHARACTER SET latin1;"
-            mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -e "CREATE DATABASE IF NOT EXISTS apim_db CHARACTER SET latin1;"
-            mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -Dshared_db < ${scriptPath}/dbscripts/mysql.sql
-            mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -Dapim_db < ${scriptPath}/dbscripts/apimgt/mysql.sql
-        """
-    } else if (dbEngine == "aurora-postgresql") {
-        // Execute PostgreSQL scripts
-        println "Executing PostgreSQL scripts..."
-        sh """
-            PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d postgres -c "DROP DATABASE IF EXISTS shared_db;"
-            PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d postgres -c "DROP DATABASE IF EXISTS apim_db;"
-            PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d postgres -c "CREATE DATABASE shared_db ENCODING 'LATIN1';"
-            PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d postgres -c "CREATE DATABASE apim_db ENCODING 'LATIN1';"
-            PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d shared_db -f ${scriptPath}/dbscripts/postgresql.sql
-            PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d apim_db -f ${scriptPath}/dbscripts/apimgt/postgresql.sql
-        """
-    } else {
-        error "Unsupported DB engine: ${dbEngine}"
+    try {
+        timeout(time: 5, unit: 'MINUTES') {
+            if (dbEngine == "aurora-mysql") {
+                // Execute MySQL scripts
+                println "Executing MySQL scripts..."
+                sh """
+                    mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -e "DROP DATABASE IF EXISTS shared_db;"
+                    mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -e "DROP DATABASE IF EXISTS apim_db;"
+                    mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -e "CREATE DATABASE IF NOT EXISTS shared_db CHARACTER SET latin1;"
+                    mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -e "CREATE DATABASE IF NOT EXISTS apim_db CHARACTER SET latin1;"
+                    mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -Dshared_db < ${scriptPath}/dbscripts/mysql.sql
+                    mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -Dapim_db < ${scriptPath}/dbscripts/apimgt/mysql.sql
+                """
+            } else if (dbEngine == "aurora-postgresql") {
+                // Execute PostgreSQL scripts
+                println "Executing PostgreSQL scripts..."
+                sh """
+                    PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d postgres -c "DROP DATABASE IF EXISTS shared_db;"
+                    PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d postgres -c "DROP DATABASE IF EXISTS apim_db;"
+                    PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d postgres -c "CREATE DATABASE shared_db;"
+                    PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d postgres -c "CREATE DATABASE apim_db;"
+                    PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d shared_db -f ${scriptPath}/dbscripts/postgresql.sql
+                    PGPASSWORD=$dbPassword psql -h ${dbEndpoint} -U ${dbUser} -d apim_db -f ${scriptPath}/dbscripts/apimgt/postgresql.sql
+                """
+            } else {
+                error "Unsupported DB engine: ${dbEngine}"
+            }
+        }
+    } catch (Exception e) {
+        error "Database operation timed out or failed: ${e.message}"
     }
 }
 
@@ -232,6 +240,16 @@ def installDBClients() {
     } else {
         println "PostgreSQL client is already installed."
     }
+}
+
+@NonCPS
+def parseJson(String jsonString) {
+    return new groovy.json.JsonSlurper().parseText(jsonString)
+}
+
+@NonCOPS
+def stringifyJson(Map jsonMap) {
+    return new groovy.json.JsonBuilder(jsonMap).toPrettyString()
 }
 
 pipeline {
@@ -442,7 +460,7 @@ pipeline {
                             def deploymentDirName = pattern.directory
                             dir("${deploymentDirName}") {
                                 def dbWriterEndpointsJson = sh(script: "terraform output -json | jq -r '.database_writer_endpoints.value'", returnStdout: true).trim()
-                                def dbWriterEndpoints = new groovy.json.JsonSlurperClassic().parseText(dbWriterEndpointsJson)
+                                def dbWriterEndpoints = parseJson(dbWriterEndpointsJson)
                                 if (!dbWriterEndpoints) {
                                     error "DB Writer Endpoints are null or empty for ${deploymentDirName}. Please check the Terraform output."
                                 }
@@ -538,9 +556,12 @@ pipeline {
     }
 
     post {
-            always {
-            sh "rm -f **/.terraform.tfstate.lock.info || true"
-            cleanWs deleteDirs: true
+        script {
+            try {
+                cleanWs()
+            } catch (Exception e) {
+                echo "Workspace cleanup failed: ${e.message}"
             }
         }
+    }
 }
