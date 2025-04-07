@@ -34,6 +34,7 @@ String dockerRepoBranch = "master"
 String dockerRepoUrl = "https://github.com/wso2/docker-apim.git"
 // Git
 String githubCredentialId = "WSO2_GITHUB_TOKEN"
+String toolsDirectory = "tools"
 
 pipeline {
     agent {label 'pipeline-agent'}
@@ -73,6 +74,17 @@ pipeline {
                 }
             }
         }
+        stage('Download-update-tool') {
+            steps {
+                script {
+                    dir("${toolsDirectory}") {
+                        sh """
+                        aws s3 cp --quiet s3://${s3_bucket}/wso2update_linux .
+                        """
+                    }
+                }
+            }
+        }
         stage('update-product-pack') {
             when {
                 expression { skip_update == false } 
@@ -82,6 +94,10 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: u2_credential, passwordVariable: 'WUM_PASSWORD', usernameVariable: 'WUM_USERNAME')]) {
                         def statusCode = sh(
                                 script: """
+                                if (!fileExists("$WSO2_PRODUCT-$WSO2_PRODUCT_VERSION/bin/wso2update_linux")) {
+                                    echo "wso2update_linux not found in product directory. Copying from tools directory."
+                                    sh "cp ${toolsDirectory}/wso2update_linux $WSO2_PRODUCT-$WSO2_PRODUCT_VERSION/bin/"
+                                }
                                 chmod +x $WSO2_PRODUCT-$WSO2_PRODUCT_VERSION/bin/wso2update_linux
                                 $WSO2_PRODUCT-$WSO2_PRODUCT_VERSION/bin/wso2update_linux version
                                 export UPDATE_LEVEL='$update_level'
