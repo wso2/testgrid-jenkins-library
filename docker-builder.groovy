@@ -63,11 +63,6 @@ pipeline {
                 }
             }
         }
-        stage('clean-workspace') {
-            steps {
-                deleteDir()
-            }
-        }
         stage('download-product-packs-from-s3') {
             steps {
                 script {
