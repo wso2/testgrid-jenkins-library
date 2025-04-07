@@ -21,8 +21,10 @@
 // Input parameters
 String wso2_product = params.wso2_product
 String wso2_product_version = params.wso2_product_version
+String tag = params.tag
 String update_level = params.update_level
 Boolean skip_update = params.skip_update
+String os = params.os
 String s3_bucket = params.s3_bucket
 String docker_registry = params.docker_registry
 String docker_registry_credential = params.docker_registry_credential
@@ -35,6 +37,12 @@ String dockerRepoUrl = "https://github.com/wso2/docker-apim.git"
 // Git
 String githubCredentialId = "WSO2_GITHUB_TOKEN"
 String toolsDirectory = "tools"
+def product_name_map = [
+    'wso2am': 'apim',
+    'wso2am-acp': 'apim-acp',
+    'wso2am-tm': 'apim-tm',
+    'wso2am-universal-gw': 'apim-universal-gw',
+]
 
 pipeline {
     agent {label 'pipeline-agent'}
@@ -170,6 +178,26 @@ pipeline {
                         
                         python3 -m http.server 8889 &
                     """
+                }
+            }
+        }
+
+        stage('docker-build') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: docker_registry_credential, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                        String UPDATED_PRODUCT_PACK_HOST_LOCATION_URL = "http://localhost:8889"
+                        dir(dockerDirectory) {
+                            sh """
+                            cd dockerfiles/${os}/${product_name_map[wso2_product]}
+                            docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD} ${docker_registry}
+                            docker build -t ${docker_registry}/${wso2_product}:${tag} . --build-arg WSO2_SERVER_DIST_URL=${UPDATED_PRODUCT_PACK_HOST_LOCATION_URL}/${wso2_product}-${wso2_product_version}.zip
+                            docker tag ${docker_registry}/${wso2_product}:${tag} 
+                            docker push ${docker_registry}/${wso2_product}:${tag}
+                            echo "Docker image ${docker_registry}/${wso2_product}:${tag} pushed successfully"
+                            """
+                        }
+                    }
                 }
             }
         }
