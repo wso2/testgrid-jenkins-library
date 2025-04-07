@@ -188,8 +188,9 @@ pipeline {
                     try {
                         withCredentials([usernamePassword(credentialsId: docker_registry_credential, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
                             String UPDATED_PRODUCT_PACK_HOST_LOCATION_URL = "http://localhost:8889"
-                            dir(dockerDirectory) {
+                            dir("${dockerDirectory}") {
                                 sh """
+                                pwd
                                 cd dockerfiles/${os}/${product_name_map[wso2_product]}
                                 docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD} ${docker_registry}
                                 docker build -t ${docker_registry}/${wso2_product}:${tag} . --build-arg WSO2_SERVER_DIST_URL=${UPDATED_PRODUCT_PACK_HOST_LOCATION_URL}/${wso2_product}-${wso2_product_version}.zip
