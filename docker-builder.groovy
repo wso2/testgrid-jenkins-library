@@ -168,7 +168,7 @@ pipeline {
 
                         zip -rq ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}.zip ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}
                         
-                        python -m SimpleHTTPServer 8889 &
+                        python3 -m http.server 8889 &
                     """
                 }
             }
