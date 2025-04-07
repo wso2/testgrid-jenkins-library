@@ -586,7 +586,7 @@ pipeline {
                                 dir("${deploymentDirName}") {
                                     println "Destroying resources for ${deploymentDirName}..."
                                     sh """
-                                        / Configure EKS cluster
+                                        # Configure EKS cluster
                                         aws eks --region ${productDeploymentRegion} \
                                         update-kubeconfig --name ${project}-${pattern.id}-${tfEnvironment}-${productDeploymentRegion}-eks \
                                         --alias ${pattern.directory}
