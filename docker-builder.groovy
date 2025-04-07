@@ -185,19 +185,44 @@ pipeline {
         stage('docker-build') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: docker_registry_credential, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                        String UPDATED_PRODUCT_PACK_HOST_LOCATION_URL = "http://localhost:8889"
-                        dir(dockerDirectory) {
-                            sh """
-                            cd dockerfiles/${os}/${product_name_map[wso2_product]}
-                            docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD} ${docker_registry}
-                            docker build -t ${docker_registry}/${wso2_product}:${tag} . --build-arg WSO2_SERVER_DIST_URL=${UPDATED_PRODUCT_PACK_HOST_LOCATION_URL}/${wso2_product}-${wso2_product_version}.zip
-                            docker tag ${docker_registry}/${wso2_product}:${tag} 
-                            docker push ${docker_registry}/${wso2_product}:${tag}
-                            echo "Docker image ${docker_registry}/${wso2_product}:${tag} pushed successfully"
-                            """
+                    try {
+                        withCredentials([usernamePassword(credentialsId: docker_registry_credential, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                            String UPDATED_PRODUCT_PACK_HOST_LOCATION_URL = "http://localhost:8889"
+                            dir(dockerDirectory) {
+                                sh """
+                                cd dockerfiles/${os}/${product_name_map[wso2_product]}
+                                docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD} ${docker_registry}
+                                docker build -t ${docker_registry}/${wso2_product}:${tag} . --build-arg WSO2_SERVER_DIST_URL=${UPDATED_PRODUCT_PACK_HOST_LOCATION_URL}/${wso2_product}-${wso2_product_version}.zip
+                                docker tag ${docker_registry}/${wso2_product}:${tag} 
+                                docker push ${docker_registry}/${wso2_product}:${tag}
+                                echo "Docker image ${docker_registry}/${wso2_product}:${tag} pushed successfully"
+                                """
+                            }
                         }
+                    } catch (Exception e) {
+                        echo "Error occurred during Docker build: ${e.message}"
+                        currentBuild.result = 'FAILURE'
+                    } finally {
+                        // Clean up the server
+                        sh """
+                            kill -9 \$(lsof -t -i:8889)
+                            rm -rf ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}.zip
+                            rm -rf ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}
+                        """
                     }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                try {
+                    println "Cleaning up the workspace..."
+                    cleanWs()
+                } catch (Exception e) {
+                    echo "Workspace cleanup failed: ${e.message}"
                 }
             }
         }
