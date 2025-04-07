@@ -544,7 +544,7 @@ pipeline {
                                             helm install apim-universal-gw ${helmChartPath}/distributed/gateway \
                                                 --namespace ${namespace} \
                                                 --set wso2.deployment.image.registry="${dockerRegistry}" \
-                                                --set wso2.deployment.image.repository="kavindasr/wso2am-universal-gw:rc2" \
+                                                --set wso2.deployment.image.repository="kavindasr/wso2am-gw:rc2" \
                                                 --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineName].dbType}" \
                                                 --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineName].dbDriver}" \
                                                 --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db?useSSL=false" \
