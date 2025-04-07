@@ -552,8 +552,8 @@ pipeline {
                                                 --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
                                             
                                             # Wait for the deployment to be ready
-                                            #kubectl wait --for=condition=ready --timeout=300s pod -l deployment=apim-universal-gw-wso2am-gw \
-                                            #-n ${namespace} || echo "Pods with label deployment=apim-universal-gw-wso2am-gw are not ready within the expected time limit."
+                                            kubectl wait --for=condition=ready --timeout=300s pod -l deployment=apim-universal-gw-wso2am-universal-gw-deployment \
+                                            -n ${namespace} || echo "Pods with label deployment=apim-universal-gw-wso2am-universal-gw-deployment are not ready within the expected time limit."
                                         """
                                     }
                                 }
