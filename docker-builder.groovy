@@ -156,6 +156,14 @@ pipeline {
                             currentBuild.result = 'FAILURE'
                             sh "exit 1"
                         }
+
+                        // Copy pizzashack war file to acp
+                        if (wso2_product == 'wso2am-acp') {
+                            sh """
+                            aws s3 cp --quiet s3://${s3_bucket}/${resourceDirectory}/am#sample#pizzashack#v1.war .
+                            mv am#sample#pizzashack#v1.war ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}/repository/deployment/server/webapps/
+                            """
+                        }
                     }
                 }
             }
