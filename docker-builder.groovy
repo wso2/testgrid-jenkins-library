@@ -92,7 +92,7 @@ pipeline {
                             sh """
                             export AWS_ACCESS_KEY_ID='$accessKey'
                             export AWS_SECRET_ACCESS_KEY='$secretAccessKey'
-                            aws s3 cp --quiet s3://${s3_bucket}/wso2update_linux .
+                            aws s3 cp --quiet s3://${s3_bucket}/${resourceDirectory}/wso2update_linux .
                             """
                         }
                     }
@@ -108,7 +108,7 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: u2_credential, passwordVariable: 'WUM_PASSWORD', usernameVariable: 'WUM_USERNAME')]) {
                         if (!fileExists("$WSO2_PRODUCT-$WSO2_PRODUCT_VERSION/bin/wso2update_linux")) {
                             println "wso2update_linux not found in product directory. Copying from tools directory."
-                            sh "cp ${toolsDirectory}/${resourceDirectory}/wso2update_linux $WSO2_PRODUCT-$WSO2_PRODUCT_VERSION/bin/"
+                            sh "cp ${toolsDirectory}/wso2update_linux $WSO2_PRODUCT-$WSO2_PRODUCT_VERSION/bin/"
                         }
                         def statusCode = sh(
                                 script: """
