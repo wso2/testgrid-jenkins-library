@@ -86,10 +86,15 @@ pipeline {
         stage('Download-update-tool') {
             steps {
                 script {
-                    dir("${toolsDirectory}") {
-                        sh """
-                        aws s3 cp --quiet s3://${s3_bucket}/wso2update_linux .
-                        """
+                    withCredentials([string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'accessKey'),
+                    string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'secretAccessKey')]) {
+                        dir("${toolsDirectory}") {
+                            sh """
+                            export AWS_ACCESS_KEY_ID='$accessKey'
+                            export AWS_SECRET_ACCESS_KEY='$secretAccessKey'
+                            aws s3 cp --quiet s3://${s3_bucket}/wso2update_linux .
+                            """
+                        }
                     }
                 }
             }
@@ -162,12 +167,17 @@ pipeline {
                             sh "exit 1"
                         }
 
-                        // Copy pizzashack war file to acp
-                        if (wso2_product == 'wso2am-acp') {
-                            sh """
-                            aws s3 cp --quiet s3://${s3_bucket}/${resourceDirectory}/am#sample#pizzashack#v1.war .
-                            mv am#sample#pizzashack#v1.war ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}/repository/deployment/server/webapps/
-                            """
+                        withCredentials([string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'accessKey'),
+                        string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'secretAccessKey')]) {
+                            // Copy pizzashack war file to acp
+                            if (wso2_product == 'wso2am-acp') {
+                                sh """
+                                export AWS_ACCESS_KEY_ID='$accessKey'
+                                export AWS_SECRET_ACCESS_KEY='$secretAccessKey'
+                                aws s3 cp --quiet s3://${s3_bucket}/${resourceDirectory}/am#sample#pizzashack#v1.war .
+                                mv am#sample#pizzashack#v1.war ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}/repository/deployment/server/webapps/
+                                """
+                            }
                         }
                     }
                 }
