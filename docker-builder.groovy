@@ -37,6 +37,7 @@ String dockerRepoUrl = "https://github.com/wso2/docker-apim.git"
 // Git
 String githubCredentialId = "WSO2_GITHUB_TOKEN"
 String toolsDirectory = "tools"
+String resourceDirectory = "testgrid-intg"
 def product_name_map = [
     'wso2am': 'apim',
     'wso2am-acp': 'apim-acp',
@@ -97,7 +98,7 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: u2_credential, passwordVariable: 'WUM_PASSWORD', usernameVariable: 'WUM_USERNAME')]) {
                         if (!fileExists("$WSO2_PRODUCT-$WSO2_PRODUCT_VERSION/bin/wso2update_linux")) {
                             println "wso2update_linux not found in product directory. Copying from tools directory."
-                            sh "cp ${toolsDirectory}/wso2update_linux $WSO2_PRODUCT-$WSO2_PRODUCT_VERSION/bin/"
+                            sh "cp ${toolsDirectory}/${resourceDirectory}/wso2update_linux $WSO2_PRODUCT-$WSO2_PRODUCT_VERSION/bin/"
                         }
                         def statusCode = sh(
                                 script: """
