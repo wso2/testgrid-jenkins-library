@@ -46,7 +46,7 @@ def product_name_map = [
 ]
 
 pipeline {
-    agent {label 'pipeline-agent'}
+    agent {label 'pipeline-agent-2'}
 
     environment {
         WSO2_UPDATES_UPDATE_LEVEL_STATE = "VERIFYING"
