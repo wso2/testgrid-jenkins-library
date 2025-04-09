@@ -206,7 +206,8 @@ pipeline {
                 script {
                     try {
                         withCredentials([usernamePassword(credentialsId: docker_registry_credential, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                            String UPDATED_PRODUCT_PACK_HOST_LOCATION_URL = "http://localhost:8889"
+                            String hostIp = sh(script: 'hostname -I | awk \'{print $1}\'', returnStdout: true).trim()
+                            String UPDATED_PRODUCT_PACK_HOST_LOCATION_URL = "http://${hostIp}:8889"
                             dir("${dockerDirectory}") {
                                 sh """
                                 cd dockerfiles/${os}/${product_name_map[wso2_product]}
