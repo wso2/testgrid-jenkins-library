@@ -80,10 +80,6 @@ pipeline {
                         rm -rf ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}.zip
                         """
                     }
-
-                    sh """
-                    whoami
-                    """
                 }
             }
         }
