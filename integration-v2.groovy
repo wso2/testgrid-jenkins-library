@@ -109,7 +109,7 @@ def createDeploymentPatterns(String product, String productVersion,
             String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}"
             // String dbEnginesJson = dbEngines.collect { "{ \"engine\": \"${it.engine}\", \"version\": \"${it.version}\" }" }.join(", ")
             // dbEnginesJson = "[${dbEnginesJson}]"
-            def dbEnginesJson = new groovy.json.JsonBuilder(dbEngines)
+            def dbEnginesJson = new groovy.json.JsonBuilder(dbEngines).toString()
             def deploymentPattern = [
                 id: count++,
                 product: product,
