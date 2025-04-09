@@ -365,7 +365,7 @@ pipeline {
                                         -var="project=${project}" \
                                         -var="client_name=${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
-                                        -var="db_engine_options=${pattern.dbEnginesJson}" \
+                                        -var="db_engine_options='${pattern.dbEnginesJson}'" \
                                         -var="db_password=$dbPassword"
                                 """
                             }
@@ -397,7 +397,7 @@ pipeline {
                                             -var="project=${project}" \
                                             -var="client_name=${pattern.id}" \
                                             -var="region=${productDeploymentRegion}" \
-                                            -var="db_engine_options=${pattern.dbEnginesJson}" \
+                                            -var="db_engine_options='${pattern.dbEnginesJson}'" \
                                             -var="db_password=$dbPassword"
                                     """
                                 }
@@ -603,7 +603,7 @@ pipeline {
                                             -var="project=${project}" \
                                             -var="client_name=${pattern.id}" \
                                             -var="region=${productDeploymentRegion}" \
-                                            -var="db_engine_options=${pattern.dbEnginesJson}" \
+                                            -var="db_engine_options='${pattern.dbEnginesJson}'" \
                                             -var="db_password=$dbPassword"
                                     """
                                 }
