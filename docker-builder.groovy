@@ -82,7 +82,7 @@ pipeline {
                     }
 
                     sh """
-                    curl ifconfig.me
+                    whoami
                     """
                 }
             }
