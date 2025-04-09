@@ -104,6 +104,7 @@ def createDeploymentPatterns(String product, String productVersion,
                 dbEngines.add([
                     engine: db,
                     version: dbDetails.version,
+                    port: dbDetails.port,
                 ])
             }
             String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}"
