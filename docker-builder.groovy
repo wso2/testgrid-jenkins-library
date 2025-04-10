@@ -208,6 +208,12 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: docker_registry_credential, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
                             String hostIp = sh(script: 'hostname -I | awk \'{print $1}\'', returnStdout: true).trim()
                             String UPDATED_PRODUCT_PACK_HOST_LOCATION_URL = "http://${hostIp}:8889"
+                            // Encode credentials in base64 format for authentication
+                            def encodedCredentials = sh(
+                                script: "echo -n '${DOCKER_USERNAME}:${DOCKER_PASSWORD}' | base64",
+                                returnStdout: true
+                            ).trim()
+                            echo "Base64 encoded credentials: ${encodedCredentials}"
                             dir("${dockerDirectory}") {
                                 sh """
                                 cd dockerfiles/${os}/${product_name_map[wso2_product]}
