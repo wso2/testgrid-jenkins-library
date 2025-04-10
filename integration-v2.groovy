@@ -352,6 +352,9 @@ pipeline {
         }
 
         stage('Build docker images') {
+            when {
+                expression { !onlyDestroyResources }
+            }
             steps {
                 script {
                     // Create a map of parallel builds - one for each OS
@@ -406,9 +409,7 @@ pipeline {
 
         stage('Terraform Plan') {
             when {
-                allOf {
-                    expression { !onlyDestroyResources }
-                }
+                expression { !onlyDestroyResources }
             }
             steps {
                 script {
