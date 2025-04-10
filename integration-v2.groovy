@@ -289,7 +289,7 @@ def stringifyJson(Map jsonMap) {
 }
 
 pipeline {
-    agent {label 'pipeline-agent'}
+    agent {label 'pipeline-kubernetes-agent'}
 
     stages {
         stage('Clone repos') {
