@@ -368,7 +368,7 @@ pipeline {
                             buildDockerImage('wso2am-tm', '4.5.0', currentOs, '-1', 'latest')
                         }
                         parallelBuilds["Build ${currentOs} wso2am-universal-gw image"] = {
-                            buildDockerImage('wso2am-gw', '4.5.0', currentOs, '-1', 'latest')
+                            buildDockerImage('wso2am-universal-gw', '4.5.0', currentOs, '-1', 'latest')
                         }
                     }
                     
