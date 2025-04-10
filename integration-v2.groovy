@@ -42,6 +42,7 @@ String awsCred = params.awsCred
 String dbPassword = params.dbPassword
 String project = params.project?: "wso2"
 String dockerRegistry = params.dockerRegistry?: "docker.io"
+String dockerRegistryCredential = params.dockerRegistryCredential
 Boolean onlyDestroyResources = params.onlyDestroyResources
 Boolean destroyResources = params.destroyResources
 Boolean skipTfApply = params.skipTfApply
@@ -525,13 +526,21 @@ pipeline {
             steps {
                 script {
                     try {
-                        withCredentials([[
-                            $class: 'AmazonWebServicesCredentialsBinding',
-                            credentialsId: awsCred,
-                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                        ]]) {
+                        withCredentials([
+                            [
+                                $class: 'AmazonWebServicesCredentialsBinding',
+                                credentialsId: awsCred,
+                                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                            ],
+                            usernamePassword(credentialsId: dockerRegistryCredential, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')
+                        ]) {
                             String pwd = sh(script: "pwd", returnStdout: true).trim()
+                            // Login to Docker registry
+                            sh """
+                                echo ${DOCKER_PASSWORD} | sudo docker login ${dockerRegistry} --username ${DOCKER_USERNAME} --password-stdin
+                            """
+
                             for (def pattern : deploymentPatterns) {
                                 def deploymentDirName = pattern.directory
                                 dir("${deploymentDirName}") {
@@ -571,7 +580,7 @@ pipeline {
                                             helm install apim-acp ${helmChartPath}/distributed/control-plane \
                                                 --namespace ${namespace} \
                                                 --set wso2.deployment.image.registry="${dockerRegistry}" \
-                                                --set wso2.deployment.image.repository="kavindasr/wso2am-acp:rc2" \
+                                                --set wso2.deployment.image.repository="wso2am-acp:latest" \
                                                 --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineName].dbType}" \
                                                 --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineName].dbDriver}" \
                                                 --set wso2.apim.configurations.databases.apim_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/apim_db?useSSL=false" \
@@ -590,7 +599,7 @@ pipeline {
                                             helm install apim-tm ${helmChartPath}/distributed/traffic-manager \
                                                 --namespace ${namespace} \
                                                 --set wso2.deployment.image.registry="${dockerRegistry}" \
-                                                --set wso2.deployment.image.repository="kavindasr/wso2am-tm:rc2" \
+                                                --set wso2.deployment.image.repository="wso2am-tm:latest" \
                                                 --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineName].dbType}" \
                                                 --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineName].dbDriver}" \
                                                 --set wso2.apim.configurations.databases.apim_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/apim_db?useSSL=false" \
@@ -609,7 +618,7 @@ pipeline {
                                             helm install apim-universal-gw ${helmChartPath}/distributed/gateway \
                                                 --namespace ${namespace} \
                                                 --set wso2.deployment.image.registry="${dockerRegistry}" \
-                                                --set wso2.deployment.image.repository="kavindasr/wso2am-gw:rc2" \
+                                                --set wso2.deployment.image.repository="wso2am-universal-gw:latest" \
                                                 --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineName].dbType}" \
                                                 --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineName].dbDriver}" \
                                                 --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db?useSSL=false" \
