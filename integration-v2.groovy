@@ -162,6 +162,38 @@ def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String d
     }
 }
 
+def buildDockerImage(String product, String productVersion, String os, String updateLevel, String tag) {
+    println "Building Docker image for ${product} ${productVersion} on ${os} with update level ${updateLevel} and tag ${tag}..."
+    try {
+        // Define parameters for the downstream job
+        def dockerBuildParameters = [
+            [$class: 'StringParameterValue', name: 'wso2_product', value: product],
+            [$class: 'StringParameterValue', name: 'wso2_product_version', value: productVersion],
+            [$class: 'StringParameterValue', name: 'os', value: os],
+            [$class: 'StringParameterValue', name: 'update_level', value: updateLevel],
+            [$class: 'StringParameterValue', name: 'tag', value: tag],
+        ]
+        
+        // Invoke the downstream build job
+        def buildJob = build job: 'U2/Integration-Tests/product-apim/utils/apim-docker-builder', 
+            parameters: dockerBuildParameters,
+            propagate: true,
+            wait: true
+            
+        println "Docker image build job completed with status: ${buildJob.result}"
+        
+        if (buildJob.result != 'SUCCESS') {
+            error "Docker image build job failed with status: ${buildJob.result}"
+        }
+        
+        return true
+    } catch (Exception e) {
+        println "Docker image build job failed for OS ${os}: ${e.message}"
+        error "Failed to build Docker image for OS ${os}. Please check the logs for more details."
+        return false
+    }
+}
+
 def installTerraform() {
     if (!fileExists('/usr/local/bin/terraform')) {
         println "Terraform not found. Installing..."
@@ -314,6 +346,34 @@ pipeline {
                     installHelm()
                     // Install database client tools
                     installDBClients()
+                }
+            }
+        }
+
+        stage('Build docker images') {
+            steps {
+                script {
+                    // Create a map of parallel builds - one for each OS
+                    def parallelBuilds = [:]
+                    
+                    // Add a build task for each OS
+                    for (def os: osList) {
+                        // Need to bind the os variable within the closure
+                        def currentOs = os
+                        
+                        parallelBuilds["Build ${currentOs} wso2am-acp image"] = {
+                            buildDockerImage('wso2am-acp', '4.5.0', currentOs, '-1', 'latest')
+                        }
+                        parallelBuilds["Build ${currentOs} wso2am-tm image"] = {
+                            buildDockerImage('wso2am-tm', '4.5.0', currentOs, '-1', 'latest')
+                        }
+                        parallelBuilds["Build ${currentOs} wso2am-universal-gw image"] = {
+                            buildDockerImage('wso2am-gw', '4.5.0', currentOs, '-1', 'latest')
+                        }
+                    }
+                    
+                    // Execute all builds in parallel
+                    parallel parallelBuilds
                 }
             }
         }
