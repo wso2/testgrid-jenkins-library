@@ -429,7 +429,8 @@ pipeline {
                                         -var="client_name=${pattern.id}" \
                                         -var="region=${productDeploymentRegion}" \
                                         -var='db_engine_options=${pattern.dbEnginesJson}' \
-                                        -var="db_password=$dbPassword"
+                                        -var="db_password=$dbPassword" \
+                                        -no-color
                                 """
                             }
                         }
@@ -461,7 +462,8 @@ pipeline {
                                             -var="client_name=${pattern.id}" \
                                             -var="region=${productDeploymentRegion}" \
                                             -var='db_engine_options=${pattern.dbEnginesJson}' \
-                                            -var="db_password=$dbPassword"
+                                            -var="db_password=$dbPassword" \
+                                            -no-color
                                     """
                                 }
                             }
@@ -675,7 +677,8 @@ pipeline {
                                             -var="client_name=${pattern.id}" \
                                             -var="region=${productDeploymentRegion}" \
                                             -var='db_engine_options=${pattern.dbEnginesJson}' \
-                                            -var="db_password=$dbPassword"
+                                            -var="db_password=$dbPassword" \
+                                            -no-color
                                     """
                                 }
                             }
