@@ -28,7 +28,6 @@ String os = params.os
 String s3_bucket = params.s3_bucket
 String docker_registry = params.docker_registry
 String docker_registry_credential = params.docker_registry_credential
-String u2_credential = params.u2_credential
 
 // Default values
 String dockerDirectory = "docker"
@@ -105,7 +104,8 @@ pipeline {
             }
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: u2_credential, passwordVariable: 'WUM_PASSWORD', usernameVariable: 'WUM_USERNAME')]) {
+                    withCredentials([string(credentialsId: 'WUM_USERNAME', variable: 'WUM_USERNAME'),
+                        string(credentialsId: 'WUM_PASSWORD', variable: 'WUM_PASSWORD'),]) {
                         if (!fileExists("$WSO2_PRODUCT-$WSO2_PRODUCT_VERSION/bin/wso2update_linux")) {
                             println "wso2update_linux not found in product directory. Copying from tools directory."
                             sh "cp ${toolsDirectory}/wso2update_linux $WSO2_PRODUCT-$WSO2_PRODUCT_VERSION/bin/"
