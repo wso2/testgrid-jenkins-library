@@ -177,7 +177,8 @@ pipeline {
                     // Copy db driver to product pack
                     if (db_driver_url != '') {
                         sh """
-                        wget -q ${db_driver_url} -O ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}/repository/components/lib/database.jar
+                        wget -q ${db_driver_url} -O ./database.jar
+                        mv database.jar ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}/repository/components/lib/
                         """
                     }
 
