@@ -28,6 +28,7 @@ String os = params.os
 String s3_bucket = params.s3_bucket
 String docker_registry = params.docker_registry
 String docker_registry_credential = params.docker_registry_credential
+String db_driver_url = params.db_driver_url
 
 // Default values
 String dockerDirectory = "docker"
@@ -166,22 +167,30 @@ pipeline {
                             currentBuild.result = 'FAILURE'
                             sh "exit 1"
                         }
-
-                        withCredentials([string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'accessKey'),
-                        string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'secretAccessKey')]) {
-                            // Copy pizzashack war file to acp
-                            if (wso2_product == 'wso2am-acp') {
-                                sh """
-                                export AWS_ACCESS_KEY_ID='$accessKey'
-                                export AWS_SECRET_ACCESS_KEY='$secretAccessKey'
-                                aws s3 cp --quiet s3://${s3_bucket}/${resourceDirectory}/am#sample#pizzashack#v1.war .
-                                mv am#sample#pizzashack#v1.war ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}/repository/deployment/server/webapps/
-                                """
-                            }
-                        }
                     }
                 }
             }
+        }
+        stage('Customize product-pack') {
+            // Copy db driver to product pack
+            if (db_driver_url != '') {
+                sh """
+                wget -q ${db_driver_url} -O ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}/repository/components/lib/database.jar
+                """
+            }
+
+            withCredentials([string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'accessKey'),
+            string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'secretAccessKey')]) {
+                // Copy pizzashack war file to acp
+                if (wso2_product == 'wso2am-acp') {
+                    sh """
+                    export AWS_ACCESS_KEY_ID='$accessKey'
+                    export AWS_SECRET_ACCESS_KEY='$secretAccessKey'
+                    aws s3 cp --quiet s3://${s3_bucket}/${resourceDirectory}/am#sample#pizzashack#v1.war .
+                    mv am#sample#pizzashack#v1.war ${WSO2_PRODUCT}-${WSO2_PRODUCT_VERSION}/repository/deployment/server/webapps/
+                    """
+                }
+            }     
         }
         stage('host-packs-locally') {
             steps {
