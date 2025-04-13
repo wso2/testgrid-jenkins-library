@@ -226,7 +226,7 @@ pipeline {
                                 sh """
                                 cd dockerfiles/${os}/${product_name_map[wso2_product]}
                                 sudo docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD} ${docker_registry}
-                                sudo docker build -t ${docker_registry}/${wso2_product}:${tag} . --build-arg WSO2_SERVER_DIST_URL=${UPDATED_PRODUCT_PACK_HOST_LOCATION_URL}/${wso2_product}-${wso2_product_version}.zip
+                                sudo docker build --no-cache -t ${docker_registry}/${wso2_product}:${tag} . --build-arg WSO2_SERVER_DIST_URL=${UPDATED_PRODUCT_PACK_HOST_LOCATION_URL}/${wso2_product}-${wso2_product_version}.zip
                                 sudo docker push ${docker_registry}/${wso2_product}:${tag}
                                 echo "Docker image ${docker_registry}/${wso2_product}:${tag} pushed successfully"
                                 """
