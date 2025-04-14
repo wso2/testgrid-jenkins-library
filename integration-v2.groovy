@@ -584,6 +584,9 @@ pipeline {
                                                 --namespace ${namespace} \
                                                 --set wso2.deployment.image.registry="${dockerRegistry}" \
                                                 --set wso2.deployment.image.repository="wso2am-acp:latest" \
+                                                --set wso2.deployment.image.imagePullSecrets.enabled=true \
+                                                --set wso2.deployment.image.imagePullSecrets.username="${DOCKER_USERNAME}" \
+                                                --set wso2.deployment.image.imagePullSecrets.password="${DOCKER_PASSWORD}" \
                                                 --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineName].dbType}" \
                                                 --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineName].dbDriver}" \
                                                 --set wso2.apim.configurations.databases.apim_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/apim_db?useSSL=false" \
@@ -603,6 +606,9 @@ pipeline {
                                                 --namespace ${namespace} \
                                                 --set wso2.deployment.image.registry="${dockerRegistry}" \
                                                 --set wso2.deployment.image.repository="wso2am-tm:latest" \
+                                                --set wso2.deployment.image.imagePullSecrets.enabled=true \
+                                                --set wso2.deployment.image.imagePullSecrets.username="${DOCKER_USERNAME}" \
+                                                --set wso2.deployment.image.imagePullSecrets.password="${DOCKER_PASSWORD}" \
                                                 --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineName].dbType}" \
                                                 --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineName].dbDriver}" \
                                                 --set wso2.apim.configurations.databases.apim_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/apim_db?useSSL=false" \
@@ -622,6 +628,9 @@ pipeline {
                                                 --namespace ${namespace} \
                                                 --set wso2.deployment.image.registry="${dockerRegistry}" \
                                                 --set wso2.deployment.image.repository="wso2am-universal-gw:latest" \
+                                                --set wso2.deployment.image.imagePullSecrets.enabled=true \
+                                                --set wso2.deployment.image.imagePullSecrets.username="${DOCKER_USERNAME}" \
+                                                --set wso2.deployment.image.imagePullSecrets.password="${DOCKER_PASSWORD}" \
                                                 --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineName].dbType}" \
                                                 --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineName].dbDriver}" \
                                                 --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db?useSSL=false" \
