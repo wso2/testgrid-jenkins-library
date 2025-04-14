@@ -192,7 +192,7 @@ def buildDockerImage(String product, String productVersion, String os, String up
         
         return true
     } catch (Exception e) {
-        println "Docker image build job failed for OS ${os}: ${e.message}"
+        println "Docker image build job failed for OS ${os}: ${e}"
         error "Failed to build Docker image for OS ${os}. Please check the logs for more details."
         return false
     }
