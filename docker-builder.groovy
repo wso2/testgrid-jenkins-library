@@ -253,9 +253,15 @@ pipeline {
             script {
                 try {
                     println "Cleaning up the workspace..."
-                    cleanWs()
+                    sh """
+                        # Remove the Docker image
+                        sudo docker rmi -f ${docker_registry}/${wso2_product}:${tag} || echo "Docker image not found or already removed"
+                    """
                 } catch (Exception e) {
                     echo "Workspace cleanup failed: ${e.message}"
+                } finally {
+                    cleanWs()
+                    println "Workspace cleanup completed."
                 }
             }
         }
