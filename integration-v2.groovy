@@ -351,36 +351,36 @@ pipeline {
             }
         }
 
-        // stage('Build docker images') {
-        //     when {
-        //         expression { !onlyDestroyResources }
-        //     }
-        //     steps {
-        //         script {
-        //             // Create a map of parallel builds - one for each OS
-        //             def parallelBuilds = [:]
+        stage('Build docker images') {
+            when {
+                expression { !onlyDestroyResources }
+            }
+            steps {
+                script {
+                    // Create a map of parallel builds - one for each OS
+                    def parallelBuilds = [:]
                     
-        //             // Add a build task for each OS
-        //             for (def os: osList) {
-        //                 // Need to bind the os variable within the closure
-        //                 def currentOs = os
+                    // Add a build task for each OS
+                    for (def os: osList) {
+                        // Need to bind the os variable within the closure
+                        def currentOs = os
                         
-        //                 parallelBuilds["Build ${currentOs} wso2am-acp image"] = {
-        //                     buildDockerImage('wso2am-acp', '4.5.0', currentOs, '-1', 'latest')
-        //                 }
-        //                 parallelBuilds["Build ${currentOs} wso2am-tm image"] = {
-        //                     buildDockerImage('wso2am-tm', '4.5.0', currentOs, '-1', 'latest')
-        //                 }
-        //                 parallelBuilds["Build ${currentOs} wso2am-universal-gw image"] = {
-        //                     buildDockerImage('wso2am-universal-gw', '4.5.0', currentOs, '-1', 'latest')
-        //                 }
-        //             }
+                        parallelBuilds["Build ${currentOs} wso2am-acp image"] = {
+                            buildDockerImage('wso2am-acp', '4.5.0', currentOs, '-1', 'latest')
+                        }
+                        parallelBuilds["Build ${currentOs} wso2am-tm image"] = {
+                            buildDockerImage('wso2am-tm', '4.5.0', currentOs, '-1', 'latest')
+                        }
+                        parallelBuilds["Build ${currentOs} wso2am-universal-gw image"] = {
+                            buildDockerImage('wso2am-universal-gw', '4.5.0', currentOs, '-1', 'latest')
+                        }
+                    }
                     
-        //             // Execute all builds in parallel
-        //             parallel parallelBuilds
-        //         }
-        //     }
-        // }
+                    // Execute all builds in parallel
+                    parallel parallelBuilds
+                }
+            }
+        }
 
         stage('Terraform Init') {
             steps {
