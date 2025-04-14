@@ -256,6 +256,7 @@ pipeline {
                     sh """
                         # Remove the Docker image
                         sudo docker rmi -f ${docker_registry}/${wso2_product}:${tag} || echo "Docker image not found or already removed"
+                        sudo docker system prune -f || echo "Docker system prune failed"
                     """
                 } catch (Exception e) {
                     echo "Workspace cleanup failed: ${e.message}"
