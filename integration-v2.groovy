@@ -709,6 +709,9 @@ pipeline {
                                 }
                             }
                         }
+                    } catch (Exception e) {
+                        println "Test execution failed: ${e}"
+                        error "Test execution failed. Please check the logs for more details."
                     }
                 }
             }
