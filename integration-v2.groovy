@@ -704,8 +704,17 @@ pipeline {
 
                                         sh """
                                             #!/bin/bash
-                                            . /home/ubuntu/.nvm/nvm.sh
+                                            export NVM_DIR="$HOME/.nvm"
+                                            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+                                            # Install Node.js v19 if not present
+                                            if ! nvm ls 19 >/dev/null 2>&1; then
+                                                nvm install 19
+                                            fi
+
                                             nvm use 19
+                                            node --version
+                                            
                                             export HOST_NAME="${pattern.hostName}"
                                             export PORTAL_HOST="am${index}.wso2.com"
                                             export GATEWAY_HOST="gw${index}.wso2.com"
