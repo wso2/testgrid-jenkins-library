@@ -711,6 +711,7 @@ pipeline {
                                             export HOST_NAME="${pattern.hostName}"
                                             export PORTAL_HOST="am.wso2.com"
                                             export GATEWAY_HOST="gw.wso2.com"
+                                            export kubernetes_namespace="${namespace}"
 
                                             ./main.sh
                                         """
