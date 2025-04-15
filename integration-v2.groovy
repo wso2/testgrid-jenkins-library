@@ -282,7 +282,8 @@ def installDBClients() {
 }
 
 def installNewman() {
-    if (!sh(script: "which newman || echo 'not found'", returnStdout: true).trim() == 'not found') {
+    def version = sh(script: 'newman --version || echo "NOT_INSTALLED"', returnStdout: true).trim()
+    if (version == 'NOT_INSTALLED') {
         println "Newman not found. Installing..."
         sh """
             # Install newman globally using npm
@@ -292,7 +293,7 @@ def installNewman() {
             newman --version
         """
     } else {
-        println "Newman is already installed."
+        println "Newman is already installed. Version: ${version}"
     }
 }
 
