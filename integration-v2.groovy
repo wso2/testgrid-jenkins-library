@@ -367,7 +367,7 @@ pipeline {
                     // Install database client tools
                     installDBClients()
                     // Install Newman if not already installed
-                    installNewman()
+                    // installNewman()
                 }
             }
         }
