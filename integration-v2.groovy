@@ -602,6 +602,7 @@ pipeline {
                                             echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
                                             helm install apim-acp ${helmChartPath}/distributed/control-plane \
                                                 --namespace ${namespace} \
+                                                --set kubernetes.ingress.controlPlane.hostname="am${pattern.id}.wso2.com"
                                                 --set wso2.deployment.image.registry="${dockerRegistry}" \
                                                 --set wso2.deployment.image.repository="wso2am-acp:latest" \
                                                 --set wso2.deployment.image.imagePullSecrets.enabled=true \
@@ -646,6 +647,9 @@ pipeline {
                                             echo "Deploying WSO2 API Manager - Gateway in ${namespace} namespace..."
                                             helm install apim-universal-gw ${helmChartPath}/distributed/gateway \
                                                 --namespace ${namespace} \
+                                                --set kubernetes.ingress.gateway.hostname="gw${pattern.id}.wso2.com" \
+                                                --set kubernetes.ingress.websocket.hostname="websocket${pattern.id}.wso2.com" \
+                                                --set kubernetes.ingress.websub.hostname="websub${pattern.id}.wso2.com" \
                                                 --set wso2.deployment.image.registry="${dockerRegistry}" \
                                                 --set wso2.deployment.image.repository="wso2am-universal-gw:latest" \
                                                 --set wso2.deployment.image.imagePullSecrets.enabled=true \
