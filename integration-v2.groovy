@@ -287,7 +287,7 @@ def installNewman() {
         println "Newman not found. Installing..."
         sh """
             # Install newman globally using npm
-            sudo npm install -g newman
+            npm install -g newman
             
             # Verify newman installation
             newman --version
