@@ -702,6 +702,9 @@ pipeline {
                                             kubectl config use-context ${pattern.directory}
                                         """
 
+                                        echo "Waiting 10 seconds before proceeding with tests..."
+                                        sleep 10
+
                                         sh """
                                             #!/bin/bash
                                             export NVM_DIR="\$HOME/.nvm"
