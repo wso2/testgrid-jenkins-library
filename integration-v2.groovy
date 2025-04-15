@@ -703,8 +703,7 @@ pipeline {
                                         """
 
                                         sh """
-                                            whoami
-                                            sudo su ubuntu
+                                            nvm use 19
                                             export HOST_NAME="${pattern.hostName}"
                                             export PORTAL_HOST="am${index}.wso2.com"
                                             export GATEWAY_HOST="gw${index}.wso2.com"
