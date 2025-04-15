@@ -373,7 +373,7 @@ pipeline {
 
         stage('Build docker images') {
             when {
-                expression { !onlyDestroyResources }
+                expression { onlyDestroyResources }
             }
             steps {
                 script {
