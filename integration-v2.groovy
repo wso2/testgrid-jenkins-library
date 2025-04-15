@@ -602,7 +602,7 @@ pipeline {
                                             echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
                                             helm install apim-acp ${helmChartPath}/distributed/control-plane \
                                                 --namespace ${namespace} \
-                                                --set kubernetes.ingress.controlPlane.hostname="am${pattern.id}.wso2.com"
+                                                --set kubernetes.ingress.controlPlane.hostname="am${index}.wso2.com"
                                                 --set wso2.deployment.image.registry="${dockerRegistry}" \
                                                 --set wso2.deployment.image.repository="wso2am-acp:latest" \
                                                 --set wso2.deployment.image.imagePullSecrets.enabled=true \
@@ -647,9 +647,9 @@ pipeline {
                                             echo "Deploying WSO2 API Manager - Gateway in ${namespace} namespace..."
                                             helm install apim-universal-gw ${helmChartPath}/distributed/gateway \
                                                 --namespace ${namespace} \
-                                                --set kubernetes.ingress.gateway.hostname="gw${pattern.id}.wso2.com" \
-                                                --set kubernetes.ingress.websocket.hostname="websocket${pattern.id}.wso2.com" \
-                                                --set kubernetes.ingress.websub.hostname="websub${pattern.id}.wso2.com" \
+                                                --set kubernetes.ingress.gateway.hostname="gw${index}.wso2.com" \
+                                                --set kubernetes.ingress.websocket.hostname="websocket${index}.wso2.com" \
+                                                --set kubernetes.ingress.websub.hostname="websub${index}.wso2.com" \
                                                 --set wso2.deployment.image.registry="${dockerRegistry}" \
                                                 --set wso2.deployment.image.repository="wso2am-universal-gw:latest" \
                                                 --set wso2.deployment.image.imagePullSecrets.enabled=true \
@@ -672,6 +672,43 @@ pipeline {
                     } catch (Exception e) {
                         println "Deployment failed: ${e}"
                         error "Deployment failed. Please check the logs for more details."
+                    }
+                }
+            }
+        }
+        stage('Run Tests') {
+            steps {
+                script {
+                    try {
+                        withCredentials([
+                            [
+                                $class: 'AmazonWebServicesCredentialsBinding',
+                                credentialsId: awsCred,
+                                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                            ]
+                        ]) {
+                            for (def pattern : deploymentPatterns) {
+                                pattern.dbEngines.eachWithIndex { dbEngine, index ->
+                                    String dbEngineName = dbEngine.engine
+                                    String namespace = "${pattern.id}-${dbEngineName}"
+                                    dir("${apimIntgDirectory}") {
+                                        sh """
+                                            # Change context
+                                            kubectl config use-context ${pattern.directory}
+                                        """
+
+                                        sh """
+                                            export HOST_NAME="${pattern.hostName}"
+                                            export PORTAL_HOST="am${index}.wso2.com"
+                                            export GATEWAY_HOST="gw${index}.wso2.com"
+
+                                            ./main.sh
+                                        """
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
