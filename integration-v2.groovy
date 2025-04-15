@@ -605,7 +605,7 @@ pipeline {
                                             echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
                                             helm install apim-acp ${helmChartPath}/distributed/control-plane \
                                                 --namespace ${namespace} \
-                                                --set kubernetes.ingress.controlPlane.hostname="am${index}.wso2.com"
+                                                --set kubernetes.ingress.controlPlane.hostname="am${index}.wso2.com" \
                                                 --set wso2.deployment.image.registry="${dockerRegistry}" \
                                                 --set wso2.deployment.image.repository="wso2am-acp:latest" \
                                                 --set wso2.deployment.image.imagePullSecrets.enabled=true \
