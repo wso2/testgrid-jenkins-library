@@ -282,11 +282,14 @@ def installDBClients() {
 }
 
 def installNewman() {
-    if (!fileExists('/usr/bin/newman')) {
+    if (!sh(script: "which newman || echo 'not found'", returnStdout: true).trim() == 'not found') {
         println "Newman not found. Installing..."
         sh """
-            sudo apt-get update || echo "Failed to update package list, continuing..."
-            sudo apt-get install -y newman
+            # Install newman globally using npm
+            sudo npm install -g newman
+            
+            # Verify newman installation
+            newman --version
         """
     } else {
         println "Newman is already installed."
