@@ -281,6 +281,18 @@ def installDBClients() {
     }
 }
 
+def installNewman() {
+    if (!fileExists('/usr/bin/newman')) {
+        println "Newman not found. Installing..."
+        sh """
+            sudo apt-get update || echo "Failed to update package list, continuing..."
+            sudo apt-get install -y newman
+        """
+    } else {
+        println "Newman is already installed."
+    }
+}
+
 @NonCPS
 def parseJson(String jsonString) {
     return new groovy.json.JsonSlurper().parseText(jsonString)
@@ -350,6 +362,8 @@ pipeline {
                     installHelm()
                     // Install database client tools
                     installDBClients()
+                    // Install Newman if not already installed
+                    installNewman()
                 }
             }
         }
