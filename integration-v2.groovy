@@ -548,7 +548,7 @@ pipeline {
         }
         stage('Deploy the cluster') {
             when {
-                expression { !onlyDestroyResources }
+                expression { onlyDestroyResources }
             }
             steps {
                 script {
