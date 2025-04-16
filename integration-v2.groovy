@@ -711,8 +711,8 @@ pipeline {
                                             kubectl config use-context ${pattern.directory}
                                         """
 
-                                        echo "Waiting 10 seconds before proceeding with tests..."
-                                        sleep 10
+                                        echo "Waiting 100 seconds before proceeding with tests..."
+                                        sleep 100
 
                                         sh """
                                             #!/bin/bash
