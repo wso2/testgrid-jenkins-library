@@ -46,6 +46,7 @@ String dockerRegistryCredential = params.dockerRegistryCredential
 Boolean onlyDestroyResources = params.onlyDestroyResources
 Boolean destroyResources = params.destroyResources
 Boolean skipTfApply = params.skipTfApply
+Boolean skipDockerBuild = params.skipDockerBuild
 
 // Default values
 def deploymentPatterns = []
@@ -374,7 +375,7 @@ pipeline {
 
         stage('Build docker images') {
             when {
-                expression { !onlyDestroyResources }
+                expression { !onlyDestroyResources && !skipDockerBuild }
             }
             steps {
                 script {
