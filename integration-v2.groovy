@@ -595,7 +595,7 @@ pipeline {
                                             aws s3 cp --quiet s3://${tfS3Bucket}/tools/wso2carbon.jks .
 
                                             # Create jks-secret
-                                            kubectl create secret generic jks-secret --from-file=wso2carbon.jks --from-file=client-truststore.jks -n ${namespace}
+                                            kubectl create secret generic jks-secret --from-file=wso2carbon.jks --from-file=client-truststore.jks -n ${namespace} || echo "Failed to create jks-secret."
                                         """
                                         println "Namespace created: ${namespace}"
 
