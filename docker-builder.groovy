@@ -29,6 +29,7 @@ String s3_bucket = params.s3_bucket
 String docker_registry = params.docker_registry
 String docker_registry_credential = params.docker_registry_credential
 String db_driver_url = params.db_driver_url
+Boolean use_staging = params.use_staging
 
 // Default values
 String dockerDirectory = "docker"
@@ -113,6 +114,12 @@ pipeline {
                         }
                         def statusCode = sh(
                                 script: """
+                                if [ ${use_staging} == true ]; then
+                                    export WSO2_UPDATES_UPDATE_LEVEL_STATE=TESTING
+                                else
+                                    export WSO2_UPDATES_UPDATE_LEVEL_STATE=VERIFYING
+                                fi
+
                                 chmod +x $WSO2_PRODUCT-$WSO2_PRODUCT_VERSION/bin/wso2update_linux
                                 $WSO2_PRODUCT-$WSO2_PRODUCT_VERSION/bin/wso2update_linux version
                                 export UPDATE_LEVEL='$update_level'
