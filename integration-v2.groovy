@@ -591,8 +591,8 @@ pipeline {
                                             # Create a namespace for the deployment
                                             kubectl create namespace ${namespace} || echo "Namespace ${namespace} already exists."
 
-                                            aws s3 cp --quiet s3://apim-testgrid-ksr/tools/client-truststore.jks .
-                                            aws s3 cp --quiet s3://apim-testgrid-ksr/tools/wso2carbon.jks .
+                                            aws s3 cp --quiet s3://${tfS3Bucket}/tools/client-truststore.jks .
+                                            aws s3 cp --quiet s3://${tfS3Bucket}/tools/wso2carbon.jks .
 
                                             # Create jks-secret
                                             kubectl create secret generic jks-secret --from-file=wso2carbon.jks --from-file=client-truststore.jks -n ${namespace}
