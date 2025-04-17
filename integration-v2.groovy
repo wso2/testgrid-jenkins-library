@@ -689,7 +689,7 @@ pipeline {
         }
         stage('Run Tests') {
             when {
-                expression { !onlyDestroyResources && !skipDockerBuild }
+                expression { !onlyDestroyResources }
             }
             steps {
                 script {
