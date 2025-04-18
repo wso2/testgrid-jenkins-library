@@ -583,7 +583,7 @@ pipeline {
 
                                     pattern.dbEngines.eachWithIndex { dbEngine, index ->
                                         String dbEngineName = dbEngine.engine
-                                        String endpoint = pattern.dbEndpoints["${dbEngineName}-${dbEngineList[dbEngineName].version}"]
+                                        def (endpoint, dbPort) = pattern.dbEndpoints["${dbEngineName}-${dbEngineList[dbEngineName].version}"]?.dbEndpoint.tokenize(':')
                                         def namespace = "${pattern.id}-${dbEngineName}"
                                         sh """
                                             # Change context
@@ -623,10 +623,10 @@ pipeline {
                                                 --set wso2.deployment.image.imagePullSecrets.password="${DOCKER_PASSWORD}" \
                                                 --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineName].dbType}" \
                                                 --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineName].dbDriver}" \
-                                                --set wso2.apim.configurations.databases.apim_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/apim_db?useSSL=false" \
+                                                --set wso2.apim.configurations.databases.apim_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:${dbPort}/apim_db?useSSL=false" \
                                                 --set wso2.apim.configurations.databases.apim_db.username="${dbUser}" \
                                                 --set wso2.apim.configurations.databases.apim_db.password="${dbPassword}" \
-                                                --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db?useSSL=false" \
+                                                --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:${dbPort}/shared_db?useSSL=false" \
                                                 --set wso2.apim.configurations.databases.shared_db.username="${dbUser}" \
                                                 --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
                                             
@@ -645,10 +645,10 @@ pipeline {
                                                 --set wso2.deployment.image.imagePullSecrets.password="${DOCKER_PASSWORD}" \
                                                 --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineName].dbType}" \
                                                 --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineName].dbDriver}" \
-                                                --set wso2.apim.configurations.databases.apim_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/apim_db?useSSL=false" \
+                                                --set wso2.apim.configurations.databases.apim_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:${dbPort}/apim_db?useSSL=false" \
                                                 --set wso2.apim.configurations.databases.apim_db.username="${dbUser}" \
                                                 --set wso2.apim.configurations.databases.apim_db.password="${dbPassword}" \
-                                                --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db?useSSL=false" \
+                                                --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:${dbPort}/shared_db?useSSL=false" \
                                                 --set wso2.apim.configurations.databases.shared_db.username="${dbUser}" \
                                                 --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
 
@@ -670,7 +670,7 @@ pipeline {
                                                 --set wso2.deployment.image.imagePullSecrets.password="${DOCKER_PASSWORD}" \
                                                 --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineName].dbType}" \
                                                 --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineName].dbDriver}" \
-                                                --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:3306/shared_db?useSSL=false" \
+                                                --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:${dbPort}/shared_db?useSSL=false" \
                                                 --set wso2.apim.configurations.databases.shared_db.username="${dbUser}" \
                                                 --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
                                             
