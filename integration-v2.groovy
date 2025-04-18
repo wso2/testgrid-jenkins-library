@@ -718,11 +718,6 @@ pipeline {
                                         sleep 100
 
                                         sh """
-                                            #!/bin/bash
-                                            export NVM_DIR="\$HOME/.nvm"
-                                            [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
-                                            nvm use 19 || exit 1
-                                            
                                             export HOST_NAME="${pattern.hostName}"
                                             export PORTAL_HOST="am.wso2.com"
                                             export GATEWAY_HOST="gw.wso2.com"
