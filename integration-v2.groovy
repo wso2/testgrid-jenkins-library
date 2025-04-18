@@ -583,7 +583,7 @@ pipeline {
 
                                     pattern.dbEngines.eachWithIndex { dbEngine, index ->
                                         String dbEngineName = dbEngine.engine
-                                        def (endpoint, dbPort) = pattern.dbEndpoints["${dbEngineName}-${dbEngineList[dbEngineName].version}"]?.dbEndpoint.tokenize(':')
+                                        def (endpoint, dbPort) = pattern.dbEndpoints["${dbEngineName}-${dbEngineList[dbEngineName].version}"]?.tokenize(':')
                                         def namespace = "${pattern.id}-${dbEngineName}"
                                         sh """
                                             # Change context
