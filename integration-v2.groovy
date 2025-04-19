@@ -605,6 +605,8 @@ pipeline {
                                         helm list -n ${namespace} -q | xargs -n1 -I{} helm uninstall {} -n ${namespace} || echo "Failed to delete existing release."
                                         """
 
+                                        sleep 60
+
                                         // Execute DB scripts
                                         executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword, "${pwd}/${apimIntgDirectory}")
 
@@ -714,8 +716,8 @@ pipeline {
                                             kubectl config use-context ${pattern.directory}
                                         """
 
-                                        echo "Waiting 100 seconds before proceeding with tests..."
-                                        sleep 100
+                                        echo "Waiting 60 seconds before proceeding with tests..."
+                                        sleep 60
 
                                         sh """
                                             export HOST_NAME="${pattern.hostName}"
