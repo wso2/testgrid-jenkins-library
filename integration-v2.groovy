@@ -132,7 +132,7 @@ def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String d
 
     try {
         timeout(time: 5, unit: 'MINUTES') {
-            if (dbEngine == "aurora-mysql") {
+            if (dbEngine == "mysql") {
                 // Execute MySQL scripts
                 println "Executing MySQL scripts..."
                 sh """
@@ -143,7 +143,7 @@ def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String d
                     mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -Dshared_db < ${scriptPath}/dbscripts/mysql.sql
                     mysql -h ${dbEndpoint} -u ${dbUser} -p$dbPassword -Dapim_db < ${scriptPath}/dbscripts/apimgt/mysql.sql
                 """
-            } else if (dbEngine == "aurora-postgresql") {
+            } else if (dbEngine == "postgres") {
                 // Execute PostgreSQL scripts
                 println "Executing PostgreSQL scripts..."
                 sh """
