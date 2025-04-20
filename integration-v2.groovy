@@ -761,7 +761,7 @@ pipeline {
                                         # Configure EKS cluster
                                         aws eks --region ${productDeploymentRegion} \
                                         update-kubeconfig --name ${project}-${pattern.id}-${tfEnvironment}-${productDeploymentRegion}-eks \
-                                        --alias ${pattern.directory}
+                                        --alias ${pattern.directory} || echo "Failed to update kubeconfig."
 
                                         kubectl delete -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.4/deploy/static/provider/aws/deploy.yaml || echo "Failed to delete ingress controller."
 
