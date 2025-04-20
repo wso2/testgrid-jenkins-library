@@ -120,6 +120,7 @@ def createDeploymentPatterns(String product, String productVersion,
                 dbEngines: dbEngines,
                 dbEnginesJson: dbEnginesJson,
                 directory: deploymentDirName,
+                eksDesiredSize: 5*dbEngines.size(),
             ]
             deploymentPatterns.add(deploymentPattern)
         }
@@ -453,6 +454,7 @@ pipeline {
                                         -var="region=${productDeploymentRegion}" \
                                         -var='db_engine_options=${pattern.dbEnginesJson}' \
                                         -var="db_password=$dbPassword" \
+                                        -var="eks_default_nodepool_desired_size=${pattern.eksDesiredSize}" \
                                         -no-color
                                 """
                             }
@@ -486,6 +488,7 @@ pipeline {
                                             -var="region=${productDeploymentRegion}" \
                                             -var='db_engine_options=${pattern.dbEnginesJson}' \
                                             -var="db_password=$dbPassword" \
+                                            -var="eks_default_nodepool_desired_size=${pattern.eksDesiredSize}" \
                                             -no-color
                                     """
                                 }
@@ -771,6 +774,7 @@ pipeline {
                                             -var="region=${productDeploymentRegion}" \
                                             -var='db_engine_options=${pattern.dbEnginesJson}' \
                                             -var="db_password=$dbPassword" \
+                                            -var="eks_default_nodepool_desired_size=${pattern.eksDesiredSize}" \
                                             -no-color
                                     """
                                 }
