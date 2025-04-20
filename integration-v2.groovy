@@ -69,14 +69,14 @@ String apimIntgDirectory = "apim-test-integration"
 
 String githubCredentialId = "WSO2_GITHUB_TOKEN"
 def dbEngineList = [
-    "aurora-mysql": [
-        version: "5.7.mysql_aurora.2.11.2",
+    "mysql": [
+        version: "5.7",
         dbDriver: "com.mysql.cj.jdbc.Driver",
         driverUrl: "https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.29/mysql-connector-java-8.0.29.jar",
         dbType: "mysql",
         port: 3306
         ],
-    "aurora-postgresql": [
+    "postgres": [
         version: "16.6",
         dbDriver: "org.postgresql.Driver",
         driverUrl: "https://repo1.maven.org/maven2/org/postgresql/postgresql/42.3.6/postgresql-42.3.6.jar",
@@ -615,7 +615,7 @@ pipeline {
                                             echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
                                             helm install apim-acp ${helmChartPath}/distributed/control-plane \
                                                 --namespace ${namespace} \
-                                                --set kubernetes.ingress.controlPlane.hostname="am.wso2.com" \
+                                                --set kubernetes.ingress.controlPlane.hostname="am${index}.wso2.com" \
                                                 --set wso2.deployment.image.registry="${dockerRegistry}" \
                                                 --set wso2.deployment.image.repository="wso2am-acp:latest" \
                                                 --set wso2.deployment.image.imagePullSecrets.enabled=true \
@@ -660,7 +660,7 @@ pipeline {
                                             echo "Deploying WSO2 API Manager - Gateway in ${namespace} namespace..."
                                             helm install apim-universal-gw ${helmChartPath}/distributed/gateway \
                                                 --namespace ${namespace} \
-                                                --set kubernetes.ingress.gateway.hostname="gw.wso2.com" \
+                                                --set kubernetes.ingress.gateway.hostname="gw${index}.wso2.com" \
                                                 --set kubernetes.ingress.websocket.hostname="websocket.wso2.com" \
                                                 --set kubernetes.ingress.websub.hostname="websub.wso2.com" \
                                                 --set wso2.deployment.image.registry="${dockerRegistry}" \
@@ -719,8 +719,8 @@ pipeline {
 
                                         sh """
                                             export HOST_NAME="${pattern.hostName}"
-                                            export PORTAL_HOST="am.wso2.com"
-                                            export GATEWAY_HOST="gw.wso2.com"
+                                            export PORTAL_HOST="am${index}.wso2.com"
+                                            export GATEWAY_HOST="gw${index}.wso2.com"
                                             export kubernetes_namespace="${namespace}"
 
                                             ./main.sh
