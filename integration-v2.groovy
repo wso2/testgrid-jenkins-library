@@ -96,8 +96,6 @@ def createDeploymentPatterns(String product, String productVersion,
         for (String jdk : jdkList) {
             def dbEngines = []
             for (String db : databaseList) {
-                def equal = (db == "aurora-postgresql")
-                println "DB engine: ${db}, equal: ${equal}"
                 def dbDetails = dbEngineList[db]
                 if (dbDetails == null) {
                     println "DB engine version not found for ${db}. Skipping..."
