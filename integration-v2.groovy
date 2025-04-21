@@ -392,13 +392,13 @@ pipeline {
                             def dbDriverUrl = dbEngineList[db].driverUrl
                             
                             parallelBuilds["Build ${currentOs} wso2am-acp image"] = {
-                                buildDockerImage('wso2am-acp', '4.5.0', currentOs, '-1', 'latest', dbDriverUrl, dockerRegistry, dockerRegistryCredential, useStaging)
+                                buildDockerImage('wso2am-acp', '4.5.0', currentOs, '-1', "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryCredential, useStaging)
                             }
                             parallelBuilds["Build ${currentOs} wso2am-tm image"] = {
-                                buildDockerImage('wso2am-tm', '4.5.0', currentOs, '-1', 'latest', dbDriverUrl, dockerRegistry, dockerRegistryCredential, useStaging)
+                                buildDockerImage('wso2am-tm', '4.5.0', currentOs, '-1', "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryCredential, useStaging)
                             }
                             parallelBuilds["Build ${currentOs} wso2am-universal-gw image"] = {
-                                buildDockerImage('wso2am-universal-gw', '4.5.0', currentOs, '-1', 'latest', dbDriverUrl, dockerRegistry, dockerRegistryCredential, useStaging)
+                                buildDockerImage('wso2am-universal-gw', '4.5.0', currentOs, '-1', "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryCredential, useStaging)
                             }
                         }
                     }
@@ -623,7 +623,7 @@ pipeline {
                                                 --namespace ${namespace} \
                                                 --set kubernetes.ingress.controlPlane.hostname="am.wso2.com" \
                                                 --set wso2.deployment.image.registry="${dockerRegistry}" \
-                                                --set wso2.deployment.image.repository="wso2am-acp:latest" \
+                                                --set wso2.deployment.image.repository="wso2am-acp:${dbEngineName}-latest" \
                                                 --set wso2.deployment.image.imagePullSecrets.enabled=true \
                                                 --set wso2.deployment.image.imagePullSecrets.username="${DOCKER_USERNAME}" \
                                                 --set wso2.deployment.image.imagePullSecrets.password="${DOCKER_PASSWORD}" \
@@ -645,7 +645,7 @@ pipeline {
                                             helm install apim-tm ${helmChartPath}/distributed/traffic-manager \
                                                 --namespace ${namespace} \
                                                 --set wso2.deployment.image.registry="${dockerRegistry}" \
-                                                --set wso2.deployment.image.repository="wso2am-tm:latest" \
+                                                --set wso2.deployment.image.repository="wso2am-tm:${dbEngineName}-latest" \
                                                 --set wso2.deployment.image.imagePullSecrets.enabled=true \
                                                 --set wso2.deployment.image.imagePullSecrets.username="${DOCKER_USERNAME}" \
                                                 --set wso2.deployment.image.imagePullSecrets.password="${DOCKER_PASSWORD}" \
@@ -670,7 +670,7 @@ pipeline {
                                                 --set kubernetes.ingress.websocket.hostname="websocket.wso2.com" \
                                                 --set kubernetes.ingress.websub.hostname="websub.wso2.com" \
                                                 --set wso2.deployment.image.registry="${dockerRegistry}" \
-                                                --set wso2.deployment.image.repository="wso2am-universal-gw:latest" \
+                                                --set wso2.deployment.image.repository="wso2am-universal-gw:${dbEngineName}-latest" \
                                                 --set wso2.deployment.image.imagePullSecrets.enabled=true \
                                                 --set wso2.deployment.image.imagePullSecrets.username="${DOCKER_USERNAME}" \
                                                 --set wso2.deployment.image.imagePullSecrets.password="${DOCKER_PASSWORD}" \
