@@ -163,7 +163,9 @@ def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String d
     }
 }
 
-def buildDockerImage(String product, String productVersion, String os, String updateLevel, String tag, String dbDriverUrl, String dockerRegistry, String dockerRegistryCredential) {
+def buildDockerImage(String product, String productVersion, String os, String updateLevel, String tag, String dbDriverUrl, 
+    String dockerRegistry, String dockerRegistryCredential, Boolean useStaging) {
+    
     println "Building Docker image for ${product} ${productVersion} on ${os} with update level ${updateLevel} and tag ${tag}..."
     try {
         // Define parameters for the downstream job
@@ -176,6 +178,7 @@ def buildDockerImage(String product, String productVersion, String os, String up
             [$class: 'StringParameterValue', name: 'docker_registry', value: dockerRegistry],
             [$class: 'StringParameterValue', name: 'docker_registry_credential', value: dockerRegistryCredential],
             [$class: 'StringParameterValue', name: 'db_driver_url', value: dbDriverUrl],
+            [$class: 'BooleanParameterValue', name: 'use_staging', value: useStaging],
         ]
         
         // Invoke the downstream build job
@@ -389,13 +392,13 @@ pipeline {
                             def dbDriverUrl = dbEngineList[db].driverUrl
                             
                             parallelBuilds["Build ${currentOs} wso2am-acp image"] = {
-                                buildDockerImage('wso2am-acp', '4.5.0', currentOs, '-1', 'latest', dbDriverUrl, dockerRegistry, dockerRegistryCredential)
+                                buildDockerImage('wso2am-acp', '4.5.0', currentOs, '-1', 'latest', dbDriverUrl, dockerRegistry, dockerRegistryCredential, useStaging)
                             }
                             parallelBuilds["Build ${currentOs} wso2am-tm image"] = {
-                                buildDockerImage('wso2am-tm', '4.5.0', currentOs, '-1', 'latest', dbDriverUrl, dockerRegistry, dockerRegistryCredential)
+                                buildDockerImage('wso2am-tm', '4.5.0', currentOs, '-1', 'latest', dbDriverUrl, dockerRegistry, dockerRegistryCredential, useStaging)
                             }
                             parallelBuilds["Build ${currentOs} wso2am-universal-gw image"] = {
-                                buildDockerImage('wso2am-universal-gw', '4.5.0', currentOs, '-1', 'latest', dbDriverUrl, dockerRegistry, dockerRegistryCredential)
+                                buildDockerImage('wso2am-universal-gw', '4.5.0', currentOs, '-1', 'latest', dbDriverUrl, dockerRegistry, dockerRegistryCredential, useStaging)
                             }
                         }
                     }
