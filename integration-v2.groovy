@@ -742,20 +742,21 @@ pipeline {
                 }
             }
         }
-        stage('Destroy Cloud Resources') {
-            when {
-                expression { destroyResources || onlyDestroyResources }
-            }
-            steps {
-                script {
-                    try {
+    }
+
+    post {
+        always {
+            script {
+                try {
+                    println "Cleaning up the workspace..."
+                    if (destroyResources || onlyDestroyResources) {
                         withCredentials([[
                             $class: 'AmazonWebServicesCredentialsBinding',
                             credentialsId: awsCred,
                             accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                             secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                         ]]) { 
-                            println "Job is completed... Deleting the workspace directories!"
+                            println "Destroying cloud resources!"
                             // Destroy the created resources
                             for (def pattern : deploymentPatterns) {
                                 def deploymentDirName = pattern.directory
@@ -783,23 +784,12 @@ pipeline {
                                 }
                             }
                         }
-                    } catch (Exception e) {
-                        println "Resource destruction failed: ${e}"
-                        error "Resource destruction failed. Please check the logs for more details."
                     }
-                }
-            }
-        }
-    }
-
-    post {
-        always {
-            script {
-                try {
-                    println "Cleaning up the workspace..."
-                    cleanWs()
                 } catch (Exception e) {
                     echo "Workspace cleanup failed: ${e.message}"
+                } finally {
+                    // Clean up the workspace
+                    cleanWs()
                 }
             }
         }
