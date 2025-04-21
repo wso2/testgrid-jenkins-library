@@ -87,7 +87,7 @@ def dbEngineList = [
 
 // Create deployment patterns for all combinations of OS, JDK, and database
 @NonCPS
-def createDeploymentPatterns(String product, String productVersion, 
+def createDeploymentPatterns(String project, String product, String productVersion, 
                                 String[] osList, String[] jdkList, String[] databaseList, def dbEngineList, def deploymentPatterns) {
     println "Creating the deployment patterns by using infrastructure combination!"
     
@@ -107,7 +107,7 @@ def createDeploymentPatterns(String product, String productVersion,
                     port: dbDetails.port,
                 ])
             }
-            String deploymentDirName = "${product}-${productVersion}-${os}-${jdk}"
+            String deploymentDirName = "${project}-${product}-${productVersion}-${os}-${jdk}"
             // String dbEnginesJson = dbEngines.collect { "{ \"engine\": \"${it.engine}\", \"version\": \"${it.version}\" }" }.join(", ")
             // dbEnginesJson = "[${dbEnginesJson}]"
             def dbEnginesJson = new groovy.json.JsonBuilder(dbEngines).toString()
@@ -343,7 +343,7 @@ pipeline {
                     println "JDK List: ${jdkList}"
                     println "OS List: ${osList}"
                     println "Database List: ${databaseList}"
-                    createDeploymentPatterns(product, productVersion, osList, jdkList, databaseList, dbEngineList, deploymentPatterns)
+                    createDeploymentPatterns(project, product, productVersion, osList, jdkList, databaseList, dbEngineList, deploymentPatterns)
 
                     println "Deployment patterns created: ${deploymentPatterns}"
 
