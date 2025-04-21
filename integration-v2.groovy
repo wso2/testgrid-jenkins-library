@@ -697,7 +697,7 @@ pipeline {
         }
         stage('Run Tests') {
             when {
-                expression { !onlyDestroyResources }
+                expression { onlyDestroyResources }
             }
             steps {
                 script {
