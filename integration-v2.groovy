@@ -565,7 +565,7 @@ pipeline {
                     // Add each deployment as a parallel task
                     for (def pattern : deploymentPatterns) {
                         def patternDir = pattern.directory
-                        
+                        def index = 0
                         for (def dbEngine : pattern.dbEngines) {
                             def dbEngineName = dbEngine.engine
                             
@@ -638,7 +638,7 @@ pipeline {
                                                     echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
                                                     helm install apim-acp ${helmChartPath}/distributed/control-plane \
                                                         --namespace ${namespace} \
-                                                        --set kubernetes.ingress.controlPlane.hostname="am.wso2.com" \
+                                                        --set kubernetes.ingress.controlPlane.hostname="am${index}.wso2.com" \
                                                         --set wso2.deployment.image.registry="${dockerRegistry}" \
                                                         --set wso2.deployment.image.repository="wso2am-acp:${dbEngineNameSafe}-latest" \
                                                         --set wso2.deployment.image.imagePullSecrets.enabled=true \
@@ -683,9 +683,9 @@ pipeline {
                                                     echo "Deploying WSO2 API Manager - Gateway in ${namespace} namespace..."
                                                     helm install apim-universal-gw ${helmChartPath}/distributed/gateway \
                                                         --namespace ${namespace} \
-                                                        --set kubernetes.ingress.gateway.hostname="gw.wso2.com" \
-                                                        --set kubernetes.ingress.websocket.hostname="websocket.wso2.com" \
-                                                        --set kubernetes.ingress.websub.hostname="websub.wso2.com" \
+                                                        --set kubernetes.ingress.gateway.hostname="gw${index}.wso2.com" \
+                                                        --set kubernetes.ingress.websocket.hostname="websocket${index}.wso2.com" \
+                                                        --set kubernetes.ingress.websub.hostname="websub${index}.wso2.com" \
                                                         --set wso2.deployment.image.registry="${dockerRegistry}" \
                                                         --set wso2.deployment.image.repository="wso2am-universal-gw:${dbEngineNameSafe}-latest" \
                                                         --set wso2.deployment.image.imagePullSecrets.enabled=true \
@@ -709,6 +709,7 @@ pipeline {
                                     }
                                 }
                             }
+                            index++
                         }
                     }
                     
