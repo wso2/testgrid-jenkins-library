@@ -765,8 +765,8 @@ pipeline {
 
                                                 sh """
                                                     export HOST_NAME="${patternSafe.hostName}"
-                                                    export PORTAL_HOST="am.wso2.com"
-                                                    export GATEWAY_HOST="gw.wso2.com"
+                                                    export PORTAL_HOST="am-${dbEngineNameSafe}.wso2.com"
+                                                    export GATEWAY_HOST="gw-${dbEngineNameSafe}.wso2.com"
                                                     export kubernetes_namespace="${namespace}"
 
                                                     ./main.sh
