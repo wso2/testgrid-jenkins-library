@@ -502,6 +502,7 @@ pipeline {
                 }
             }
         }
+
         stage('Configure EKS cluster') {
             when {
                 expression { !onlyDestroyResources }
@@ -549,150 +550,171 @@ pipeline {
                 }
             }                        
         }
-        stage('Deploy the cluster') {
+
+        stage('Prepare Deployment') {
             when {
                 expression { !onlyDestroyResources }
             }
             steps {
                 script {
-                    try {
-                        withCredentials([
-                            [
-                                $class: 'AmazonWebServicesCredentialsBinding',
-                                credentialsId: awsCred,
-                                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                            ],
-                            usernamePassword(credentialsId: dockerRegistryCredential, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')
-                        ]) {
-                            String pwd = sh(script: "pwd", returnStdout: true).trim()
-                            // Login to Docker registry
-                            sh """
-                                echo ${DOCKER_PASSWORD} | sudo docker login ${dockerRegistry} --username ${DOCKER_USERNAME} --password-stdin
-                            """
+                    // Create dynamic stages for each pattern and database
+                    for (def pattern : deploymentPatterns) {
+                        def patternDir = pattern.directory
+                        
+                        for (def dbEngine : pattern.dbEngines) {
+                            def dbEngineName = dbEngine.engine
+                            def stageId = "${pattern.id}-${dbEngineName}"
+                            
+                            // We need to use variables that are safe for the closure
+                            def patternDirSafe = patternDir
+                            def dbEngineNameSafe = dbEngineName
+                            def patternSafe = pattern
+                            
+                            // Add a stage for this pattern/db combination
+                            stage("Deploy ${patternDirSafe} with ${dbEngineNameSafe}") {
+                                when {
+                                    expression { !onlyDestroyResources }
+                                }
+                                steps {
+                                    script {
+                                        try {
+                                            withCredentials([
+                                                [
+                                                    $class: 'AmazonWebServicesCredentialsBinding',
+                                                    credentialsId: awsCred,
+                                                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                                                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                                                ],
+                                                usernamePassword(credentialsId: dockerRegistryCredential, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')
+                                            ]) {
+                                                String pwd = sh(script: "pwd", returnStdout: true).trim()
+                                                // Login to Docker registry
+                                                sh """
+                                                    echo ${DOCKER_PASSWORD} | sudo docker login ${dockerRegistry} --username ${DOCKER_USERNAME} --password-stdin
+                                                """
 
-                            for (def pattern : deploymentPatterns) {
-                                def deploymentDirName = pattern.directory
-                                dir("${deploymentDirName}") {
-                                    def dbWriterEndpointsJson = sh(script: "terraform output -json | jq -r '.database_writer_endpoints.value'", returnStdout: true).trim()
-                                    def dbWriterEndpoints = new groovy.json.JsonSlurperClassic().parseText(dbWriterEndpointsJson)
-                                    if (!dbWriterEndpoints) {
-                                        error "DB Writer Endpoints are null or empty for ${deploymentDirName}. Please check the Terraform output."
-                                    }
-                                    println "DB Writer Endpoints: ${dbWriterEndpoints}"
-                                    // Convert LazyMap to HashMap
-                                    pattern.dbEndpoints = new HashMap<>(dbWriterEndpoints)
+                                                dir("${patternDirSafe}") {
+                                                    def dbWriterEndpointsJson = sh(script: "terraform output -json | jq -r '.database_writer_endpoints.value'", returnStdout: true).trim()
+                                                    def dbWriterEndpoints = new groovy.json.JsonSlurperClassic().parseText(dbWriterEndpointsJson)
+                                                    if (!dbWriterEndpoints) {
+                                                        error "DB Writer Endpoints are null or empty for ${patternDirSafe}. Please check the Terraform output."
+                                                    }
+                                                    println "DB Writer Endpoints: ${dbWriterEndpoints}"
+                                                    // Convert LazyMap to HashMap
+                                                    patternSafe.dbEndpoints = new HashMap<>(dbWriterEndpoints)
 
-                                    pattern.dbEngines.eachWithIndex { dbEngine, index ->
-                                        String dbEngineName = dbEngine.engine
-                                        def (endpoint, dbPort) = pattern.dbEndpoints["${dbEngineName}-${dbEngineList[dbEngineName].version}"]?.tokenize(':')
-                                        def namespace = "${pattern.id}-${dbEngineName}"
-                                        sh """
-                                            # Change context
-                                            kubectl config use-context ${pattern.directory}
+                                                    def (endpoint, dbPort) = patternSafe.dbEndpoints["${dbEngineNameSafe}-${dbEngineList[dbEngineNameSafe].version}"]?.tokenize(':')
+                                                    def namespace = "${patternSafe.id}-${dbEngineNameSafe}"
+                                                    sh """
+                                                        # Change context
+                                                        kubectl config use-context ${patternDirSafe}
 
-                                            # Create a namespace for the deployment
-                                            kubectl create namespace ${namespace} || echo "Namespace ${namespace} already exists."
+                                                        # Create a namespace for the deployment
+                                                        kubectl create namespace ${namespace} || echo "Namespace ${namespace} already exists."
 
-                                            aws s3 cp --quiet s3://${tfS3Bucket}/tools/client-truststore.jks .
-                                            aws s3 cp --quiet s3://${tfS3Bucket}/tools/wso2carbon.jks .
+                                                        aws s3 cp --quiet s3://${tfS3Bucket}/tools/client-truststore.jks .
+                                                        aws s3 cp --quiet s3://${tfS3Bucket}/tools/wso2carbon.jks .
 
-                                            # Create jks-secret
-                                            kubectl create secret generic jks-secret --from-file=wso2carbon.jks --from-file=client-truststore.jks -n ${namespace} || echo "Failed to create jks-secret."
-                                        """
-                                        println "Namespace created: ${namespace}"
+                                                        # Create jks-secret
+                                                        kubectl create secret generic jks-secret --from-file=wso2carbon.jks --from-file=client-truststore.jks -n ${namespace} || echo "Failed to create jks-secret."
+                                                    """
+                                                    println "Namespace created: ${namespace}"
 
-                                        sh """
-                                        # Delete existing release if it exists
-                                        helm list -n ${namespace} -q | xargs -n1 -I{} helm uninstall {} -n ${namespace} || echo "Failed to delete existing release."
-                                        """
+                                                    sh """
+                                                    # Delete existing release if it exists
+                                                    helm list -n ${namespace} -q | xargs -n1 -I{} helm uninstall {} -n ${namespace} || echo "Failed to delete existing release."
+                                                    """
 
-                                        sleep 60
+                                                    sleep 60
 
-                                        // Execute DB scripts
-                                        executeDBScripts(dbEngineName, endpoint, dbUser, dbPassword, "${pwd}/${apimIntgDirectory}")
+                                                    // Execute DB scripts
+                                                    executeDBScripts(dbEngineNameSafe, endpoint, dbUser, dbPassword, "${pwd}/${apimIntgDirectory}")
 
-                                        String helmChartPath = "${pwd}/${helmDirectory}"
-                                        // Install the product using Helm
-                                        sh """
-                                            # Deploy wso2am-acp
-                                            echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
-                                            helm install apim-acp ${helmChartPath}/distributed/control-plane \
-                                                --namespace ${namespace} \
-                                                --set kubernetes.ingress.controlPlane.hostname="am.wso2.com" \
-                                                --set wso2.deployment.image.registry="${dockerRegistry}" \
-                                                --set wso2.deployment.image.repository="wso2am-acp:${dbEngineName}-latest" \
-                                                --set wso2.deployment.image.imagePullSecrets.enabled=true \
-                                                --set wso2.deployment.image.imagePullSecrets.username="${DOCKER_USERNAME}" \
-                                                --set wso2.deployment.image.imagePullSecrets.password="${DOCKER_PASSWORD}" \
-                                                --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineName].dbType}" \
-                                                --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineName].dbDriver}" \
-                                                --set wso2.apim.configurations.databases.apim_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:${dbPort}/apim_db?useSSL=false" \
-                                                --set wso2.apim.configurations.databases.apim_db.username="${dbUser}" \
-                                                --set wso2.apim.configurations.databases.apim_db.password="${dbPassword}" \
-                                                --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:${dbPort}/shared_db?useSSL=false" \
-                                                --set wso2.apim.configurations.databases.shared_db.username="${dbUser}" \
-                                                --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
-                                            
-                                            # Wait for the deployment to be ready
-                                            kubectl wait --for=condition=available --timeout=400s deployment/apim-acp-wso2am-acp-deployment-1 \
-                                                -n ${namespace} || echo "Deployment apim-acp is not ready within the expected time limit."
+                                                    String helmChartPath = "${pwd}/${helmDirectory}"
+                                                    // Install the product using Helm
+                                                    sh """
+                                                        # Deploy wso2am-acp
+                                                        echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
+                                                        helm install apim-acp ${helmChartPath}/distributed/control-plane \
+                                                            --namespace ${namespace} \
+                                                            --set kubernetes.ingress.controlPlane.hostname="am.wso2.com" \
+                                                            --set wso2.deployment.image.registry="${dockerRegistry}" \
+                                                            --set wso2.deployment.image.repository="wso2am-acp:${dbEngineNameSafe}-latest" \
+                                                            --set wso2.deployment.image.imagePullSecrets.enabled=true \
+                                                            --set wso2.deployment.image.imagePullSecrets.username="${DOCKER_USERNAME}" \
+                                                            --set wso2.deployment.image.imagePullSecrets.password="${DOCKER_PASSWORD}" \
+                                                            --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineNameSafe].dbType}" \
+                                                            --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineNameSafe].dbDriver}" \
+                                                            --set wso2.apim.configurations.databases.apim_db.url="jdbc:${dbEngineList[dbEngineNameSafe].dbType}://${endpoint}:${dbPort}/apim_db?useSSL=false" \
+                                                            --set wso2.apim.configurations.databases.apim_db.username="${dbUser}" \
+                                                            --set wso2.apim.configurations.databases.apim_db.password="${dbPassword}" \
+                                                            --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineNameSafe].dbType}://${endpoint}:${dbPort}/shared_db?useSSL=false" \
+                                                            --set wso2.apim.configurations.databases.shared_db.username="${dbUser}" \
+                                                            --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
+                                                        
+                                                        # Wait for the deployment to be ready
+                                                        kubectl wait --for=condition=available --timeout=400s deployment/apim-acp-wso2am-acp-deployment-1 \
+                                                            -n ${namespace} || echo "Deployment apim-acp is not ready within the expected time limit."
 
-                                            # Deploy wso2am-tm
-                                            echo "Deploying WSO2 API Manager - Traffic Manager in ${namespace} namespace..."
-                                            helm install apim-tm ${helmChartPath}/distributed/traffic-manager \
-                                                --namespace ${namespace} \
-                                                --set wso2.deployment.image.registry="${dockerRegistry}" \
-                                                --set wso2.deployment.image.repository="wso2am-tm:${dbEngineName}-latest" \
-                                                --set wso2.deployment.image.imagePullSecrets.enabled=true \
-                                                --set wso2.deployment.image.imagePullSecrets.username="${DOCKER_USERNAME}" \
-                                                --set wso2.deployment.image.imagePullSecrets.password="${DOCKER_PASSWORD}" \
-                                                --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineName].dbType}" \
-                                                --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineName].dbDriver}" \
-                                                --set wso2.apim.configurations.databases.apim_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:${dbPort}/apim_db?useSSL=false" \
-                                                --set wso2.apim.configurations.databases.apim_db.username="${dbUser}" \
-                                                --set wso2.apim.configurations.databases.apim_db.password="${dbPassword}" \
-                                                --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:${dbPort}/shared_db?useSSL=false" \
-                                                --set wso2.apim.configurations.databases.shared_db.username="${dbUser}" \
-                                                --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
+                                                        # Deploy wso2am-tm
+                                                        echo "Deploying WSO2 API Manager - Traffic Manager in ${namespace} namespace..."
+                                                        helm install apim-tm ${helmChartPath}/distributed/traffic-manager \
+                                                            --namespace ${namespace} \
+                                                            --set wso2.deployment.image.registry="${dockerRegistry}" \
+                                                            --set wso2.deployment.image.repository="wso2am-tm:${dbEngineNameSafe}-latest" \
+                                                            --set wso2.deployment.image.imagePullSecrets.enabled=true \
+                                                            --set wso2.deployment.image.imagePullSecrets.username="${DOCKER_USERNAME}" \
+                                                            --set wso2.deployment.image.imagePullSecrets.password="${DOCKER_PASSWORD}" \
+                                                            --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineNameSafe].dbType}" \
+                                                            --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineNameSafe].dbDriver}" \
+                                                            --set wso2.apim.configurations.databases.apim_db.url="jdbc:${dbEngineList[dbEngineNameSafe].dbType}://${endpoint}:${dbPort}/apim_db?useSSL=false" \
+                                                            --set wso2.apim.configurations.databases.apim_db.username="${dbUser}" \
+                                                            --set wso2.apim.configurations.databases.apim_db.password="${dbPassword}" \
+                                                            --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineNameSafe].dbType}://${endpoint}:${dbPort}/shared_db?useSSL=false" \
+                                                            --set wso2.apim.configurations.databases.shared_db.username="${dbUser}" \
+                                                            --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
 
-                                            # Wait for the deployment to be ready
-                                            kubectl wait --for=condition=available --timeout=400s deployment/apim-tm-wso2am-tm-deployment-1 \
-                                            -n ${namespace} || echo "Deployment apim-tm is not ready within the expected time limit."
+                                                        # Wait for the deployment to be ready
+                                                        kubectl wait --for=condition=available --timeout=400s deployment/apim-tm-wso2am-tm-deployment-1 \
+                                                        -n ${namespace} || echo "Deployment apim-tm is not ready within the expected time limit."
 
-                                            # Deploy wso2am-gw
-                                            echo "Deploying WSO2 API Manager - Gateway in ${namespace} namespace..."
-                                            helm install apim-universal-gw ${helmChartPath}/distributed/gateway \
-                                                --namespace ${namespace} \
-                                                --set kubernetes.ingress.gateway.hostname="gw.wso2.com" \
-                                                --set kubernetes.ingress.websocket.hostname="websocket.wso2.com" \
-                                                --set kubernetes.ingress.websub.hostname="websub.wso2.com" \
-                                                --set wso2.deployment.image.registry="${dockerRegistry}" \
-                                                --set wso2.deployment.image.repository="wso2am-universal-gw:${dbEngineName}-latest" \
-                                                --set wso2.deployment.image.imagePullSecrets.enabled=true \
-                                                --set wso2.deployment.image.imagePullSecrets.username="${DOCKER_USERNAME}" \
-                                                --set wso2.deployment.image.imagePullSecrets.password="${DOCKER_PASSWORD}" \
-                                                --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineName].dbType}" \
-                                                --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineName].dbDriver}" \
-                                                --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineName].dbType}://${endpoint}:${dbPort}/shared_db?useSSL=false" \
-                                                --set wso2.apim.configurations.databases.shared_db.username="${dbUser}" \
-                                                --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
-                                            
-                                            # Wait for the deployment to be ready
-                                            kubectl wait --for=condition=ready --timeout=300s pod -l deployment=apim-universal-gw-wso2am-universal-gw \
-                                            -n ${namespace} || echo "Pods with label deployment=apim-universal-gw-wso2am-universal-gw-deployment are not ready within the expected time limit."
-                                        """
+                                                        # Deploy wso2am-gw
+                                                        echo "Deploying WSO2 API Manager - Gateway in ${namespace} namespace..."
+                                                        helm install apim-universal-gw ${helmChartPath}/distributed/gateway \
+                                                            --namespace ${namespace} \
+                                                            --set kubernetes.ingress.gateway.hostname="gw.wso2.com" \
+                                                            --set kubernetes.ingress.websocket.hostname="websocket.wso2.com" \
+                                                            --set kubernetes.ingress.websub.hostname="websub.wso2.com" \
+                                                            --set wso2.deployment.image.registry="${dockerRegistry}" \
+                                                            --set wso2.deployment.image.repository="wso2am-universal-gw:${dbEngineNameSafe}-latest" \
+                                                            --set wso2.deployment.image.imagePullSecrets.enabled=true \
+                                                            --set wso2.deployment.image.imagePullSecrets.username="${DOCKER_USERNAME}" \
+                                                            --set wso2.deployment.image.imagePullSecrets.password="${DOCKER_PASSWORD}" \
+                                                            --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineNameSafe].dbType}" \
+                                                            --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineNameSafe].dbDriver}" \
+                                                            --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineNameSafe].dbType}://${endpoint}:${dbPort}/shared_db?useSSL=false" \
+                                                            --set wso2.apim.configurations.databases.shared_db.username="${dbUser}" \
+                                                            --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
+                                                        
+                                                        # Wait for the deployment to be ready
+                                                        kubectl wait --for=condition=ready --timeout=300s pod -l deployment=apim-universal-gw-wso2am-universal-gw \
+                                                        -n ${namespace} || echo "Pods with label deployment=apim-universal-gw-wso2am-universal-gw-deployment are not ready within the expected time limit."
+                                                    """
+                                                }
+                                            }
+                                        } catch (Exception e) {
+                                            println "Deployment failed for ${patternDirSafe}-${dbEngineNameSafe}: ${e}"
+                                            error "Deployment failed for ${patternDirSafe}-${dbEngineNameSafe}. Please check the logs for more details."
+                                        }
                                     }
                                 }
-                            }                     
+                            }
                         }
-                    } catch (Exception e) {
-                        println "Deployment failed: ${e}"
-                        error "Deployment failed. Please check the logs for more details."
                     }
                 }
             }
         }
+
         stage('Run Tests') {
             when {
                 expression { !onlyDestroyResources }
