@@ -637,10 +637,10 @@ pipeline {
                                                     echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
                                                     helm install apim-acp ${helmChartPath}/distributed/control-plane \
                                                         --namespace ${namespace} \
-                                                        --set kubernetes.ingress.controlPlane.hostname="am-${dbEngineNameSafe}.wso2.com" \
-                                                        --set 'wso2.apim.configurations.gateway.environments[0].httpHostname=gw-${dbEngineNameSafe}.wso2.com' \
-                                                        --set 'wso2.apim.configurations.gateway.environments[0].wsHostname=websocket-${dbEngineNameSafe}.wso2.com' \
-                                                        --set 'wso2.apim.configurations.gateway.environments[0].websubHostname=websub-${dbEngineNameSafe}.wso2.com' \
+                                                        --set 'kubernetes.ingress.controlPlane.hostname="am-'${dbEngineNameSafe}'.wso2.com"' \
+                                                        --set 'wso2.apim.configurations.gateway.environments[0].httpHostname="gw-'${dbEngineNameSafe}'.wso2.com"' \
+                                                        --set 'wso2.apim.configurations.gateway.environments[0].wsHostname="websocket-'${dbEngineNameSafe}'.wso2.com"' \
+                                                        --set 'wso2.apim.configurations.gateway.environments[0].websubHostname="websub-'${dbEngineNameSafe}'.wso2.com"' \
                                                         --set wso2.deployment.image.registry="${dockerRegistry}" \
                                                         --set wso2.deployment.image.repository="wso2am-acp:${dbEngineNameSafe}-latest" \
                                                         --set wso2.deployment.image.imagePullSecrets.enabled=true \
