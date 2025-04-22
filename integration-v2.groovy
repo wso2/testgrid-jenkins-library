@@ -715,49 +715,69 @@ pipeline {
             }
         }
 
-        stage('Run Tests') {
+        stage('Prepare Tests') {
             when {
                 expression { !onlyDestroyResources }
             }
             steps {
                 script {
-                    try {
-                        withCredentials([
-                            [
-                                $class: 'AmazonWebServicesCredentialsBinding',
-                                credentialsId: awsCred,
-                                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                            ]
-                        ]) {
-                            for (def pattern : deploymentPatterns) {
-                                pattern.dbEngines.eachWithIndex { dbEngine, index ->
-                                    String dbEngineName = dbEngine.engine
-                                    String namespace = "${pattern.id}-${dbEngineName}"
-                                    dir("${apimIntgDirectory}") {
-                                        sh """
-                                            # Change context
-                                            kubectl config use-context ${pattern.directory}
-                                        """
+                    // Create dynamic stages for each pattern and database
+                    for (def pattern : deploymentPatterns) {
+                        def patternDir = pattern.directory
+                        
+                        for (def dbEngine : pattern.dbEngines) {
+                            def dbEngineName = dbEngine.engine
+                            def stageId = "${pattern.id}-${dbEngineName}"
+                            
+                            // We need to use variables that are safe for the closure
+                            def patternDirSafe = patternDir
+                            def dbEngineNameSafe = dbEngineName
+                            def patternSafe = pattern
+                            
+                            // Add a stage for testing this pattern/db combination
+                            stage("Test ${patternDirSafe} with ${dbEngineNameSafe}") {
+                                when {
+                                    expression { !onlyDestroyResources }
+                                }
+                                steps {
+                                    script {
+                                        try {
+                                            withCredentials([
+                                                [
+                                                    $class: 'AmazonWebServicesCredentialsBinding',
+                                                    credentialsId: awsCred,
+                                                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                                                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                                                ]
+                                            ]) {
+                                                String namespace = "${patternSafe.id}-${dbEngineNameSafe}"
+                                                dir("${apimIntgDirectory}") {
+                                                    sh """
+                                                        # Change context
+                                                        kubectl config use-context ${patternDirSafe}
+                                                    """
 
-                                        echo "Waiting 60 seconds before proceeding with tests..."
-                                        sleep 60
+                                                    echo "Waiting 60 seconds before proceeding with tests for ${patternDirSafe} with ${dbEngineNameSafe}..."
+                                                    sleep 60
 
-                                        sh """
-                                            export HOST_NAME="${pattern.hostName}"
-                                            export PORTAL_HOST="am.wso2.com"
-                                            export GATEWAY_HOST="gw.wso2.com"
-                                            export kubernetes_namespace="${namespace}"
+                                                    sh """
+                                                        export HOST_NAME="${patternSafe.hostName}"
+                                                        export PORTAL_HOST="am.wso2.com"
+                                                        export GATEWAY_HOST="gw.wso2.com"
+                                                        export kubernetes_namespace="${namespace}"
 
-                                            ./main.sh
-                                        """
+                                                        ./main.sh
+                                                    """
+                                                }
+                                            }
+                                        } catch (Exception e) {
+                                            println "Test execution failed for ${patternDirSafe}-${dbEngineNameSafe}: ${e}"
+                                            error "Test execution failed for ${patternDirSafe}-${dbEngineNameSafe}. Please check the logs for more details."
+                                        }
                                     }
                                 }
                             }
                         }
-                    } catch (Exception e) {
-                        println "Test execution failed: ${e}"
-                        error "Test execution failed. Please check the logs for more details."
                     }
                 }
             }
