@@ -28,11 +28,9 @@ String[] osList = params.osList?.split(',')?.collect { it.trim() } ?: []
 String[] jdkList = params.jdkList?.split(',')?.collect { it.trim() } ?: []
 String[] databaseList = params.databaseList?.split(',')?.collect { it.trim() } ?: []
 String albCertArn = params.albCertArn
-String productRepository = params.productRepository
-String productTestBranch = params.productTestBranch
-String productTestScript = params.productTestScript
-String surefireReportDir = params.surefireReportDir
-String productInstanceType = params.productInstanceType
+Integer acpUpdateLevel = params.acpUpdateLevel?: -1
+Integer tmUpdateLevel = params.tmUpdateLevel?: -1
+Integer gwUpdateLevel = params.gwUpdateLevel?: -1
 Boolean useStaging = params.useStaging
 Boolean apimPreRelease = params.apimPreRelease
 String testGroups = params.testGroups
@@ -392,13 +390,13 @@ pipeline {
                             def dbDriverUrl = dbEngineList[db].driverUrl
                             
                             parallelBuilds["Build ${currentOs} wso2am-acp image"] = {
-                                buildDockerImage('wso2am-acp', '4.5.0', currentOs, '-1', "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryCredential, useStaging)
+                                buildDockerImage('wso2am-acp', '4.5.0', currentOs, acpUpdateLevel, "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryCredential, useStaging)
                             }
                             parallelBuilds["Build ${currentOs} wso2am-tm image"] = {
-                                buildDockerImage('wso2am-tm', '4.5.0', currentOs, '-1', "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryCredential, useStaging)
+                                buildDockerImage('wso2am-tm', '4.5.0', currentOs, tmUpdateLevel, "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryCredential, useStaging)
                             }
                             parallelBuilds["Build ${currentOs} wso2am-universal-gw image"] = {
-                                buildDockerImage('wso2am-universal-gw', '4.5.0', currentOs, '-1', "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryCredential, useStaging)
+                                buildDockerImage('wso2am-universal-gw', '4.5.0', currentOs, gwUpdateLevel, "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryCredential, useStaging)
                             }
                         }
                     }
