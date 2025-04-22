@@ -764,12 +764,11 @@ pipeline {
                                                 sleep 60
 
                                                 sh """
-                                                    export HOST_NAME="${patternSafe.hostName}"
-                                                    export PORTAL_HOST="am-${dbEngineNameSafe}.wso2.com"
-                                                    export GATEWAY_HOST="gw-${dbEngineNameSafe}.wso2.com"
-                                                    export kubernetes_namespace="${namespace}"
-
-                                                    ./main.sh
+                                                    ./main.sh --HOSTNAME="${patternSafe.hostName}" \
+                                                        --PORTAL_HOST="am-${dbEngineNameSafe}.wso2.com" \
+                                                        --GATEWAY_HOST="gw-${dbEngineNameSafe}.wso2.com" \
+                                                        --kubernetes_namespace="${namespace}"
+                                        
                                                 """
                                             }
                                         }
