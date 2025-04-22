@@ -662,8 +662,7 @@ pipeline {
                                                         --set wso2.apim.configurations.databases.apim_db.password="${dbPassword}" \
                                                         --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineNameSafe].dbType}://${endpoint}:${dbPort}/shared_db?useSSL=false" \
                                                         --set wso2.apim.configurations.databases.shared_db.username="${dbUser}" \
-                                                        --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}" \
-                                                        --debug
+                                                        --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
                                                     
                                                     # Wait for the deployment to be ready
                                                     kubectl wait --for=condition=available --timeout=400s deployment/apim-acp-wso2am-acp-deployment-1 \
