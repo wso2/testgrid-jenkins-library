@@ -638,9 +638,18 @@ pipeline {
                                                     helm install apim-acp ${helmChartPath}/distributed/control-plane \
                                                         --namespace ${namespace} \
                                                         --set kubernetes.ingress.controlPlane.hostname="am-${dbEngineNameSafe}.wso2.com" \
-                                                        --set "wso2.apim.configurations.gateway.environments[0].httpHostname=\"gw-${dbEngineNameSafe}.wso2.com\"" \
-                                                        --set "wso2.apim.configurations.gateway.environments[0].wsHostname=\"websocket-${dbEngineNameSafe}.wso2.com\"" \
-                                                        --set "wso2.apim.configurations.gateway.environments[0].websubHostname=\"websub-${dbEngineNameSafe}.wso2.com\"" \
+                                                        --set wso2.apim.configurations.gateway.environments[0].name="Default" \
+                                                        --set wso2.apim.configurations.gateway.environments[0].type="hybrid" \
+                                                        --set wso2.apim.configurations.gateway.environments[0].gatewayType="Regular" \
+                                                        --set wso2.apim.configurations.gateway.environments[0].provider="wso2" \
+                                                        --set wso2.apim.configurations.gateway.environments[0].displayInApiConsole=true \
+                                                        --set wso2.apim.configurations.gateway.environments[0].description="This is a hybrid gateway that handles both production and sandbox token traffic." \
+                                                        --set wso2.apim.configurations.gateway.environments[0].showAsTokenEndpointUrl=true \
+                                                        --set wso2.apim.configurations.gateway.environments[0].serviceName="apim-universal-gw-wso2am-universal-gw-service" \
+                                                        --set wso2.apim.configurations.gateway.environments[0].servicePort=9443 \
+                                                        --set wso2.apim.configurations.gateway.environments[0].wsHostname="websocket-${dbEngineNameSafe}.wso2.com" \
+                                                        --set wso2.apim.configurations.gateway.environments[0].httpHostname="gw-${dbEngineNameSafe}.wso2.com" \
+                                                        --set wso2.apim.configurations.gateway.environments[0].websubHostname="websub-${dbEngineNameSafe}.wso2.com" \
                                                         --set wso2.deployment.image.registry="${dockerRegistry}" \
                                                         --set wso2.deployment.image.repository="wso2am-acp:${dbEngineNameSafe}-latest" \
                                                         --set wso2.deployment.image.imagePullSecrets.enabled=true \
