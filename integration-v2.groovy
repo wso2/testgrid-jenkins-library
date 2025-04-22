@@ -638,7 +638,9 @@ pipeline {
                                                     helm install apim-acp ${helmChartPath}/distributed/control-plane \
                                                         --namespace ${namespace} \
                                                         --set kubernetes.ingress.controlPlane.hostname="am-${dbEngineNameSafe}.wso2.com" \
-                                                        --set 'wso2.apim.configurations.gateway.environments="[{name=Default,type=hybrid,gatewayType=Regular,provider=wso2,displayInApiConsole=true,description=\"This is a hybrid gateway that handles both production and sandbox token traffic.\",showAsTokenEndpointUrl=true,serviceName=apim-universal-gw-wso2am-universal-gw-service,servicePort=9443,wsHostname=websocket-${dbEngineNameSafe}.wso2.com,httpHostname=gw-${dbEngineNameSafe}.wso2.com,websubHostname=websub-${dbEngineNameSafe}.wso2.com}]"'
+                                                        --set "wso2.apim.configurations.gateway.environments[0].httpHostname=\"gw-${dbEngineNameSafe}.wso2.com\"" \
+                                                        --set "wso2.apim.configurations.gateway.environments[0].wsHostname=\"websocket-${dbEngineNameSafe}.wso2.com\"" \
+                                                        --set "wso2.apim.configurations.gateway.environments[0].websubHostname=\"websub-${dbEngineNameSafe}.wso2.com\"" \
                                                         --set wso2.deployment.image.registry="${dockerRegistry}" \
                                                         --set wso2.deployment.image.repository="wso2am-acp:${dbEngineNameSafe}-latest" \
                                                         --set wso2.deployment.image.imagePullSecrets.enabled=true \
@@ -651,7 +653,8 @@ pipeline {
                                                         --set wso2.apim.configurations.databases.apim_db.password="${dbPassword}" \
                                                         --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineNameSafe].dbType}://${endpoint}:${dbPort}/shared_db?useSSL=false" \
                                                         --set wso2.apim.configurations.databases.shared_db.username="${dbUser}" \
-                                                        --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
+                                                        --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}" \
+                                                        --debug
                                                     
                                                     # Wait for the deployment to be ready
                                                     kubectl wait --for=condition=available --timeout=400s deployment/apim-acp-wso2am-acp-deployment-1 \
