@@ -27,7 +27,8 @@ Boolean skip_update = params.skip_update
 String os = params.os
 String s3_bucket = params.s3_bucket
 String docker_registry = params.docker_registry
-String docker_registry_credential = params.docker_registry_credential
+String docker_registry_username = params.docker_registry_username
+String docker_registry_password = params.docker_registry_password
 String db_driver_url = params.db_driver_url
 Boolean use_staging = params.use_staging
 
@@ -226,18 +227,16 @@ pipeline {
             steps {
                 script {
                     try {
-                        withCredentials([usernamePassword(credentialsId: docker_registry_credential, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                            String hostIp = sh(script: 'hostname -I | awk \'{print $1}\'', returnStdout: true).trim()
-                            String UPDATED_PRODUCT_PACK_HOST_LOCATION_URL = "http://${hostIp}:8889"
-                            dir("${dockerDirectory}") {
-                                sh """
-                                cd dockerfiles/${os}/${product_name_map[wso2_product]}
-                                sudo docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD} ${docker_registry}
-                                sudo docker build --no-cache -t ${docker_registry}/${wso2_product}:${tag} . --build-arg WSO2_SERVER_DIST_URL=${UPDATED_PRODUCT_PACK_HOST_LOCATION_URL}/${wso2_product}-${wso2_product_version}.zip
-                                sudo docker push ${docker_registry}/${wso2_product}:${tag}
-                                echo "Docker image ${docker_registry}/${wso2_product}:${tag} pushed successfully"
-                                """
-                            }
+                        String hostIp = sh(script: 'hostname -I | awk \'{print $1}\'', returnStdout: true).trim()
+                        String UPDATED_PRODUCT_PACK_HOST_LOCATION_URL = "http://${hostIp}:8889"
+                        dir("${dockerDirectory}") {
+                            sh """
+                            cd dockerfiles/${os}/${product_name_map[wso2_product]}
+                            sudo docker login -u ${docker_registry_username} -p ${docker_registry_password} ${docker_registry}
+                            sudo docker build --no-cache -t ${docker_registry}/${wso2_product}:${tag} . --build-arg WSO2_SERVER_DIST_URL=${UPDATED_PRODUCT_PACK_HOST_LOCATION_URL}/${wso2_product}-${wso2_product_version}.zip
+                            sudo docker push ${docker_registry}/${wso2_product}:${tag}
+                            echo "Docker image ${docker_registry}/${wso2_product}:${tag} pushed successfully"
+                            """
                         }
                     } catch (Exception e) {
                         echo "Error occurred during Docker build: ${e.message}"
