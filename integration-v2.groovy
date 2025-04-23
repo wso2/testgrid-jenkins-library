@@ -861,6 +861,7 @@ pipeline {
                     }
                 } catch (Exception e) {
                     echo "Workspace cleanup failed: ${e.message}"
+                    currentBuild.result = 'FAILURE'
                 } finally {
                     // Clean up the workspace
                     cleanWs()
