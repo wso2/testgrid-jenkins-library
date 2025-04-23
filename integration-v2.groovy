@@ -39,7 +39,6 @@ String tfS3region = params.tfS3region
 String awsCred = params.awsCred
 String dbPassword = params.dbPassword
 String project = params.project?: "wso2"
-String dockerRegistryCredential = params.dockerRegistryCredential
 Boolean onlyDestroyResources = params.onlyDestroyResources
 Boolean destroyResources = params.destroyResources
 Boolean skipTfApply = params.skipTfApply
@@ -604,8 +603,7 @@ pipeline {
                                                 credentialsId: awsCred,
                                                 accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                                                 secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                                            ],
-                                            usernamePassword(credentialsId: dockerRegistryCredential, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')
+                                            ]
                                         ]) {
                                             String pwd = sh(script: "pwd", returnStdout: true).trim()
                                             // Login to Docker registry
