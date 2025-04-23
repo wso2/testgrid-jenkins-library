@@ -39,7 +39,6 @@ String tfS3region = params.tfS3region
 String awsCred = params.awsCred
 String dbPassword = params.dbPassword
 String project = params.project?: "wso2"
-String dockerRegistry = params.dockerRegistry?: "docker.io"
 String dockerRegistryCredential = params.dockerRegistryCredential
 Boolean onlyDestroyResources = params.onlyDestroyResources
 Boolean destroyResources = params.destroyResources
@@ -162,7 +161,7 @@ def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String d
 }
 
 def buildDockerImage(String product, String productVersion, String os, String updateLevel, String tag, String dbDriverUrl, 
-    String dockerRegistry, String dockerRegistryCredential, Boolean useStaging) {
+    String dockerRegistry, String dockerRegistryUsername, String dockerRegistryPassword, Boolean useStaging) {
     
     println "Building Docker image for ${product} ${productVersion} on ${os} with update level ${updateLevel} and tag ${tag}..."
     try {
@@ -174,7 +173,8 @@ def buildDockerImage(String product, String productVersion, String os, String up
             [$class: 'StringParameterValue', name: 'update_level', value: updateLevel],
             [$class: 'StringParameterValue', name: 'tag', value: tag],
             [$class: 'StringParameterValue', name: 'docker_registry', value: dockerRegistry],
-            [$class: 'StringParameterValue', name: 'docker_registry_credential', value: dockerRegistryCredential],
+            [$class: 'StringParameterValue', name: 'docker_registry_username', value: dockerRegistryUsername],
+            [$class: 'StringParameterValue', name: 'docker_registry_password', value: dockerRegistryPassword],
             [$class: 'StringParameterValue', name: 'db_driver_url', value: dbDriverUrl],
             [$class: 'BooleanParameterValue', name: 'use_staging', value: useStaging],
         ]
@@ -373,40 +373,6 @@ pipeline {
             }
         }
 
-        stage('Build docker images') {
-            when {
-                expression { !onlyDestroyResources && !skipDockerBuild }
-            }
-            steps {
-                script {
-                    // Create a map of parallel builds - one for each OS
-                    def parallelBuilds = [:]
-                    
-                    // Add a build task for each OS
-                    for (def os: osList) {
-                        for (def db: databaseList) {
-                            // Need to bind the os variable within the closure
-                            def currentOs = os
-                            def dbDriverUrl = dbEngineList[db].driverUrl
-                            
-                            parallelBuilds["Build ${currentOs} wso2am-acp image"] = {
-                                buildDockerImage('wso2am-acp', '4.5.0', currentOs, acpUpdateLevel, "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryCredential, useStaging)
-                            }
-                            parallelBuilds["Build ${currentOs} wso2am-tm image"] = {
-                                buildDockerImage('wso2am-tm', '4.5.0', currentOs, tmUpdateLevel, "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryCredential, useStaging)
-                            }
-                            parallelBuilds["Build ${currentOs} wso2am-universal-gw image"] = {
-                                buildDockerImage('wso2am-universal-gw', '4.5.0', currentOs, gwUpdateLevel, "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryCredential, useStaging)
-                            }
-                        }
-                    }
-                    
-                    // Execute all builds in parallel
-                    parallel parallelBuilds
-                }
-            }
-        }
-
         stage('Terraform Init') {
             steps {
                 script {
@@ -566,6 +532,42 @@ pipeline {
             }                        
         }
 
+        stage('Build docker images') {
+            when {
+                expression { !onlyDestroyResources && !skipDockerBuild }
+            }
+            steps {
+                script {
+                    // Create a map of parallel builds - one for each OS
+                    def parallelBuilds = [:]
+                    
+                    for (def pattern : deploymentPatterns) {
+                        for (def dbEngine : pattern.dbEngines) {
+                            // Need to bind the os variable within the closure
+                            def currentOs = pattern.os
+                            def dbDriverUrl = dbEngineList[dbEngine].driverUrl
+                            def dockerRegistry = pattern.dockerRegistry.registry
+                            def dockerRegistryUsername = pattern.dockerRegistry.username
+                            def dockerRegistryPassword = pattern.dockerRegistry.password
+                            
+                            parallelBuilds["Build ${currentOs} wso2am-acp image"] = {
+                                buildDockerImage('wso2am-acp', '4.5.0', currentOs, acpUpdateLevel, "${dbEngine}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging)
+                            }
+                            parallelBuilds["Build ${currentOs} wso2am-tm image"] = {
+                                buildDockerImage('wso2am-tm', '4.5.0', currentOs, tmUpdateLevel, "${dbEngine}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging)
+                            }
+                            parallelBuilds["Build ${currentOs} wso2am-universal-gw image"] = {
+                                buildDockerImage('wso2am-universal-gw', '4.5.0', currentOs, gwUpdateLevel, "${dbEngine}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging)
+                            }
+                        }
+                    }
+                    
+                    // Execute all builds in parallel
+                    parallel parallelBuilds
+                }
+            }
+        }
+
         stage('Prepare Deployment') {
             steps {
                 script {
@@ -587,6 +589,9 @@ pipeline {
                             def patternDirSafe = patternDir
                             def dbEngineNameSafe = dbEngineName
                             def patternSafe = pattern
+                            def dockerRegistrySafe = pattern.dockerRegistry.registry
+                            def dockerRegistryUsernameSafe = pattern.dockerRegistry.username
+                            def dockerRegistryPasswordSafe = pattern.dockerRegistry.password
                             def stageId = "${patternDirSafe}-${dbEngineNameSafe}"
                             
                             // Add deployment task to parallel map
@@ -605,7 +610,7 @@ pipeline {
                                             String pwd = sh(script: "pwd", returnStdout: true).trim()
                                             // Login to Docker registry
                                             sh """
-                                                echo ${DOCKER_PASSWORD} | sudo docker login ${dockerRegistry} --username ${DOCKER_USERNAME} --password-stdin
+                                                echo ${dockerRegistryPasswordSafe} | sudo docker login ${dockerRegistrySafe} --username ${dockerRegistryUsernameSafe} --password-stdin
                                             """
 
                                             dir("${patternDirSafe}") {
@@ -665,11 +670,11 @@ pipeline {
                                                         --set wso2.apim.configurations.gateway.environments[0].wsHostname="websocket-${dbEngineNameSafe}.wso2.com" \
                                                         --set wso2.apim.configurations.gateway.environments[0].httpHostname="gw-${dbEngineNameSafe}.wso2.com" \
                                                         --set wso2.apim.configurations.gateway.environments[0].websubHostname="websub-${dbEngineNameSafe}.wso2.com" \
-                                                        --set wso2.deployment.image.registry="${dockerRegistry}" \
+                                                        --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                         --set wso2.deployment.image.repository="wso2am-acp:${dbEngineNameSafe}-latest" \
                                                         --set wso2.deployment.image.imagePullSecrets.enabled=true \
-                                                        --set wso2.deployment.image.imagePullSecrets.username="${DOCKER_USERNAME}" \
-                                                        --set wso2.deployment.image.imagePullSecrets.password="${DOCKER_PASSWORD}" \
+                                                        --set wso2.deployment.image.imagePullSecrets.username="${dockerRegistryUsernameSafe}" \
+                                                        --set wso2.deployment.image.imagePullSecrets.password="${dockerRegistryPasswordSafe}" \
                                                         --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineNameSafe].dbType}" \
                                                         --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineNameSafe].dbDriver}" \
                                                         --set wso2.apim.configurations.databases.apim_db.url="jdbc:${dbEngineList[dbEngineNameSafe].dbType}://${endpoint}:${dbPort}/apim_db?useSSL=false" \
@@ -687,11 +692,11 @@ pipeline {
                                                     echo "Deploying WSO2 API Manager - Traffic Manager in ${namespace} namespace..."
                                                     helm install apim-tm ${helmChartPath}/distributed/traffic-manager \
                                                         --namespace ${namespace} \
-                                                        --set wso2.deployment.image.registry="${dockerRegistry}" \
+                                                        --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                         --set wso2.deployment.image.repository="wso2am-tm:${dbEngineNameSafe}-latest" \
                                                         --set wso2.deployment.image.imagePullSecrets.enabled=true \
-                                                        --set wso2.deployment.image.imagePullSecrets.username="${DOCKER_USERNAME}" \
-                                                        --set wso2.deployment.image.imagePullSecrets.password="${DOCKER_PASSWORD}" \
+                                                        --set wso2.deployment.image.imagePullSecrets.username="${dockerRegistryUsernameSafe}" \
+                                                        --set wso2.deployment.image.imagePullSecrets.password="${dockerRegistryPasswordSafe}" \
                                                         --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineNameSafe].dbType}" \
                                                         --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineNameSafe].dbDriver}" \
                                                         --set wso2.apim.configurations.databases.apim_db.url="jdbc:${dbEngineList[dbEngineNameSafe].dbType}://${endpoint}:${dbPort}/apim_db?useSSL=false" \
@@ -712,11 +717,11 @@ pipeline {
                                                         --set kubernetes.ingress.gateway.hostname="gw-${dbEngineNameSafe}.wso2.com" \
                                                         --set kubernetes.ingress.websocket.hostname="websocket-${dbEngineNameSafe}.wso2.com" \
                                                         --set kubernetes.ingress.websub.hostname="websub-${dbEngineNameSafe}.wso2.com" \
-                                                        --set wso2.deployment.image.registry="${dockerRegistry}" \
+                                                        --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                         --set wso2.deployment.image.repository="wso2am-universal-gw:${dbEngineNameSafe}-latest" \
                                                         --set wso2.deployment.image.imagePullSecrets.enabled=true \
-                                                        --set wso2.deployment.image.imagePullSecrets.username="${DOCKER_USERNAME}" \
-                                                        --set wso2.deployment.image.imagePullSecrets.password="${DOCKER_PASSWORD}" \
+                                                        --set wso2.deployment.image.imagePullSecrets.username="${dockerRegistryUsernameSafe}" \
+                                                        --set wso2.deployment.image.imagePullSecrets.password="${dockerRegistryPasswordSafe}" \
                                                         --set wso2.apim.configurations.databases.type="${dbEngineList[dbEngineNameSafe].dbType}" \
                                                         --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineNameSafe].dbDriver}" \
                                                         --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineNameSafe].dbType}://${endpoint}:${dbPort}/shared_db?useSSL=false" \
