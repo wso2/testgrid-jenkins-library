@@ -544,19 +544,20 @@ pipeline {
                         for (def dbEngine : pattern.dbEngines) {
                             // Need to bind the os variable within the closure
                             def currentOs = pattern.os
-                            def dbDriverUrl = dbEngineList[dbEngine].driverUrl
+                            def db = dbEngine.engine
+                            def dbDriverUrl = dbEngineList[db].driverUrl
                             def dockerRegistry = pattern.dockerRegistry.registry
                             def dockerRegistryUsername = pattern.dockerRegistry.username
                             def dockerRegistryPassword = pattern.dockerRegistry.password
                             
                             parallelBuilds["Build ${currentOs} wso2am-acp image"] = {
-                                buildDockerImage("${project}-wso2am-acp", '4.5.0', currentOs, acpUpdateLevel, "${dbEngine}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging)
+                                buildDockerImage("${project}-wso2am-acp", '4.5.0', currentOs, acpUpdateLevel, "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging)
                             }
                             parallelBuilds["Build ${currentOs} wso2am-tm image"] = {
-                                buildDockerImage("${project}-wso2am-tm", '4.5.0', currentOs, tmUpdateLevel, "${dbEngine}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging)
+                                buildDockerImage("${project}-wso2am-tm", '4.5.0', currentOs, tmUpdateLevel, "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging)
                             }
                             parallelBuilds["Build ${currentOs} wso2am-universal-gw image"] = {
-                                buildDockerImage("${project}-wso2am-universal-gw", '4.5.0', currentOs, gwUpdateLevel, "${dbEngine}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging)
+                                buildDockerImage("${project}-wso2am-universal-gw", '4.5.0', currentOs, gwUpdateLevel, "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging)
                             }
                         }
                     }
