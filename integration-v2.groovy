@@ -173,7 +173,7 @@ def buildDockerImage(String product, String productVersion, String os, String up
             [$class: 'StringParameterValue', name: 'tag', value: tag],
             [$class: 'StringParameterValue', name: 'docker_registry', value: dockerRegistry],
             [$class: 'StringParameterValue', name: 'docker_registry_username', value: dockerRegistryUsername],
-            [$class: 'StringParameterValue', name: 'docker_registry_password', value: dockerRegistryPassword],
+            [$class: 'PasswordParameterValue', name: 'docker_registry_password', value: dockerRegistryPassword],
             [$class: 'StringParameterValue', name: 'db_driver_url', value: dbDriverUrl],
             [$class: 'BooleanParameterValue', name: 'use_staging', value: useStaging],
         ]
