@@ -19,6 +19,7 @@
 */
 
 // Input parameters
+String project = params.project
 String wso2_product = params.wso2_product
 String wso2_product_version = params.wso2_product_version
 String tag = params.tag
@@ -33,6 +34,7 @@ String db_driver_url = params.db_driver_url
 Boolean use_staging = params.use_staging
 
 // Default values
+String wso2_product_full_name = "${project}-${wso2_product}"
 String dockerDirectory = "docker"
 String dockerRepoBranch = "master"
 String dockerRepoUrl = "https://github.com/wso2/docker-apim.git"
@@ -233,9 +235,9 @@ pipeline {
                             sh """
                             cd dockerfiles/${os}/${product_name_map[wso2_product]}
                             sudo docker login -u ${docker_registry_username} -p ${docker_registry_password} ${docker_registry}
-                            sudo docker build --no-cache -t ${docker_registry}/${wso2_product}:${tag} . --build-arg WSO2_SERVER_DIST_URL=${UPDATED_PRODUCT_PACK_HOST_LOCATION_URL}/${wso2_product}-${wso2_product_version}.zip
-                            sudo docker push ${docker_registry}/${wso2_product}:${tag}
-                            echo "Docker image ${docker_registry}/${wso2_product}:${tag} pushed successfully"
+                            sudo docker build --no-cache -t ${docker_registry}/${wso2_product_full_name}:${tag} . --build-arg WSO2_SERVER_DIST_URL=${UPDATED_PRODUCT_PACK_HOST_LOCATION_URL}/${wso2_product}-${wso2_product_version}.zip
+                            sudo docker push ${docker_registry}/${wso2_product_full_name}:${tag}
+                            echo "Docker image ${docker_registry}/${wso2_product_full_name}:${tag} pushed successfully"
                             """
                         }
                     } catch (Exception e) {
@@ -261,7 +263,7 @@ pipeline {
                     println "Cleaning up the workspace..."
                     sh """
                         # Remove the Docker image
-                        sudo docker rmi -f ${docker_registry}/${wso2_product}:${tag} || echo "Docker image not found or already removed"
+                        sudo docker rmi -f ${docker_registry}/${wso2_product_full_name}:${tag} || echo "Docker image not found or already removed"
                         sudo docker system prune -f || echo "Docker system prune failed"
                         # Remove Docker credentials
                         sudo docker logout ${docker_registry} || echo "Docker logout failed"
