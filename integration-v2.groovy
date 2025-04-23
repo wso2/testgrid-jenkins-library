@@ -550,13 +550,13 @@ pipeline {
                             def dockerRegistryPassword = pattern.dockerRegistry.password
                             
                             parallelBuilds["Build ${currentOs} wso2am-acp image"] = {
-                                buildDockerImage('wso2am-acp', '4.5.0', currentOs, acpUpdateLevel, "${dbEngine}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging)
+                                buildDockerImage("${project}-wso2am-acp", '4.5.0', currentOs, acpUpdateLevel, "${dbEngine}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging)
                             }
                             parallelBuilds["Build ${currentOs} wso2am-tm image"] = {
-                                buildDockerImage('wso2am-tm', '4.5.0', currentOs, tmUpdateLevel, "${dbEngine}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging)
+                                buildDockerImage("${project}-wso2am-tm", '4.5.0', currentOs, tmUpdateLevel, "${dbEngine}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging)
                             }
                             parallelBuilds["Build ${currentOs} wso2am-universal-gw image"] = {
-                                buildDockerImage('wso2am-universal-gw', '4.5.0', currentOs, gwUpdateLevel, "${dbEngine}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging)
+                                buildDockerImage("${project}-wso2am-universal-gw", '4.5.0', currentOs, gwUpdateLevel, "${dbEngine}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging)
                             }
                         }
                     }
@@ -669,7 +669,7 @@ pipeline {
                                                         --set wso2.apim.configurations.gateway.environments[0].httpHostname="gw-${dbEngineNameSafe}.wso2.com" \
                                                         --set wso2.apim.configurations.gateway.environments[0].websubHostname="websub-${dbEngineNameSafe}.wso2.com" \
                                                         --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
-                                                        --set wso2.deployment.image.repository="wso2am-acp:${dbEngineNameSafe}-latest" \
+                                                        --set wso2.deployment.image.repository="${project}-wso2am-acp:${dbEngineNameSafe}-latest" \
                                                         --set wso2.deployment.image.imagePullSecrets.enabled=true \
                                                         --set wso2.deployment.image.imagePullSecrets.username="${dockerRegistryUsernameSafe}" \
                                                         --set wso2.deployment.image.imagePullSecrets.password="${dockerRegistryPasswordSafe}" \
@@ -691,7 +691,7 @@ pipeline {
                                                     helm install apim-tm ${helmChartPath}/distributed/traffic-manager \
                                                         --namespace ${namespace} \
                                                         --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
-                                                        --set wso2.deployment.image.repository="wso2am-tm:${dbEngineNameSafe}-latest" \
+                                                        --set wso2.deployment.image.repository="${project}-wso2am-tm:${dbEngineNameSafe}-latest" \
                                                         --set wso2.deployment.image.imagePullSecrets.enabled=true \
                                                         --set wso2.deployment.image.imagePullSecrets.username="${dockerRegistryUsernameSafe}" \
                                                         --set wso2.deployment.image.imagePullSecrets.password="${dockerRegistryPasswordSafe}" \
@@ -716,7 +716,7 @@ pipeline {
                                                         --set kubernetes.ingress.websocket.hostname="websocket-${dbEngineNameSafe}.wso2.com" \
                                                         --set kubernetes.ingress.websub.hostname="websub-${dbEngineNameSafe}.wso2.com" \
                                                         --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
-                                                        --set wso2.deployment.image.repository="wso2am-universal-gw:${dbEngineNameSafe}-latest" \
+                                                        --set wso2.deployment.image.repository="${project}-wso2am-universal-gw:${dbEngineNameSafe}-latest" \
                                                         --set wso2.deployment.image.imagePullSecrets.enabled=true \
                                                         --set wso2.deployment.image.imagePullSecrets.username="${dockerRegistryUsernameSafe}" \
                                                         --set wso2.deployment.image.imagePullSecrets.password="${dockerRegistryPasswordSafe}" \
