@@ -540,6 +540,21 @@ pipeline {
                                     hostName = sh(script: "kubectl -n ingress-nginx get svc ingress-nginx-controller -o json | jq -r '.status.loadBalancer.ingress[0].hostname'", returnStdout: true).trim()
                                     println "Ingress Host Name: ${hostName}"
                                     pattern.hostName = hostName
+
+                                    def ecrWso2AcpURL = sh(script: "terraform output -json | jq -r '.ecr_wso2am_acp_url.value'", returnStdout: true).trim()
+                                    println "ECR WSO2 ACP URL: ${ecrWso2AcpURL}"
+                                    def ecrCommonURL = ecrWso2AcpURL.split('/')[0]
+                                    println "ECR Common URL: ${ecrCommonURL}"
+
+                                    def password = sh(
+                                        script: "aws ecr get-login-password --region ${productDeploymentRegion}",
+                                        returnStdout: true
+                                    ).trim()
+                                    pattern.dockerRegistry = [
+                                        registry: ecrCommonURL,
+                                        username: "AWS",
+                                        password: password
+                                    ]
                                 }
                             }
                         }
