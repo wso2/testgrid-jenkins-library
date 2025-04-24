@@ -50,11 +50,11 @@ String updateType = "u2"
 String hostName = ""
 String dbUser = "wso2carbon"
 // Helm repository details
-String helmRepoUrl = "https://github.com/kavindasr/helm-apim.git"
+String helmRepoUrl = "https://github.com/wso2/helm-apim.git"
 String helmRepoBranch = "apim-intg"
 String helmDirectory = "helm-apim"
 // APIM Test Integration repository details
-String apimIntgRepoUrl = "https://github.com/kavindasr/apim-test-integration.git"
+String apimIntgRepoUrl = "https://github.com/wso2/apim-test-integration.git"
 String apimIntgRepoBranch = "4.5.0-profile-automation"
 String apimIntgDirectory = "apim-test-integration"
 String tfDirectory = "terraform"
