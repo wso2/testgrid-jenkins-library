@@ -49,11 +49,6 @@ def deploymentPatterns = []
 String updateType = "u2"
 String hostName = ""
 String dbUser = "wso2carbon"
-// Terraform repository details
-String tfRepoUrl = "https://github.com/kavindasr/iac-aws-wso2-products.git"
-String tfRepoBranch = "apim-intg"
-String tfDirectory = "iac-aws-wso2-products"
-String tfEnvironment = "dev"
 // Helm repository details
 String helmRepoUrl = "https://github.com/kavindasr/helm-apim.git"
 String helmRepoBranch = "apim-intg"
@@ -62,6 +57,8 @@ String helmDirectory = "helm-apim"
 String apimIntgRepoUrl = "https://github.com/kavindasr/apim-test-integration.git"
 String apimIntgRepoBranch = "4.5.0-profile-automation"
 String apimIntgDirectory = "apim-test-integration"
+String tfDirectory = "terraform"
+String tfEnvironment = "dev"
 
 String githubCredentialId = "WSO2_GITHUB_TOKEN"
 def dbEngineList = [
@@ -315,12 +312,6 @@ pipeline {
         stage('Clone repos') {
             steps {
                 script {
-                    dir(tfDirectory) {
-                        git branch: "${tfRepoBranch}",
-                        credentialsId: githubCredentialId,
-                        url: "${tfRepoUrl}"
-                    }
-
                     dir(helmDirectory) {
                         git branch: "${helmRepoBranch}",
                         credentialsId: githubCredentialId,
@@ -353,7 +344,7 @@ pipeline {
                         
                         // Copy the Terraform files to the respective directories
                         dir("${deploymentDirName}") {
-                            sh "cp -r ../${tfDirectory}/* ."
+                            sh "cp -r ../${apimIntgDirectory}/${tfDirectory}/* ."
                         }
                     }
 
