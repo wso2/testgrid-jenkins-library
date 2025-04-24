@@ -308,6 +308,23 @@ def stringifyJson(Map jsonMap) {
     return new groovy.json.JsonBuilder(jsonMap).toPrettyString()
 }
 
+@NonCPS
+def commonArgs() {
+    return """
+    --set aws.enabled=false \
+    --set wso2.apim.configurations.adminUsername="admin" \
+    --set wso2.apim.configurations.adminPassword="admin" \
+    --set wso2.apim.configurations.security.keystores.primary.password="wso2carbon" \
+    --set wso2.apim.configurations.security.keystores.primary.keyPassword="wso2carbon" \
+    --set wso2.apim.configurations.security.keystores.tls.password="wso2carbon" \
+    --set wso2.apim.configurations.security.keystores.tls.keyPassword="wso2carbon" \
+    --set wso2.apim.configurations.security.keystores.internal.password="wso2carbon" \
+    --set wso2.apim.configurations.security.keystores.internal.keyPassword="wso2carbon" \
+    --set wso2.apim.configurations.security.truststore.password="wso2carbon" \
+    --set wso2.deployment.resources.requests.cpu="1000m" \
+    """
+}
+
 pipeline {
     agent {label 'pipeline-kubernetes-agent'}
 
@@ -635,8 +652,8 @@ pipeline {
                                                     aws s3 cp --quiet s3://${tfS3Bucket}/tools/client-truststore.jks .
                                                     aws s3 cp --quiet s3://${tfS3Bucket}/tools/wso2carbon.jks .
 
-                                                    # Create jks-secret
-                                                    kubectl create secret generic jks-secret --from-file=wso2carbon.jks --from-file=client-truststore.jks -n ${namespace} || echo "Failed to create jks-secret."
+                                                    # Create apim-keystore-secret
+                                                    kubectl create secret generic apim-keystore-secret --from-file=wso2carbon.jks --from-file=client-truststore.jks -n ${namespace} || echo "Failed to create apim-keystore-secret."
                                                 """
                                                 println "Namespace created: ${namespace}"
 
@@ -657,6 +674,7 @@ pipeline {
                                                     echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
                                                     helm install apim-acp ${helmChartPath}/distributed/control-plane \
                                                         --namespace ${namespace} \
+                                                        ${commonArgs()}
                                                         --set kubernetes.ingress.controlPlane.hostname="am-${dbEngineNameSafe}.wso2.com" \
                                                         --set wso2.apim.configurations.gateway.environments[0].name="Default" \
                                                         --set wso2.apim.configurations.gateway.environments[0].type="hybrid" \
@@ -691,6 +709,15 @@ pipeline {
                                                     echo "Deploying WSO2 API Manager - Traffic Manager in ${namespace} namespace..."
                                                     helm install apim-tm ${helmChartPath}/distributed/traffic-manager \
                                                         --namespace ${namespace} \
+                                                        ${commonArgs()}
+                                                        --set wso2.apim.configurations.km.serviceUrl="apim-acp-wso2am-acp-service" \
+                                                        --set wso2.apim.configurations.throttling.serviceUrl="apim-tm-wso2am-tm-service" \
+                                                        --set wso2.apim.configurations.throttling.urls="{apim-tm-wso2am-tm-1-service,apim-tm-wso2am-tm-2-service}" \
+                                                        --set wso2.apim.configurations.eventhub.enabled=true \
+                                                        --set wso2.apim.configurations.eventhub.serviceUrl="apim-acp-wso2am-acp-service" \
+                                                        --set wso2.apim.configurations.eventhub.urls="{apim-acp-wso2am-acp-1-service,apim-acp-wso2am-acp-2-service}" \
+                                                        --set wso2.deployment.replicas=1 \
+                                                        --set wso2.deployment.minReplicas=1 \
                                                         --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                         --set wso2.deployment.image.repository="${project}-wso2am-tm:${dbEngineNameSafe}-latest" \
                                                         --set wso2.deployment.image.imagePullSecrets.enabled=true \
