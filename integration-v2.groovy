@@ -25,7 +25,6 @@ String product = params.product
 String productVersion = params.productVersion
 String productDeploymentRegion = params.productDeploymentRegion
 String[] osList = params.osList?.split(',')?.collect { it.trim() } ?: []
-String[] jdkList = params.jdkList?.split(',')?.collect { it.trim() } ?: []
 String[] databaseList = params.databaseList?.split(',')?.collect { it.trim() } ?: []
 String albCertArn = params.albCertArn
 String acpUpdateLevel = params.acpUpdateLevel?: "-1"
@@ -76,45 +75,41 @@ def dbEngineList = [
         ],
 ]
 
-// Create deployment patterns for all combinations of OS, JDK, and database
+// Create deployment patterns for all combinations of OS and database
 @NonCPS
 def createDeploymentPatterns(String project, String product, String productVersion, 
-                                String[] osList, String[] jdkList, String[] databaseList, def dbEngineList, def deploymentPatterns) {
+                                String[] osList, String[] databaseList, def dbEngineList, def deploymentPatterns) {
     println "Creating the deployment patterns by using infrastructure combination!"
     
     int count = 1
     for (String os : osList) {
-        for (String jdk : jdkList) {
-            def dbEngines = []
-            for (String db : databaseList) {
-                def dbDetails = dbEngineList[db]
-                if (dbDetails == null) {
-                    println "DB engine version not found for ${db}. Skipping..."
-                    continue
-                }
-                dbEngines.add([
-                    engine: db,
-                    version: dbDetails.version,
-                    port: dbDetails.port,
-                ])
+        def dbEngines = []
+        for (String db : databaseList) {
+            def dbDetails = dbEngineList[db]
+            if (dbDetails == null) {
+                println "DB engine version not found for ${db}. Skipping..."
+                continue
             }
-            String deploymentDirName = "${project}-${product}-${productVersion}-${os}-${jdk}"
-            // String dbEnginesJson = dbEngines.collect { "{ \"engine\": \"${it.engine}\", \"version\": \"${it.version}\" }" }.join(", ")
-            // dbEnginesJson = "[${dbEnginesJson}]"
-            def dbEnginesJson = new groovy.json.JsonBuilder(dbEngines).toString()
-            def deploymentPattern = [
-                id: count++,
-                product: product,
-                version: productVersion,
-                os: os,
-                jdk: jdk,
-                dbEngines: dbEngines,
-                dbEnginesJson: dbEnginesJson,
-                directory: deploymentDirName,
-                eksDesiredSize: 5*dbEngines.size(),
-            ]
-            deploymentPatterns.add(deploymentPattern)
+            dbEngines.add([
+                engine: db,
+                version: dbDetails.version,
+                port: dbDetails.port,
+            ])
         }
+        String deploymentDirName = "${project}-${product}-${productVersion}-${os}"
+        
+        def dbEnginesJson = new groovy.json.JsonBuilder(dbEngines).toString()
+        def deploymentPattern = [
+            id: count++,
+            product: product,
+            version: productVersion,
+            os: os,
+            dbEngines: dbEngines,
+            dbEnginesJson: dbEnginesJson,
+            directory: deploymentDirName,
+            eksDesiredSize: 5*dbEngines.size(),
+        ]
+        deploymentPatterns.add(deploymentPattern)
     }
 }
 
@@ -327,10 +322,9 @@ pipeline {
         stage('Preparation') {
             steps {
                 script {
-                    println "JDK List: ${jdkList}"
                     println "OS List: ${osList}"
                     println "Database List: ${databaseList}"
-                    createDeploymentPatterns(project, product, productVersion, osList, jdkList, databaseList, dbEngineList, deploymentPatterns)
+                    createDeploymentPatterns(project, product, productVersion, osList, databaseList, dbEngineList, deploymentPatterns)
 
                     println "Deployment patterns created: ${deploymentPatterns}"
 
