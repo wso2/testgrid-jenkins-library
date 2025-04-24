@@ -167,7 +167,6 @@ def buildDockerImage(String project, String product, String productVersion, Stri
         // Define parameters for the downstream job
         def dockerBuildParameters = [
             [$class: 'StringParameterValue', name: 'project', value: project],
-            [$class: 'StringParameterValue', name: 'product', value: product],
             [$class: 'StringParameterValue', name: 'product_version', value: productVersion],
             [$class: 'StringParameterValue', name: 'jdk', value: jdkList[0]], // Assuming the first JDK is used for the build
             [$class: 'StringParameterValue', name: 'wso2_product', value: product],
