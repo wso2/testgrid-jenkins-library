@@ -569,7 +569,7 @@ pipeline {
             }
         }
 
-        stage('Prepare Deployment') {
+        stage('Prepare Deployment and Test') {
             steps {
                 script {
                     if (onlyDestroyResources) {
@@ -739,42 +739,7 @@ pipeline {
                                         error "Deployment failed for ${patternDirSafe}-${dbEngineNameSafe}. Please check the logs for more details."
                                     }
                                 }
-                            }
-                        }
-                    }
-                    
-                    // Run all deployments in parallel
-                    parallel parallelDeployments
-                }
-            }
-        }
 
-        stage('Prepare Tests') {
-            steps {
-                script {
-                    if (onlyDestroyResources) {
-                        echo "Skipping test execution because onlyDestroyResources is set to true"
-                        return
-                    }
-
-                    // Create a map of parallel test runs
-                    def parallelTests = [:]
-                    
-                    // Add each test execution as a parallel task
-                    for (def pattern : deploymentPatterns) {
-                        def patternDir = pattern.directory
-                        
-                        for (def dbEngine : pattern.dbEngines) {
-                            def dbEngineName = dbEngine.engine
-                            
-                            // We need to use variables that are safe for the closure
-                            def patternDirSafe = patternDir
-                            def dbEngineNameSafe = dbEngineName
-                            def patternSafe = pattern
-                            def stageId = "${patternDirSafe}-${dbEngineNameSafe}"
-                            
-                            // Add test task to parallel map
-                            parallelTests["Test ${stageId}"] = {
                                 stage("Test ${stageId}") {
                                     try {
                                         withCredentials([
@@ -813,8 +778,8 @@ pipeline {
                         }
                     }
                     
-                    // Run all tests in parallel
-                    parallel parallelTests
+                    // Run all stages in parallel
+                    parallel parallelDeployments
                 }
             }
         }
