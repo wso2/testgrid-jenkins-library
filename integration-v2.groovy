@@ -56,6 +56,7 @@ String apimIntgRepoBranch = "4.5.0-profile-automation"
 String apimIntgDirectory = "apim-test-integration"
 String tfDirectory = "terraform"
 String tfEnvironment = "dev"
+String logsDirectory = "logs"
 
 String githubCredentialId = "WSO2_GITHUB_TOKEN"
 def dbEngineList = [
@@ -745,8 +746,24 @@ pipeline {
                                                         --PORTAL_HOST="am-${dbEngineNameSafe}.wso2.com" \
                                                         --GATEWAY_HOST="gw-${dbEngineNameSafe}.wso2.com" \
                                                         --kubernetes_namespace="${namespace}"
-                                        
                                                 """
+                                            }
+
+                                            dir("${logsDirectory}") {
+                                                def podNames = sh(
+                                                    script: "kubectl get pods -l product=apim -n=${namespace} -o custom-columns=:metadata.name",
+                                                    returnStdout: true
+                                                ).trim().split('\n')
+                                                println "APIM pods in namespace ${namespace}: ${podNames}"
+                                                for (def podName : podNames) {
+                                                    if (podName?.trim()) {
+                                                        def logFile = "${dbEngineNameSafe}-${podName}.log"
+                                                        sh """
+                                                            kubectl logs ${podName} -n=${namespace} > ${logFile} || echo "Failed to get logs for pod ${podName}"
+                                                        """
+                                                    }
+                                                }
+                                                sh "ls -la"
                                             }
                                         }
                                     } catch (Exception e) {
@@ -810,6 +827,7 @@ pipeline {
                     echo "Workspace cleanup failed: ${e.message}"
                     currentBuild.result = 'FAILURE'
                 } finally {
+                    archiveArtifacts artifacts: "${logsDirectory}/**/*.*", fingerprint: true
                     // Clean up the workspace
                     cleanWs()
                 }
