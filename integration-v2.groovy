@@ -768,6 +768,15 @@ pipeline {
                                                     
                                                     # Wait for the deployment to be ready
                                                     kubectl wait --for=condition=ready --timeout=300s pod -l deployment=apim-universal-gw-wso2am-universal-gw -n ${namespace}
+
+                                                    # Helm-apim does not have a ingress to expose gateway REST API. So we need to create a ingress resource to expose the REST API.
+                                                    kubectl create ingress gw-rest-ingress \
+                                                    --rule="gw-${dbEngineNameSafe}.wso2.com/api/am/gateway/v2/=apim-universal-gw-wso2am-universal-gw-service:9443" \
+                                                    --class=nginx \
+                                                    --annotation=nginx.ingress.kubernetes.io/backend-protocol=HTTPS \
+                                                    --annotation=nginx.ingress.kubernetes.io/proxy-buffer-size=8k \
+                                                    --annotation=nginx.ingress.kubernetes.io/proxy-buffering=on \
+                                                    --namespace=${namespace} || echo "Failed to create ingress resource for gateway REST API."
                                                 """
                                             }
                                         }
