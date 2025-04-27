@@ -726,6 +726,12 @@ pipeline {
                                                         --set kubernetes.ingress.gateway.hostname="gw-${dbEngineNameSafe}.wso2.com" \
                                                         --set kubernetes.ingress.websocket.hostname="websocket-${dbEngineNameSafe}.wso2.com" \
                                                         --set kubernetes.ingress.websub.hostname="websub-${dbEngineNameSafe}.wso2.com" \
+                                                        --set wso2.apim.configurations.km.serviceUrl="apim-acp-wso2am-acp-service" \
+                                                        --set wso2.apim.configurations.throttling.serviceUrl="apim-tm-wso2am-tm-service" \
+                                                        --set wso2.apim.configurations.throttling.urls="{apim-tm-wso2am-tm-1-service,apim-tm-wso2am-tm-2-service}" \
+                                                        --set wso2.apim.configurations.eventhub.enabled=true \
+                                                        --set wso2.apim.configurations.eventhub.serviceUrl="apim-acp-wso2am-acp-service" \
+                                                        --set wso2.apim.configurations.eventhub.urls="{apim-acp-wso2am-acp-1-service,apim-acp-wso2am-acp-2-service}" \
                                                         --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                         --set wso2.deployment.image.repository="${project}-wso2am-universal-gw:${dbEngineNameSafe}-latest" \
                                                         --set wso2.deployment.image.imagePullSecrets.enabled=true \
@@ -735,7 +741,9 @@ pipeline {
                                                         --set wso2.apim.configurations.databases.jdbc.driver="${dbEngineList[dbEngineNameSafe].dbDriver}" \
                                                         --set wso2.apim.configurations.databases.shared_db.url="jdbc:${dbEngineList[dbEngineNameSafe].dbType}://${endpoint}:${dbPort}/shared_db?useSSL=false" \
                                                         --set wso2.apim.configurations.databases.shared_db.username="${dbUser}" \
-                                                        --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
+                                                        --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}" \
+                                                        --set wso2.deployment.replicas=1 \
+                                                        --set wso2.deployment.minReplicas=1
                                                     
                                                     # Wait for the deployment to be ready
                                                     kubectl wait --for=condition=ready --timeout=300s pod -l deployment=apim-universal-gw-wso2am-universal-gw -n ${namespace}
