@@ -629,6 +629,10 @@ pipeline {
                                                 helm list -n ${namespace} -q | xargs -n1 -I{} helm uninstall {} -n ${namespace} || echo "Failed to delete existing release."
                                                 """
 
+                                                String wso2amAcpImageDigest = sh(script: "aws ecr describe-images --repository-name ${project}-wso2am-acp --query 'imageDetails[?contains(imageTags, \`${dbEngineNameSafe}-latest\`)].imageDigest' --region ${productDeploymentRegion} --output text", returnStdout: true).trim()
+                                                String wso2amTmImageDigest = sh(script: "aws ecr describe-images --repository-name ${project}-wso2am-tm --query 'imageDetails[?contains(imageTags, \`${dbEngineNameSafe}-latest\`)].imageDigest' --region ${productDeploymentRegion} --output text", returnStdout: true).trim()
+                                                String wso2amGwImageDigest = sh(script: "aws ecr describe-images --repository-name ${project}-wso2am-universal-gw --query 'imageDetails[?contains(imageTags, \`${dbEngineNameSafe}-latest\`)].imageDigest' --region ${productDeploymentRegion} --output text", returnStdout: true).trim()
+
                                                 sleep 60
 
                                                 // Execute DB scripts
@@ -667,6 +671,7 @@ pipeline {
                                                         --set wso2.apim.configurations.gateway.environments[0].websubHostname="websub-${dbEngineNameSafe}.wso2.com" \
                                                         --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                         --set wso2.deployment.image.repository="${project}-wso2am-acp:${dbEngineNameSafe}-latest" \
+                                                        --set wso2.deployment.image.digest="${wso2amAcpImageDigest}" \
                                                         --set wso2.deployment.image.imagePullSecrets.enabled=true \
                                                         --set wso2.deployment.image.imagePullSecrets.username="${dockerRegistryUsernameSafe}" \
                                                         --set wso2.deployment.image.imagePullSecrets.password="${dockerRegistryPasswordSafe}" \
@@ -707,6 +712,7 @@ pipeline {
                                                         --set wso2.deployment.minReplicas=1 \
                                                         --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                         --set wso2.deployment.image.repository="${project}-wso2am-tm:${dbEngineNameSafe}-latest" \
+                                                        --set wso2.deployment.image.digest=${wso2amTmImageDigest} \
                                                         --set wso2.deployment.image.imagePullSecrets.enabled=true \
                                                         --set wso2.deployment.image.imagePullSecrets.username="${dockerRegistryUsernameSafe}" \
                                                         --set wso2.deployment.image.imagePullSecrets.password="${dockerRegistryPasswordSafe}" \
@@ -748,6 +754,7 @@ pipeline {
                                                         --set wso2.apim.configurations.eventhub.urls="{apim-acp-wso2am-acp-1-service,apim-acp-wso2am-acp-2-service}" \
                                                         --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                         --set wso2.deployment.image.repository="${project}-wso2am-universal-gw:${dbEngineNameSafe}-latest" \
+                                                        --set wso2.deployment.image.digest=${wso2amGwImageDigest} \
                                                         --set wso2.deployment.image.imagePullSecrets.enabled=true \
                                                         --set wso2.deployment.image.imagePullSecrets.username="${dockerRegistryUsernameSafe}" \
                                                         --set wso2.deployment.image.imagePullSecrets.password="${dockerRegistryPasswordSafe}" \
