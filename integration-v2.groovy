@@ -48,7 +48,7 @@ String hostName = ""
 String dbUser = "wso2carbon"
 // Helm repository details
 String helmRepoUrl = "https://github.com/kavindasr/helm-apim.git"
-String helmRepoBranch = "apim-intg"
+String helmRepoBranch = "main"
 String helmDirectory = "helm-apim"
 // APIM Test Integration repository details
 String apimIntgRepoUrl = "https://github.com/kavindasr/apim-test-integration.git"
