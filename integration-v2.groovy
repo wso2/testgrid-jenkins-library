@@ -629,9 +629,9 @@ pipeline {
                                                 helm list -n ${namespace} -q | xargs -n1 -I{} helm uninstall {} -n ${namespace} || echo "Failed to delete existing release."
                                                 """
 
-                                                String wso2amAcpImageDigest = sh(script: "aws ecr describe-images --repository-name ${project}-wso2am-acp --query 'imageDetails[?contains(imageTags, \`${dbEngineNameSafe}-latest\`)].imageDigest' --region ${productDeploymentRegion} --output text", returnStdout: true).trim()
-                                                String wso2amTmImageDigest = sh(script: "aws ecr describe-images --repository-name ${project}-wso2am-tm --query 'imageDetails[?contains(imageTags, \`${dbEngineNameSafe}-latest\`)].imageDigest' --region ${productDeploymentRegion} --output text", returnStdout: true).trim()
-                                                String wso2amGwImageDigest = sh(script: "aws ecr describe-images --repository-name ${project}-wso2am-universal-gw --query 'imageDetails[?contains(imageTags, \`${dbEngineNameSafe}-latest\`)].imageDigest' --region ${productDeploymentRegion} --output text", returnStdout: true).trim()
+                                                String wso2amAcpImageDigest = sh(script: "aws ecr describe-images --repository-name ${project}-wso2am-acp --query 'imageDetails[?contains(imageTags, `${dbEngineNameSafe}-latest`)].imageDigest' --region ${productDeploymentRegion} --output text", returnStdout: true).trim()
+                                                String wso2amTmImageDigest = sh(script: "aws ecr describe-images --repository-name ${project}-wso2am-tm --query 'imageDetails[?contains(imageTags, `${dbEngineNameSafe}-latest`)].imageDigest' --region ${productDeploymentRegion} --output text", returnStdout: true).trim()
+                                                String wso2amGwImageDigest = sh(script: "aws ecr describe-images --repository-name ${project}-wso2am-universal-gw --query 'imageDetails[?contains(imageTags, `${dbEngineNameSafe}-latest`)].imageDigest' --region ${productDeploymentRegion} --output text", returnStdout: true).trim()
 
                                                 sleep 60
 
