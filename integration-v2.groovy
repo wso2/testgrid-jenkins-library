@@ -862,7 +862,9 @@ pipeline {
                     echo "Workspace cleanup failed: ${e.message}"
                     currentBuild.result = 'FAILURE'
                 } finally {
-                    archiveArtifacts artifacts: "${logsDirectory}/**/*.*", fingerprint: true
+                    if (!onlyDestroyResources) {
+                        archiveArtifacts artifacts: "${logsDirectory}/**/*.*", fingerprint: true
+                    }
                     // Clean up the workspace
                     cleanWs()
                 }
