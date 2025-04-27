@@ -25,15 +25,12 @@ String product = params.product
 String productVersion = params.productVersion
 String productDeploymentRegion = params.productDeploymentRegion
 String[] osList = params.osList?.split(',')?.collect { it.trim() } ?: []
-String[] jdkList = params.jdkList?.split(',')?.collect { it.trim() } ?: []
 String[] databaseList = params.databaseList?.split(',')?.collect { it.trim() } ?: []
 String albCertArn = params.albCertArn
 String acpUpdateLevel = params.acpUpdateLevel?: "-1"
 String tmUpdateLevel = params.tmUpdateLevel?: "-1"
 String gwUpdateLevel = params.gwUpdateLevel?: "-1"
 Boolean useStaging = params.useStaging
-Boolean apimPreRelease = params.apimPreRelease
-String testGroups = params.testGroups
 String tfS3Bucket = params.tfS3Bucket
 String tfS3region = params.tfS3region
 String awsCred = params.awsCred
@@ -49,11 +46,6 @@ def deploymentPatterns = []
 String updateType = "u2"
 String hostName = ""
 String dbUser = "wso2carbon"
-// Terraform repository details
-String tfRepoUrl = "https://github.com/kavindasr/iac-aws-wso2-products.git"
-String tfRepoBranch = "apim-intg"
-String tfDirectory = "iac-aws-wso2-products"
-String tfEnvironment = "dev"
 // Helm repository details
 String helmRepoUrl = "https://github.com/kavindasr/helm-apim.git"
 String helmRepoBranch = "apim-intg"
@@ -62,6 +54,9 @@ String helmDirectory = "helm-apim"
 String apimIntgRepoUrl = "https://github.com/kavindasr/apim-test-integration.git"
 String apimIntgRepoBranch = "4.5.0-profile-automation"
 String apimIntgDirectory = "apim-test-integration"
+String tfDirectory = "terraform"
+String tfEnvironment = "dev"
+String logsDirectory = "logs"
 
 String githubCredentialId = "WSO2_GITHUB_TOKEN"
 def dbEngineList = [
@@ -81,45 +76,41 @@ def dbEngineList = [
         ],
 ]
 
-// Create deployment patterns for all combinations of OS, JDK, and database
+// Create deployment patterns for all combinations of OS and database
 @NonCPS
 def createDeploymentPatterns(String project, String product, String productVersion, 
-                                String[] osList, String[] jdkList, String[] databaseList, def dbEngineList, def deploymentPatterns) {
+                                String[] osList, String[] databaseList, def dbEngineList, def deploymentPatterns) {
     println "Creating the deployment patterns by using infrastructure combination!"
     
     int count = 1
     for (String os : osList) {
-        for (String jdk : jdkList) {
-            def dbEngines = []
-            for (String db : databaseList) {
-                def dbDetails = dbEngineList[db]
-                if (dbDetails == null) {
-                    println "DB engine version not found for ${db}. Skipping..."
-                    continue
-                }
-                dbEngines.add([
-                    engine: db,
-                    version: dbDetails.version,
-                    port: dbDetails.port,
-                ])
+        def dbEngines = []
+        for (String db : databaseList) {
+            def dbDetails = dbEngineList[db]
+            if (dbDetails == null) {
+                println "DB engine version not found for ${db}. Skipping..."
+                continue
             }
-            String deploymentDirName = "${project}-${product}-${productVersion}-${os}-${jdk}"
-            // String dbEnginesJson = dbEngines.collect { "{ \"engine\": \"${it.engine}\", \"version\": \"${it.version}\" }" }.join(", ")
-            // dbEnginesJson = "[${dbEnginesJson}]"
-            def dbEnginesJson = new groovy.json.JsonBuilder(dbEngines).toString()
-            def deploymentPattern = [
-                id: count++,
-                product: product,
-                version: productVersion,
-                os: os,
-                jdk: jdk,
-                dbEngines: dbEngines,
-                dbEnginesJson: dbEnginesJson,
-                directory: deploymentDirName,
-                eksDesiredSize: 5*dbEngines.size(),
-            ]
-            deploymentPatterns.add(deploymentPattern)
+            dbEngines.add([
+                engine: db,
+                version: dbDetails.version,
+                port: dbDetails.port,
+            ])
         }
+        String deploymentDirName = "${project}-${product}-${productVersion}-${os}"
+        
+        def dbEnginesJson = new groovy.json.JsonBuilder(dbEngines).toString()
+        def deploymentPattern = [
+            id: count++,
+            product: product,
+            version: productVersion,
+            os: os,
+            dbEngines: dbEngines,
+            dbEnginesJson: dbEnginesJson,
+            directory: deploymentDirName,
+            eksDesiredSize: 5*dbEngines.size(),
+        ]
+        deploymentPatterns.add(deploymentPattern)
     }
 }
 
@@ -332,12 +323,6 @@ pipeline {
         stage('Clone repos') {
             steps {
                 script {
-                    dir(tfDirectory) {
-                        git branch: "${tfRepoBranch}",
-                        credentialsId: githubCredentialId,
-                        url: "${tfRepoUrl}"
-                    }
-
                     dir(helmDirectory) {
                         git branch: "${helmRepoBranch}",
                         credentialsId: githubCredentialId,
@@ -355,10 +340,9 @@ pipeline {
         stage('Preparation') {
             steps {
                 script {
-                    println "JDK List: ${jdkList}"
                     println "OS List: ${osList}"
                     println "Database List: ${databaseList}"
-                    createDeploymentPatterns(project, product, productVersion, osList, jdkList, databaseList, dbEngineList, deploymentPatterns)
+                    createDeploymentPatterns(project, product, productVersion, osList, databaseList, dbEngineList, deploymentPatterns)
 
                     println "Deployment patterns created: ${deploymentPatterns}"
 
@@ -370,7 +354,7 @@ pipeline {
                         
                         // Copy the Terraform files to the respective directories
                         dir("${deploymentDirName}") {
-                            sh "cp -r ../${tfDirectory}/* ."
+                            sh "cp -r ../${apimIntgDirectory}/${tfDirectory}/* ."
                         }
                     }
 
@@ -789,8 +773,24 @@ pipeline {
                                                         --PORTAL_HOST="am-${dbEngineNameSafe}.wso2.com" \
                                                         --GATEWAY_HOST="gw-${dbEngineNameSafe}.wso2.com" \
                                                         --kubernetes_namespace="${namespace}"
-                                        
                                                 """
+                                            }
+
+                                            dir("${logsDirectory}") {
+                                                def podNames = sh(
+                                                    script: "kubectl get pods -l product=apim -n=${namespace} -o custom-columns=:metadata.name",
+                                                    returnStdout: true
+                                                ).trim().split('\n')
+                                                println "APIM pods in namespace ${namespace}: ${podNames}"
+                                                for (def podName : podNames) {
+                                                    if (podName?.trim()) {
+                                                        def logFile = "${dbEngineNameSafe}-${podName}.log"
+                                                        sh """
+                                                            kubectl logs ${podName} -n=${namespace} > ${logFile} || echo "Failed to get logs for pod ${podName}"
+                                                        """
+                                                    }
+                                                }
+                                                sh "ls -la"
                                             }
                                         }
                                     } catch (Exception e) {
@@ -854,6 +854,7 @@ pipeline {
                     echo "Workspace cleanup failed: ${e.message}"
                     currentBuild.result = 'FAILURE'
                 } finally {
+                    archiveArtifacts artifacts: "${logsDirectory}/**/*.*", fingerprint: true
                     // Clean up the workspace
                     cleanWs()
                 }
