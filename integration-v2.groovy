@@ -644,6 +644,11 @@ pipeline {
                                                 String helmChartPath = "${pwd}/${helmDirectory}"
                                                 // Install the product using Helm
                                                 sh """
+                                                    # Helm-apim does not have a ingress to expose gateway REST API. So we need to create a ingress resource to expose the REST API.
+                                                    helm install apim-ing ${pwd}/${apimIntgDirectory}/kubernetes/gw-ingress \
+                                                        --set hostname=gw-${dbEngineNameSafe}.wso2.com \
+                                                        --namespace ${namespace}
+                                                    
                                                     # Deploy wso2am-acp
                                                     echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
                                                     helm install apim-acp ${helmChartPath}/distributed/control-plane \
@@ -772,11 +777,6 @@ pipeline {
                                                     
                                                     # Wait for the deployment to be ready
                                                     kubectl wait --for=condition=ready --timeout=300s pod -l deployment=apim-universal-gw-wso2am-universal-gw -n ${namespace}
-                                                    
-                                                    # Helm-apim does not have a ingress to expose gateway REST API. So we need to create a ingress resource to expose the REST API.
-                                                    helm install apim-ing ${pwd}/${apimIntgDirectory}/kubernetes/gw-ingress \
-                                                        --set hostname=gw-${dbEngineNameSafe}.wso2.com \
-                                                        --namespace ${namespace}
                                                 """
                                             }
                                         }
