@@ -771,35 +771,13 @@ pipeline {
                                                     
                                                     # Wait for the deployment to be ready
                                                     kubectl wait --for=condition=ready --timeout=300s pod -l deployment=apim-universal-gw-wso2am-universal-gw -n ${namespace}
-
+                                                    
                                                     # Helm-apim does not have a ingress to expose gateway REST API. So we need to create a ingress resource to expose the REST API.
-                                                    kubectl apply -f - <<EOF
-                                                    apiVersion: networking.k8s.io/v1
-                                                    kind: Ingress
-                                                    metadata:
-                                                        annotations:
-                                                            nginx.ingress.kubernetes.io/backend-protocol: HTTPS
-                                                            nginx.ingress.kubernetes.io/proxy-buffer-size: 8k
-                                                            nginx.ingress.kubernetes.io/proxy-buffering: "on"
-                                                        name: gw-rest-ingress
-                                                        namespace: ${namespace}
-                                                    spec:
-                                                        ingressClassName: nginx
-                                                        tls:
-                                                        - hosts:
-                                                            - gw-${dbEngineNameSafe}.wso2.com
-                                                        rules:
-                                                        - host: gw-mysql.wso2.com
-                                                            http:
-                                                            paths:
-                                                            - backend:
-                                                                service:
-                                                                    name: apim-universal-gw-wso2am-universal-gw-service
-                                                                    port:
-                                                                    number: 9443
-                                                                path: /api/am/gateway/v2/
-                                                                pathType: Prefix
-                                                    EOF
+                                                    helm install apim-ing ${pwd}/${apimIntgDirectory}/kubernetes/gw-ingress \
+                                                        --set hostname=gw-${dbEngineNameSafe}.wso2.com \
+                                                        --namespace ${namespace}
+                                                    # Wait for the ingress to be ready
+                                                    kubectl wait --for=condition=ready --timeout=300s ingress/gw-rest-ingress -n ${namespace}
                                                 """
                                             }
                                         }
