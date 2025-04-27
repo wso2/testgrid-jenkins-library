@@ -776,8 +776,6 @@ pipeline {
                                                     helm install apim-ing ${pwd}/${apimIntgDirectory}/kubernetes/gw-ingress \
                                                         --set hostname=gw-${dbEngineNameSafe}.wso2.com \
                                                         --namespace ${namespace}
-                                                    # Wait for the ingress to be ready
-                                                    kubectl wait --for=condition=ready --timeout=300s ingress/gw-rest-ingress -n ${namespace}
                                                 """
                                             }
                                         }
