@@ -333,9 +333,6 @@ pipeline {
                         credentialsId: githubCredentialId,
                         url: "${apimIntgRepoUrl}"
                     }
-                    dir("${logsDirectory}") {
-                        // Create empty logs directory
-                    }
                 }
             }
         }
@@ -353,6 +350,7 @@ pipeline {
                     for (def pattern : deploymentPatterns) {
                         def deploymentDirName = pattern.directory
                         println "Creating directory: ${deploymentDirName}"
+                        sh "mkdir -p ${deploymentDirName}"
                         
                         // Copy the Terraform files to the respective directories
                         dir("${deploymentDirName}") {
