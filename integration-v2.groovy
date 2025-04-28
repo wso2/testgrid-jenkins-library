@@ -492,7 +492,6 @@ pipeline {
                                     pattern.hostName = hostName
 
                                     def ecrWso2AcpURL = sh(script: "terraform output -json | jq -r '.ecr_wso2am_acp_url.value'", returnStdout: true).trim()
-                                    println "ECR WSO2 ACP URL: ${ecrWso2AcpURL}"
                                     def ecrCommonURL = ecrWso2AcpURL.split('/')[0]
                                     println "ECR Common URL: ${ecrCommonURL}"
 
