@@ -787,8 +787,9 @@ pipeline {
                                 }
 
                                 stage("Test ${stageId}") {
-                                    when {
-                                        expression { !skipTests }
+                                    if (skipTests) {
+                                        echo "Skipping tests for ${stageId} as skipTests is set to true."
+                                        return
                                     }
                                     try {
                                         withCredentials([
