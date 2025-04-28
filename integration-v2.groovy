@@ -40,6 +40,7 @@ Boolean onlyDestroyResources = params.onlyDestroyResources
 Boolean destroyResources = params.destroyResources
 Boolean skipTfApply = params.skipTfApply
 Boolean skipDockerBuild = params.skipDockerBuild
+Boolean skipTests = params.skipTests
 
 // Default values
 def deploymentPatterns = []
@@ -786,6 +787,9 @@ pipeline {
                                 }
 
                                 stage("Test ${stageId}") {
+                                    when {
+                                        expression { !skipTests }
+                                    }
                                     try {
                                         withCredentials([
                                             [
