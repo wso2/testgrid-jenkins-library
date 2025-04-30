@@ -664,6 +664,7 @@ pipeline {
                                                         --set wso2.apim.configurations.security.keystores.internal.keyPassword="wso2carbon" \
                                                         --set wso2.apim.configurations.security.truststore.password="wso2carbon" \
                                                         --set wso2.deployment.resources.requests.cpu="1000m" \
+                                                        --set wso2.apim.configurations.userStore.properties.ReadGroups=true \
                                                         --set kubernetes.ingress.controlPlane.hostname="am-${dbEngineNameSafe}.wso2.com" \
                                                         --set wso2.apim.configurations.gateway.environments[0].name="Default" \
                                                         --set wso2.apim.configurations.gateway.environments[0].type="hybrid" \
