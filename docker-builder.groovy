@@ -117,6 +117,7 @@ pipeline {
                         }
                         def statusCode = sh(
                                 script: """
+                                #!/bin/bash
                                 echo "${use_staging}"
                                 if [ "${use_staging}" == "true" ] || [ "${use_staging}" == true ]; then
                                     export WSO2_UPDATES_UPDATE_LEVEL_STATE=TESTING
