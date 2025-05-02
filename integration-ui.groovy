@@ -828,7 +828,7 @@ pipeline {
                                                         --set host_ip="${patternSafe.hostName}" \
                                                         --set git_user_name="${GIT_USERNAME}" \
                                                         --set git_user_password="${GIT_PASSWORD}" \
-                                                        --set git_repo="${productTestBranch}" \
+                                                        --set git_repo="${productRepository}" \
                                                         --set git_branch="${productTestBranch}" \
 
                                                 """
