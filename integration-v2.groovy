@@ -678,6 +678,8 @@ pipeline {
                                                         --set wso2.apim.configurations.gateway.environments[0].wsHostname="websocket-${dbEngineNameSafe}.wso2.com" \
                                                         --set wso2.apim.configurations.gateway.environments[0].httpHostname="gw-${dbEngineNameSafe}.wso2.com" \
                                                         --set wso2.apim.configurations.gateway.environments[0].websubHostname="websub-${dbEngineNameSafe}.wso2.com" \
+                                                        --set wso2.apim.configurations.devportal.enableApplicationSharing=true \
+                                                        --set wso2.apim.configurations.devportal.applicationSharingType="default" \
                                                         --set wso2.apim.configurations.oauth_config.oauth2JWKSUrl="https://apim-acp-wso2am-acp-service:9443/oauth2/jwks" \
                                                         --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                         --set wso2.deployment.image.repository="${project}-wso2am-acp:${dbEngineNameSafe}-latest" \
