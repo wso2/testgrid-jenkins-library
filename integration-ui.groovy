@@ -822,7 +822,7 @@ pipeline {
 
                                                 sh """
                                                     # Run tests
-                                                    helm install apim-test ${pwd}/${apimIntgDirectory}/kubernetes/cypress \
+                                                    helm install apim-test ./kubernetes/cypress \
                                                         --namespace ${namespace} \
                                                         --set host="am-${dbEngineNameSafe}.wso2.com" \
                                                         --set host_ip="${patternSafe.hostName}" \
