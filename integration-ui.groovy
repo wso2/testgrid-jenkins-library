@@ -829,7 +829,10 @@ pipeline {
                                                         --set git_user_name="${GIT_USERNAME}" \
                                                         --set git_user_password="${GIT_PASSWORD}" \
                                                         --set git_repo="${productRepository}" \
-                                                        --set git_branch="${productTestBranch}" \
+                                                        --set git_branch="${productTestBranch}"
+
+                                                    # Tail the logs of the test pod
+                                                    kubectl logs -f -n ${namespace} -l app=test-runner --tail=-1 --follow || echo "Failed to tail logs."
 
                                                 """
                                             }
