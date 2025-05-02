@@ -58,36 +58,41 @@ function log_error(){
     exit 1
 }
 
-function install_jdk(){
+function install_jdk11(){
+    jdk11="ADOPT_OPEN_JDK11"
+    mkdir -p /opt/${jdk11}
+    jdk_file2=$(jq -r '.jdk[] | select ( .name == '\"${jdk11}\"') | .file_name' ${INFRA_JSON})
+    wget -q https://integration-testgrid-resources.s3.amazonaws.com/lib/jdk/$jdk_file2.tar.gz
+    tar -xzf "$jdk_file2.tar.gz" -C /opt/${jdk11} --strip-component=1
+
+    export JAVA_HOME=/opt/${jdk11}
+}
+
+function install_jdks(){
+    mkdir -p /opt/${jdk_name}
+    jdk_file=$(jq -r '.jdk[] | select ( .name == '\"${jdk_name}\"') | .file_name' ${INFRA_JSON})
+    wget -q https://integration-testgrid-resources.s3.amazonaws.com/lib/jdk/$jdk_file.tar.gz
+    tar -xzf "$jdk_file.tar.gz" -C /opt/${jdk_name} --strip-component=1
+
+    export JAVA_HOME=/opt/${jdk_name}
+    echo $JAVA_HOME
+}
+
+function set_jdk(){
     jdk_name=$1
-
-    if [[ "$jdk_name" == "ADOPT_OPEN_JDK17" ||  "$jdk_name" == "ADOPT_OPEN_JDK21" ]]; then
-
-        mkdir -p /opt/${jdk_name}
-        jdk_file=$(jq -r '.jdk[] | select ( .name == '\"${jdk_name}\"') | .file_name' ${INFRA_JSON})
-        wget -q https://integration-testgrid-resources.s3.amazonaws.com/lib/jdk/$jdk_file.tar.gz
-        tar -xzf "$jdk_file.tar.gz" -C /opt/${jdk_name} --strip-component=1
-
-        export JAVA_HOME=/opt/${jdk_name}
+    #When running Integration tests for JDK 17 or 21, JDK 11 is also required for compilation.
+    if [[ "$jdk_name" == "ADOPT_OPEN_JDK17" ]] || [[ "$jdk_name" == "ADOPT_OPEN_JDK21" ]]; then
+        echo "Installing " + $jdk_name
+        install_jdks
+        echo $JAVA_HOME
+        #setting JAVA_HOME to JDK 11 to compile
+        install_jdk11
+        echo $JAVA_HOME 
+    else
+        echo "Installing " + $jdk_name
+        install_jdks
         echo $JAVA_HOME
         
-        jdk11="ADOPT_OPEN_JDK11"
-        mkdir -p /opt/${jdk11}
-        jdk_file2=$(jq -r '.jdk[] | select ( .name == '\"${jdk11}\"') | .file_name' ${INFRA_JSON})
-        wget -q https://integration-testgrid-resources.s3.amazonaws.com/lib/jdk/$jdk_file2.tar.gz
-        tar -xzf "$jdk_file2.tar.gz" -C /opt/${jdk11} --strip-component=1
-
-        export JAVA_HOME=/opt/${jdk11}
-        echo $JAVA_HOME
-    else
-
-        mkdir -p /opt/${jdk_name}
-        jdk_file=$(jq -r '.jdk[] | select ( .name == '\"${jdk_name}\"') | .file_name' ${INFRA_JSON})
-        wget -q https://integration-testgrid-resources.s3.amazonaws.com/lib/jdk/$jdk_file.tar.gz
-        tar -xzf "$jdk_file.tar.gz" -C /opt/${jdk_name} --strip-component=1
-
-        export JAVA_HOME=/opt/${jdk_name}
-        echo $JAVA_HOME
     fi
 }
 
@@ -117,7 +122,7 @@ then
 fi
 
 log_info "Exporting JDK"
-install_jdk ${JDK_TYPE}
+set_jdk ${JDK_TYPE}
 
 pwd
 
@@ -135,25 +140,27 @@ export_db_params ${DB_TYPE}
 rm -rf $PRODUCT_REPOSITORY_PACK_DIR
 mkdir -p $PRODUCT_REPOSITORY_PACK_DIR
 log_info "Copying product pack to Repository"
-ls $TESTGRID_DIR
+# Remove the existing product pack
 rm -rf $TESTGRID_DIR/$PRODUCT_NAME-$PRODUCT_VERSION.zip
-ls $TESTGRID_DIR
+# Create new product pack after adding the JDBC driver
 zip -q -r $TESTGRID_DIR/$PRODUCT_NAME-$PRODUCT_VERSION.zip $PRODUCT_NAME-$PRODUCT_VERSION
 
 log_info "Navigating to integration test module directory"
 ls $INT_TEST_MODULE_DIR
 
+# Check for master branch execution or tag-based execution
 if [[ "$PRODUCT_VERSION" != *"SNAPSHOT"* ]]; then
     cd $TESTGRID_DIR/$PRODUCT_REPOSITORY_NAME
     echo $JAVA_HOME
+    #If support add the nexus repository to the pom.xml
     if [[ "$PRODUCT_REPOSITORY_BRANCH" == *"support"* ]]; then
         log_info "Add WSO2 repository to pom.xml"
         cp $TESTGRID_DIR/add-patch-repository.sh $TESTGRID_DIR/$PRODUCT_REPOSITORY_NAME/
         cp $TESTGRID_DIR/add_u2.xml $TESTGRID_DIR/$PRODUCT_REPOSITORY_NAME/
-        chmod +x $TESTGRID_DIR/$PRODUCT_REPOSITORY_NAME/add-patch-repository.sh
         bash $TESTGRID_DIR/$PRODUCT_REPOSITORY_NAME/add-patch-repository.sh
     fi
     log_info "Running Maven clean install"
+    #For Tag-based execution we initially build the product pack and then run the integration tests
     echo $JAVA_HOME
     mvn clean install -Dmaven.test.skip=true
     echo "Copying pack to target"
