@@ -831,6 +831,9 @@ pipeline {
                                                         --set git_repo="${productRepository}" \
                                                         --set git_branch="${productTestBranch}"
 
+                                                    # Wait for the test pod to be running
+                                                    kubectl wait --for=condition=ready --timeout=300s pod --selector=app=test-runner -n ${namespace}
+
                                                     # Tail the logs of the test pod
                                                     kubectl logs -f -n ${namespace} -l app=test-runner --tail=-1 --follow || echo "Failed to tail logs."
 
