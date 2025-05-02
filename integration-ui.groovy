@@ -847,6 +847,18 @@ pipeline {
                                                     kubectl logs -f -n ${namespace} -l app=test-runner --tail=-1 --follow || echo "Failed to tail logs."
 
                                                 """
+
+                                                // Get the job status
+                                                def jobFailedStatus = sh(script: "kubectl get job -n ${namespace} -l app=test-runner -o json | jq '.items[] | .status.failed'", returnStdout: true).trim()
+                                                def jobSucceededStatus = sh(script: "kubectl get job -n ${namespace} -l app=test-runner -o json | jq '.items[] | .status.succeeded'", returnStdout: true).trim()
+
+                                                if (jobFailedStatus == "1") {
+                                                    error "Test job failed for ${patternDirSafe}-${dbEngineNameSafe}. Please check the logs for more details."
+                                                } else if (jobSucceededStatus == "1") {
+                                                    println "Test job succeeded for ${patternDirSafe}-${dbEngineNameSafe}."
+                                                } else {
+                                                    error "Test job status is unknown for ${patternDirSafe}-${dbEngineNameSafe}. Please check the logs for more details."
+                                                }
                                             }
                                         }
                                     } catch (Exception e) {
