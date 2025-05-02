@@ -820,12 +820,21 @@ pipeline {
                                                 echo "Waiting 60 seconds before proceeding with tests for ${patternDirSafe} with ${dbEngineNameSafe}..."
                                                 sleep 60
 
+                                                // Resolve hostname to IP address
+                                                def hostIP = sh(script: "nslookup ${patternSafe.hostName} | grep Address | tail -n1 | awk '{print \$2}'", returnStdout: true).trim()
+                                                println "Resolved host IP: ${hostIP} for hostname: ${patternSafe.hostName}"
+
+                                                // If hostname resolution fails, use the hostname directly
+                                                if (!hostIP || hostIP.isEmpty()) {
+                                                    error "Could not resolve hostname to IP, using hostname directly"
+                                                }
+
                                                 sh """
                                                     # Run tests
                                                     helm install apim-test ./kubernetes/cypress \
                                                         --namespace ${namespace} \
                                                         --set host="am-${dbEngineNameSafe}.wso2.com" \
-                                                        --set host_ip="${patternSafe.hostName}" \
+                                                        --set host_ip="${hostIP}" \
                                                         --set git_user_name="${GIT_USERNAME}" \
                                                         --set git_user_password="${GIT_PASSWORD}" \
                                                         --set git_repo="${productRepository}" \
