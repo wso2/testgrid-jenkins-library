@@ -805,7 +805,7 @@ pipeline {
                                             ],
                                             [
                                                 $class: 'UsernamePasswordMultiBinding',
-                                                credentialsId: 'ksr-git',
+                                                credentialsId: "${githubCredentialId}",
                                                 usernameVariable: 'GIT_USERNAME',
                                                 passwordVariable: 'GIT_PASSWORD'
                                             ]
