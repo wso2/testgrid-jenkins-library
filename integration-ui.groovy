@@ -833,6 +833,7 @@ pipeline {
                                                     # Run tests
                                                     helm install apim-test ./kubernetes/cypress \
                                                         --namespace ${namespace} \
+                                                        --set gw_hostname="gw-${dbEngineNameSafe}.wso2.com" \
                                                         --set host="am-${dbEngineNameSafe}.wso2.com" \
                                                         --set host_ip="${hostIP}" \
                                                         --set git_user_name="${GIT_USERNAME}" \
