@@ -38,6 +38,9 @@ stages {
                 }else{
                     updateType="u2"
                 }
+                if (use_staging.toBoolean()){
+                    updateType="staging"
+                }
                 dir("testgrid") {
                     git branch: "${cfn_repo_branch}",
                     credentialsId: "WSO2_GITHUB_TOKEN",
