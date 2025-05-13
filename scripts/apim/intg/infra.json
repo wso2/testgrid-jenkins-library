@@ -36,6 +36,26 @@
 	],
     "jdbc": 
     [
+		{
+			"name": "db2-se",
+			"file_name": "db2jcc4",
+			"driver": "com.ibm.db2.jcc.DB2Driver",
+			"database": [
+				{
+					"name": "WSO2AM_COMMON_DB",
+					"url": "jdbc:db2://DB_HOST:50000/WSO2AM_COMMON_DB:retrieveMessagesFromServerOnGetMessage=true;",
+					"username": "DB_USERNAME",
+					"password": "DB_PASSWORD"
+				},
+				{
+					"name": "WSO2AM_APIMGT_DB",
+					"url": "jdbc:db2://DB_HOST:50000/WSO2AM_APIMGT_DB:retrieveMessagesFromServerOnGetMessage=true;",
+					"username": "DB_USERNAME",
+					"password": "DB_PASSWORD"
+				}
+			],
+			"validation_query": "SELECT 1 FROM SYSIBM.SYSDUMMY1"
+		},
         {
 			"name": "mysql",
 			"file_name": "mysql-connector-java-8.0.28",
