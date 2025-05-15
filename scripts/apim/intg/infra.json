@@ -43,13 +43,13 @@
 			"database": [
 				{
 					"name": "WSO2AM_COMMON_DB",
-					"url": "jdbc:db2://DB_HOST:50000/WSO2AM_COMMON_DB:retrieveMessagesFromServerOnGetMessage=true;",
+					"url": "jdbc:db2://DB_HOST:50000/WSO2AM_COMMON_DB",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				},
 				{
 					"name": "WSO2AM_APIMGT_DB",
-					"url": "jdbc:db2://DB_HOST:50000/WSO2AM_APIMGT_DB:retrieveMessagesFromServerOnGetMessage=true;",
+					"url": "jdbc:db2://DB_HOST:50000/WSO2AM_APIMGT_DB",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				}
