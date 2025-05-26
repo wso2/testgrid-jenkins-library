@@ -1,0 +1,382 @@
+/*
+* Copyright (c) 2023 WSO2 LLC. (http://www.wso2.org) All Rights Reserved.
+*
+* WSO2 Inc. licenses this file to you under the Apache License,
+* Version 2.0 (the "License"); you may not use this file except
+* in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*
+*/
+
+pipeline {
+    agent {label 'pipeline-kubernetes-agent'}
+    environment {
+        EKS_CLUSTER_REGION = 'us-east-1'   
+        EKS_CLUSTER_NAME = 'testgrid-eks-cluster'
+        RDS_STACK_NAME = 'testgrid-rds-stack-410'  
+        DB_USERNAME = 'root'
+        DB_PASSWORD = '613296496' 
+        WUM_USER = credentials('WUM_USERNAME')
+        WUM_PWD = credentials('WUM_PASSWORD')
+    }
+    stages {
+        stage('Clone repo') {
+            steps {
+                script {
+                    properties([
+                        parameters([
+                            separator(name: "PRODUCT_ENVIRONMENT", sectionHeader: "Product Details",
+			separatorStyle: "border-width: 0",
+			sectionHeaderStyle: """
+				background-color: #7ea6d3;
+				text-align: center;
+				padding: 4px;
+				color: #343434;
+				font-size: 22px;
+				font-weight: normal;
+				text-transform: uppercase;
+				font-family: 'Orienta', sans-serif;
+				letter-spacing: 1px;
+				font-style: italic;
+                margin-bottom: 25px;
+			"""),
+                            string(
+                                name: 'product_name',
+                                defaultValue: 'apim',
+                                description: 'Product name',
+                                trim: true
+                            ),
+                            string(
+                                name: 'product_version',
+                                defaultValue: '4.1.0',
+                                description: 'Product version',
+                                trim: true
+                            ),
+                            separator(name: "AWS_ENVIRONMENT", sectionHeader: "AWS cloudformation Details",
+			separatorStyle: "border-width: 0",
+			sectionHeaderStyle: """
+				background-color: #7ea6d3;
+				text-align: center;
+				padding: 4px;
+				color: #343434;
+				font-size: 22px;
+				font-weight: normal;
+				text-transform: uppercase;
+				font-family: 'Orienta', sans-serif;
+				letter-spacing: 1px;
+				font-style: italic;
+                margin-bottom: 25px;
+			"""),
+                            string(
+                                name: 'deployment_script_repo_url',
+                                defaultValue: 'https://github.com/wso2/apim-test-integration',
+                                description: 'Product deployment script repository.',
+                                trim: true
+                            ),
+                            string(
+                                name: 'deployment_script_repo_branch',
+                                defaultValue: '4.1.0-profile-automation',
+                                description: 'Branch name of the deployment script repository.',
+                                trim: true
+                            ),
+                            string(
+                                name: 'db_engine',
+                                defaultValue: 'mysql',
+                                description: 'Database engine',
+                                trim: true
+                            ),
+                            string(
+                                name: 'db_version',
+                                defaultValue: '8.0.36',
+                                description: 'Database engine version',
+                                trim: true
+                            ),
+                            string(
+                                name: 'db_instance_class',
+                                defaultValue: 'db.t3.small',
+                                description: 'Database engine instance class',
+                                trim: true
+                            ),
+                            separator(name: "KUBERNETES_ENVIRONMENT", sectionHeader: "Kubernetes Details",
+                                separatorStyle: "border-width: 0",
+                                sectionHeaderStyle: """
+                                    background-color: #7ea6d3;
+                                    text-align: center;
+                                    padding: 4px;
+                                    color: #343434;
+                                    font-size: 22px;
+                                    font-weight: normal;
+                                    text-transform: uppercase;
+                                    font-family: 'Orienta', sans-serif;
+                                    letter-spacing: 1px;
+                                    font-style: italic;
+                                    margin-bottom: 25px;
+                                """),           
+                            string(
+                                name: 'kubernetes_repo_url',
+                                defaultValue: 'https://github.com/wso2/kubernetes-apim',
+                                description: "Product's kubernetes repository URL.",
+                                trim: true
+                            ),
+                            string(
+                                name: 'kubernetes_repo_branch',
+                                defaultValue: '4.1.x',
+                                description: 'Branch name of the kubernetes repository.',
+                                trim: true
+                            ),
+                            string(
+                                name: 'path_to_helm_folder',
+                                defaultValue: 'advanced/am-pattern-4',
+                                description: 'Relative path of the helm folder in your helm repository.',
+                                trim: true
+                            ),
+                            string(
+                                name: 'kubernetes_namespace',
+                                defaultValue: 'apim-4-1-0',
+                                description: 'namespace to be deployed.',
+                                trim: true
+                            ),
+                            separator(name: "TESTING ENVIRONMENT", sectionHeader: "Testing Details",
+			separatorStyle: "border-width: 0",
+			sectionHeaderStyle: """
+				background-color: #7ea6d3;
+				text-align: center;
+				padding: 4px;
+				color: #343434;
+				font-size: 22px;
+				font-weight: normal;
+				text-transform: uppercase;
+				font-family: 'Orienta', sans-serif;
+				letter-spacing: 1px;
+				font-style: italic;
+                margin-bottom: 25px;
+			"""),
+                            string(
+                                name: 'product_testing_repo_url',
+                                defaultValue: 'https://github.com/wso2/apim-test-integration',
+                                description: "Product's testing repository URL.",
+                                trim: true
+                            ),
+                            string(
+                                name: 'product_testing_repo_branch',
+                                defaultValue: '4.1.0-profile-automation',
+                                description: "Product's testing repository branch name.",
+                                trim: true
+                            ),
+                            string(
+                                name: 'test_file_path',
+                                defaultValue: './main.sh',
+                                description: 'Test execution relative file path',
+                                trim: true
+                            ),
+                            string(
+                                name: 'service_startup_timeout',
+                                defaultValue: '1800',
+                                description: 'Service up timeout in seconds.',
+                                trim: true
+                            )
+                        ])
+                    ])
+                    def lst = ["apim"];
+                    if (!lst.contains(product_name)) {
+                        error("Product ${product_name} not supported");
+                    } 
+                    def cnfFolderName = "kubernetes/product-deployment/scripts/${product_name}"
+                    def kubernetesFolderName = "kubernetes/product-deployment/scripts/${product_name}/kubernetes-${product_name}"
+                    def testingFolderName = "kubernetes/product-deployment/scripts/${product_name}/test-${product_name}"
+                    dir(cnfFolderName) {
+                        git branch: "${deployment_script_repo_branch}", url: "${deployment_script_repo_url}"
+                    }
+                    dir(kubernetesFolderName) {
+                        deleteDir()
+                        git branch: "${kubernetes_repo_branch}", url: "${kubernetes_repo_url}"
+                    }
+                    dir(testingFolderName) {
+                        deleteDir()
+                        git branch: "${product_testing_repo_branch}", url: "${product_testing_repo_url}"
+                    }
+                    echo "workspace path : ${env.WORKSPACE} pwd: "
+                    sh "pwd"
+                    sh "chmod +x -R ${env.WORKSPACE}"
+                }
+            }
+        }
+
+        stage('Validate cluster') {
+            steps {
+                script {
+                    echo "\n\n\n\n=============================================="
+                    echo "Validate."
+                    echo "==============================================\n\n\n\n"
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: "testgrid-aws-kubernetes",
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        sh "./kubernetes/product-deployment/scripts/validate-cluster-and-params.sh"
+                    }
+                }
+            }
+        }
+        stage('Create Database') {
+            steps {
+                script {
+                    echo "\n\n\n\n=============================================="
+                    echo "Create RDS database."
+                    echo "==============================================\n\n\n\n"
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: "testgrid-aws-kubernetes",
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        sh "./kubernetes/product-deployment/scripts/create-database.sh"
+                    }
+                }
+            }
+        }
+        stage('Deploy into cluster') {
+            steps {
+                script {
+                    echo "\n\n\n\n=============================================="
+                    echo "Deploy ${product_name} into cluster"
+                    echo "==============================================\n\n\n\n"
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: "testgrid-aws-kubernetes",
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        sh "./kubernetes/product-deployment/scripts/deploy.sh ${product_name} ${WUM_USER} ${WUM_PWD}"
+                    }
+                }
+            }
+        }
+        stage('Run Tests') {
+            steps {
+                script {
+                    echo "\n\n\n\n=============================================="
+                    echo "Testing ${product_name} into cluster"
+                    echo "==============================================\n\n\n\n"
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: "testgrid-aws-kubernetes",
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        hostName = sh(
+                            returnStdout: true, 
+                            script: './kubernetes/product-deployment/scripts/extract-cluster-details.sh'
+                        )
+                        sh "kubectl wait --for=condition=ready pod   -l product='$product_name'   --timeout='$service_startup_timeout's --namespace='$kubernetes_namespace'"
+                        env.HOST_NAME=hostName.trim()
+                        sh "./kubernetes/product-deployment/scripts/test.sh ${product_name} ${test_file_path}"
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: "testgrid-aws-kubernetes",
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        echo "\n\n\n\n=============================================="
+                        echo "Uninstall ${product_name} in cluster"
+                        echo "==============================================\n\n\n\n"
+                        sh "./kubernetes/product-deployment/scripts/cleanup.sh ${product_name} || true"
+                        archiveArtifacts artifacts: "kubernetes/product-deployment/output/**/*.*", fingerprint: true
+
+                    }
+            junit allowEmptyResults: true, testResults: '**/*results.xml'
+            cleanWs deleteDirs: true, notFailBuild: true
+        }
+    }
+}
+
+def sendEmail() {
+    if (currentBuild.currentResult.equals("SUCCESS")){
+        headerColour = "#05B349"
+    }else{
+        headerColour = "#ff0000"
+    }
+    content="""
+        <div style="padding-left: 10px">
+            <div style="height: 4px; background-image: linear-gradient(to right, orange, black);">
+        </div>
+        <table border="0" cellspacing="0" cellpadding="0" valign='top'>
+            <td>
+                <h1>Kubernetes deployment test results</span></h1>
+            </td>
+            <td>
+                <img src="http://cdn.wso2.com/wso2/newsletter/images/nl-2017/nl2017-wso2-logo-wb.png"/>
+            </td>
+        </table>
+        <div style="margin: auto; background-color: #ffffff;">
+            <p style="height:10px;font-family: Lucida Grande;font-size: 20px;">
+            <font color="black">
+                <b> Testgrid Kubernetes Deployment job status </b>
+            </font>
+            </p>
+        <table cellspacing="0" cellpadding="0" border="2" bgcolor="#f0f0f0" width="80%">
+        <colgroup>
+            <col width="150"/>
+            <col width="150"/>
+        </colgroup>
+        <tr style="border: 1px solid black; font-size: 16px;">
+            <th bgcolor="${headerColour}" style="padding-top: 3px; padding-bottom: 3px">Test Specification</th>
+            <th bgcolor="${headerColour}" style="black">Test Values</th>
+        </tr>
+        <tr>
+            <td>Product</td>
+            <td>${product_name.toUpperCase()}</td>
+        </tr>
+        <tr>
+            <td>Version</td>
+            <td>${product_version}</td>
+        </tr>
+        <tr>
+            <td>Database</td>
+            <td>${db_engine}</td>
+        </tr>
+        <tr>
+            <td>Databases version</td>
+            <td>${db_version}</td>
+        </tr>
+        </table>
+        <br/>
+        <br/>
+        <p style="height:10px;font-family:Lucida Grande;font-size: 20px;">
+            <font color="black">
+            <b>Build Info:</b>
+            <small><a href="${BUILD_URL}">${BUILD_URL}</a></small>
+            </font>
+        </p>
+        <br/>
+        <br/>
+        <br/>
+        <em>Tested by WSO2 Jenkins TestGrid Kubernetes Deployment Pipeline.</em>
+        </div>
+        """
+    subject="[TestGrid][KubernetesDeployments][${product_name.toUpperCase()}:${product_version}]]-Build ${currentBuild.currentResult}-#${env.BUILD_NUMBER}"
+    senderEmailGroup=""
+    if(product_name.equals("apim")){
+        senderEmailGroup = "integration-builder@wso2.com"
+    }
+    emailext(to: "${senderEmailGroup}",
+            subject: subject,
+            body: content, mimeType: 'text/html')
+}

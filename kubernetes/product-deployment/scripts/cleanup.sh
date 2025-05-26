@@ -25,3 +25,21 @@ eksctl scale nodegroup --region ${EKS_CLUSTER_REGION} --cluster ${EKS_CLUSTER_NA
 echo "Deleting RDS database."
 aws cloudformation delete-stack --region ${EKS_CLUSTER_REGION} --stack-name ${RDS_STACK_NAME}
 aws cloudformation wait stack-delete-complete --region ${EKS_CLUSTER_REGION} --stack-name ${RDS_STACK_NAME}
+
+echo "Listing RDS Snaphots with instance identifier: testgrid-rds ..."
+snapshot_identifiers=$(aws rds describe-db-snapshots --db-instance-identifier testgrid-rds | jq -r '.DBSnapshots[].DBSnapshotIdentifier')
+
+# Convert the space-separated snapshot identifiers to an array
+IFS=$'\n' read -rd '' -a snapshot_array <<< "$snapshot_identifiers"
+
+echo "Deleting RDS Snapshots"
+# Delete the snapshot identifiers
+for snapshot in "${snapshot_array[@]}"; do
+    if [[ $snapshot == "${RDS_STACK_NAME}"* ]]; then
+        # Delete the RDS snapshot
+        echo "Deleting $snapshot"
+        aws rds delete-db-snapshot --db-snapshot-identifier "$snapshot"
+    fi
+done
+
+
