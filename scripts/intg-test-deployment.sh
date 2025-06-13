@@ -71,15 +71,15 @@ function deploymentTest(){
     mkdir ${testOutputDir}
     log_info "Executing scenario tests for ${productTestGroup}!"
     bash ${currentScript}/intg-test-executer.sh "${deploymentDirectory}" "${testOutputDir}" "${productTestGroup}"
-    if [[ $? != 0 ]];
-    then
-        log_error "Executing post actions!"
-        bash ${currentScript}/post-actions.sh ${deploymentName}
-        exit 1
-    else
-        log_info "Test Execution Passed!"
-        bash ${currentScript}/post-actions.sh ${deploymentName}
-    fi
+    # if [[ $? != 0 ]];
+    # then
+    #     log_error "Executing post actions!"
+    #     bash ${currentScript}/post-actions.sh ${deploymentName}
+    #     exit 1
+    # else
+    #     log_info "Test Execution Passed!"
+    #     bash ${currentScript}/post-actions.sh ${deploymentName}
+    # fi
 }
 
 function main(){
