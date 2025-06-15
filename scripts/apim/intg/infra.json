@@ -42,14 +42,14 @@
 			"driver": "com.ibm.db2.jcc.DB2Driver",
 			"database": [
 				{
-					"name": "WSO2AM_COMMON_DB",
-					"url": "jdbc:db2://DB_HOST:50000/WSO2AM_COMMON_DB",
+					"name": "SHRD_DB",
+					"url": "jdbc:db2://DB_HOST:50000/SHRD_DB",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				},
 				{
-					"name": "WSO2AM_APIMGT_DB",
-					"url": "jdbc:db2://DB_HOST:50000/WSO2AM_APIMGT_DB",
+					"name": "APIM_DB",
+					"url": "jdbc:db2://DB_HOST:50000/APIM_DB",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				}
