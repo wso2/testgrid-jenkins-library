@@ -49,7 +49,7 @@ aws cloudformation create-stack \
     ParameterKey=pDbEngine,ParameterValue="$dbEngine" \
     ParameterKey=pDbVersion,ParameterValue="${db_version}" \
     ParameterKey=pDbInstanceClass,ParameterValue="${db_instance_class}"  \
-    ParameterKey=pProductVersion,ParameterValue="${product_version}" \
+    ParameterKey=pProductVersion,ParameterValue="${SHORT_PRODUCT_VERSION}" \
     ParameterKey=pProductTagName,ParameterValue="${product_name}-${product_version}-testgrid-kubernetes-deployment" || { echo 'Failed to create RDS stack.';  exit 1; }
 
 # Wait for RDS DB to come alive.
