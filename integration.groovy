@@ -28,8 +28,8 @@ stages {
     stage('Clone CFN repo') {
         steps {
             script {
-                cfn_repo_url="https://github.com/kavindasr/testgrid.git"
-                cfn_repo_branch="db2-update"
+                cfn_repo_url="https://github.com/wso2/testgrid.git"
+                cfn_repo_branch="master"
                 if (apim_pre_release.toBoolean()){
                     cfn_repo_branch="apim-pre-release"
                 }
