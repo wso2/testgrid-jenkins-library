@@ -60,7 +60,7 @@ for os in ${osArray[@]}; do
                 stackNamePrefix="prod-${product}${simplifiedProductVersion}-${updateType}"
             fi
             stackNameSufix=$(removeSpecialCharacters "${os}-${jdk}-${db}")
-            stackName="${stackNamePrefix}-${stackNameSufix}-ksr"
+            stackName="${stackNamePrefix}-${stackNameSufix}-${uniqueIdentifier}"
 
             # An individual directory will be created per deployment in each build
             log_info "Creating a directory for ${deploymentDirName} deployment"
