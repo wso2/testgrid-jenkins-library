@@ -27,6 +27,7 @@ pipeline {
         DB_PASSWORD = '613296496' 
         WUM_USER = credentials('WUM_USERNAME')
         WUM_PWD = credentials('WUM_PASSWORD')
+        SHORT_PRODUCT_VERSION = '321'
     }
     stages {
         stage('Clone repo') {

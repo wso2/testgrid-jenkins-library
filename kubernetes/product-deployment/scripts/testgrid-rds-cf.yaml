@@ -38,6 +38,8 @@ Parameters:
       - db.m3.2xlarge
       - db.m4.large
       - db.m4.xlarge
+  pProductVersion:
+    Type: String
   pProductTagName:
     Type: String
 
@@ -53,7 +55,7 @@ Resources:
       StorageType: gp2
       PubliclyAccessible: True
       AllocatedStorage: "20"
-      DBInstanceIdentifier: testgrid-rds
+      DBInstanceIdentifier: !Join ["-", ["testgrid-rds", !Ref pProductVersion]]
       LicenseModel:
         !If [UseLicensedVersion, license-included, !Ref "AWS::NoValue"]
       Tags:

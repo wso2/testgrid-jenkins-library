@@ -20,14 +20,12 @@
 
 productName=$1;
 ./kubernetes/product-deployment/scripts/"$productName"/cleanup.sh
-echo "Scaling node group instances to zero."
-eksctl scale nodegroup --region ${EKS_CLUSTER_REGION} --cluster ${EKS_CLUSTER_NAME} --name ng-1 --nodes=0
 echo "Deleting RDS database."
 aws cloudformation delete-stack --region ${EKS_CLUSTER_REGION} --stack-name ${RDS_STACK_NAME}
 aws cloudformation wait stack-delete-complete --region ${EKS_CLUSTER_REGION} --stack-name ${RDS_STACK_NAME}
 
 echo "Listing RDS Snaphots with instance identifier: testgrid-rds ..."
-snapshot_identifiers=$(aws rds describe-db-snapshots --db-instance-identifier testgrid-rds | jq -r '.DBSnapshots[].DBSnapshotIdentifier')
+snapshot_identifiers=$(aws rds describe-db-snapshots --db-instance-identifier testgrid-rds-${SHORT_PRODUCT_VERSION} | jq -r '.DBSnapshots[].DBSnapshotIdentifier')
 
 # Convert the space-separated snapshot identifiers to an array
 IFS=$'\n' read -rd '' -a snapshot_array <<< "$snapshot_identifiers"
