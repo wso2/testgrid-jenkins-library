@@ -21,6 +21,7 @@ import hudson.model.*
 
 def deploymentDirectories = []
 def updateType = ""
+def migratedDB = "false"
 
 pipeline {
 agent {label 'pipeline-agent'}
@@ -29,7 +30,7 @@ stages {
         steps {
             script {
                 cfn_repo_url="https://github.com/wso2/testgrid.git"
-                cfn_repo_branch="master"
+                cfn_repo_branch="master-apim-migration"
                 if (apim_pre_release.toBoolean()){
                     cfn_repo_branch="apim-pre-release"
                 }
@@ -40,6 +41,9 @@ stages {
                 }
                 if (use_staging.toBoolean()){
                     updateType="staging"
+                }
+                if (run_migration.toBoolean()){
+                    migratedDB="true"
                 }
                 dir("testgrid") {
                     git branch: "${cfn_repo_branch}",
@@ -62,19 +66,19 @@ stages {
                 string(credentialsId: 'TESTGRID_EMAIL_PASSWORD', variable: 'testgridEmailPassword')])
                 {
                     sh '''
-                        echo "Writting AWS-Access Key ID to parameter file"
+                        echo "Writing AWS-Access Key ID to parameter file"
                         ./scripts/write-parameter-file.sh "AWSAccessKeyId" ${accessKey} "${WORKSPACE}/parameters/parameters.json"
-                        echo "Writting AWS-Secret Access Key to parameter file"
+                        echo "Writing AWS-Secret Access Key to parameter file"
                         ./scripts/write-parameter-file.sh "AWSAccessKeySecret" ${secretAccessKey} "${WORKSPACE}/parameters/parameters.json"
-                        echo "Writting WUM Password to parameter file"
+                        echo "Writing WUM Password to parameter file"
                         ./scripts/write-parameter-file.sh "WUMPassword" ${wumPassword} "${WORKSPACE}/parameters/parameters.json"
-                        echo "Writting WUM Username to parameter file"
+                        echo "Writing WUM Username to parameter file"
                         ./scripts/write-parameter-file.sh "WUMUsername" ${wumUserName} "${WORKSPACE}/parameters/parameters.json"
-                        echo "Writting DB password to parameter file"
+                        echo "Writing DB password to parameter file"
                         ./scripts/write-parameter-file.sh "DBPassword" ${dbPassword} "${WORKSPACE}/parameters/parameters.json"
-                        echo "Writting S3 access key id to parameter file"
+                        echo "Writing S3 access key id to parameter file"
                         ./scripts/write-parameter-file.sh "S3AccessKeyID" ${s3accessKey} "${WORKSPACE}/parameters/parameters.json"
-                        echo "Writting S3 secret access key to parameter file"
+                        echo "Writing S3 secret access key to parameter file"
                         ./scripts/write-parameter-file.sh "S3SecretAccessKey" ${s3secretKey} "${WORKSPACE}/parameters/parameters.json"
                         echo "Writing testgrid email key to parameter file"
                         ./scripts/write-parameter-file.sh "TESTGRID_EMAIL_PASSWORD" ${testgridEmailPassword} "${WORKSPACE}/parameters/parameters.json"
@@ -83,40 +87,42 @@ stages {
                 withCredentials([usernamePassword(credentialsId: 'WSO2_GITHUB_TOKEN', usernameVariable: 'githubUserName', passwordVariable: 'githubPassword')]) 
                 {
                     sh '''
-                       echo "Writting Github Username to parameter file"
+                       echo "Writing Github Username to parameter file"
                         ./scripts/write-parameter-file.sh "GithubUserName" ${githubUserName} "${WORKSPACE}/parameters/parameters.json"
-                        echo "Writting Github Password to parameter file"
+                        echo "Writing Github Password to parameter file"
                         ./scripts/write-parameter-file.sh "GithubPassword" ${githubPassword} "${WORKSPACE}/parameters/parameters.json"
                     '''
                 }
                 sh '''
                     echo --- Adding common parameters to parameter file! ---
-                    echo "Writting product name to parameter file"
+                    echo "Writing product name to parameter file"
                     ./scripts/write-parameter-file.sh "Product" ${product} "${WORKSPACE}/parameters/parameters.json"
-                    echo "Writting product version to parameter file"
+                    echo "Writing product version to parameter file"
                     ./scripts/write-parameter-file.sh "ProductVersion" ${product_version} "${WORKSPACE}/parameters/parameters.json"
-                    echo "Writting product deployment region to parameter file"
+                    echo "Writing product deployment region to parameter file"
                     ./scripts/write-parameter-file.sh "Region" ${product_deployment_region} "${WORKSPACE}/parameters/parameters.json"
-                    echo "Writting product instance Type to parameter file"
+                    echo "Writing product instance Type to parameter file"
                     ./scripts/write-parameter-file.sh "WSO2InstanceType" ${product_instance_type} "${WORKSPACE}/parameters/parameters.json"
-                    echo "Writting product deployment cfn loction to parameter file"
+                    echo "Writing product deployment cfn loction to parameter file"
                     ./scripts/write-parameter-file.sh "CloudformationLocation" ${cloudformation_location} "${WORKSPACE}/parameters/parameters.json"
-                    echo "Writting product deployment ALB Certificate ARN to parameter file"
+                    echo "Writing product deployment ALB Certificate ARN to parameter file"
                     ./scripts/write-parameter-file.sh "ALBCertificateARN" ${alb_cert_arn} "${WORKSPACE}/parameters/parameters.json"
-                    echo "Writting product deployment Product Repository to parameter file"
+                    echo "Writing product deployment Product Repository to parameter file"
                     ./scripts/write-parameter-file.sh "ProductRepository" ${product_repository} "${WORKSPACE}/parameters/parameters.json"
-                    echo "Writting product deployment Product Test Branch to parameter file"
+                    echo "Writing product deployment Product Test Branch to parameter file"
                     ./scripts/write-parameter-file.sh "ProductTestBranch" ${product_test_branch} "${WORKSPACE}/parameters/parameters.json"
-                    echo "Writting product deployment Product Test script location to parameter file"
+                    echo "Writing product deployment Product Test script location to parameter file"
                     ./scripts/write-parameter-file.sh "ProductTestScriptLocation" ${product_test_script} "${WORKSPACE}/parameters/parameters.json"
-                    echo "Writting product update type to parameter file"
+                    echo "Writing product update type to parameter file"
                     ./scripts/write-parameter-file.sh "UpdateType" '''+updateType+''' "${WORKSPACE}/parameters/parameters.json"
-                    echo "Writting test type to parameter file"
+                    echo "Writing test type to parameter file"
                     ./scripts/write-parameter-file.sh "TestType" "intg" "${WORKSPACE}/parameters/parameters.json"
-                    echo "Writting product Surefire Report Directory"
+                    echo "Writing product Surefire Report Directory"
                     ./scripts/write-parameter-file.sh "SurefireReportDir" ${surefire_report_dir} "${WORKSPACE}/parameters/parameters.json"
-                    echo "Writting product download location"
+                    echo "Writing product download location"
                     ./scripts/write-parameter-file.sh "ProductPackLocation" ${product_pack_location} "${WORKSPACE}/parameters/parameters.json"
+                    echo "Writing migration enabled to parameter file"
+                    ./scripts/write-parameter-file.sh "MigratedDB" '''+migratedDB+''' "${WORKSPACE}/parameters/parameters.json"
                     echo "Writing to parameter file completed!"
                     echo --- Preparing parameter files for deployments! ---
                     ./scripts/deployment-builder.sh ${product} ${product_version} '''+updateType+'''
@@ -168,22 +174,22 @@ def create_build_jobs(deploymentDirectory){
                 sh'''
                     ./scripts/deployment-handler.sh '''+deploymentDirectory+''' ${WORKSPACE}/${cloudformation_location} 
                 '''
-                stage("Testing ${deploymentDirectory}") {
+                stage("Testing Migration ${deploymentDirectory}") {
                     println "Deployment Integration testing..."
                     script {
                         if (test_groups != "") {
                             def testGroups = test_groups.split(",")
-                                println "Test Groups ${testGroups}"
-                                for (productTestGroup in testGroups) {
-                                    println "Deploying Test for ${productTestGroup} for $deploymentDirectory"
-                                    executeTests(deploymentDirectory, productTestGroup)
-                                }
+                            println "Test Groups ${testGroups}"
+                            for (productTestGroup in testGroups) {
+                                println "Deploying Test for ${productTestGroup} for $deploymentDirectory"
+                                executeTests(deploymentDirectory, productTestGroup)
+                            }
                         } else {
                             println "Deploying Test for $deploymentDirectory"
                             sh '''
-                                 echo
-                                 ./scripts/intg-test-deployment.sh ''' + deploymentDirectory + ''' ${product_repository} ${product_test_branch} ${product_test_script}
-                            '''
+                             echo
+                             ./scripts/intg-test-deployment.sh ''' + deploymentDirectory + ''' ${product_repository} ${product_test_branch} ${product_test_script}
+                        '''
                         }
                     }
                 }
@@ -259,6 +265,10 @@ def sendEmail(deploymentDirectories, updateType) {
         <tr>
             <td>Used APIM pre-release</td>
             <td>${apim_pre_release}</td>
+        </tr>
+        <tr>
+            <td>Run Migration from APIM 3.2.0</td>
+            <td>${run_migration}</td>
         </tr>
         <tr>
             <td>Operating Systems</td>

@@ -23,6 +23,9 @@ set -o xtrace
 currentScript=$(dirname $(realpath "$0"))
 source ${currentScript}/common-functions.sh
 
+originalParameteFilePath="${WORKSPACE}/parameters/parameters.json"
+migratedDB=$(extractParameters "MigratedDB" ${originalParameteFilePath})
+
 INPUTS_DIR=$1
 OUTPUTS_DIR=$2
 productTestGroup=$3
@@ -74,8 +77,15 @@ scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${keyFileL
 log_info "Executing /opt/testgrid/workspace/wso2-update.sh on remote Instance"
 ssh -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${keyFileLocation} $instanceUser@${WSO2InstanceName} "cd /opt/testgrid/workspace && sudo bash /opt/testgrid/workspace/wso2-update.sh" "'$WUM_USERNAME'" "'$WUM_PASSWORD'" "'$TEST_MODE'" 
 
-log_info "Executing /opt/testgrid/workspace/provision_db_${PRODUCT_NAME}.sh on remote Instance"
-ssh -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${keyFileLocation} $instanceUser@${WSO2InstanceName} "cd /opt/testgrid/workspace && sudo bash /opt/testgrid/workspace/provision_db_${PRODUCT_NAME}.sh"
+# If migratedDB is 'true' then execute below
+if [[ ${migratedDB} == "true" ]];
+then
+    log_info "Executing /opt/testgrid/workspace/provision_db_migrated_${PRODUCT_NAME}.sh on remote Instance"
+    ssh -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${keyFileLocation} $instanceUser@${WSO2InstanceName} "cd /opt/testgrid/workspace && sudo bash /opt/testgrid/workspace/provision_db_migrated_${PRODUCT_NAME}.sh"
+else
+    log_info "Executing /opt/testgrid/workspace/provision_db_${PRODUCT_NAME}.sh on remote Instance"
+    ssh -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${keyFileLocation} $instanceUser@${WSO2InstanceName} "cd /opt/testgrid/workspace && sudo bash /opt/testgrid/workspace/provision_db_${PRODUCT_NAME}.sh"
+fi
 
 # Setting the test status as failed
 MVNSTATE=1
