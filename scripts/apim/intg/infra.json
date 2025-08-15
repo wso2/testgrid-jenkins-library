@@ -85,7 +85,7 @@
             [
                 {
 					"name": "WSO2AM_COMMON_DB",
-					"url": "jdbc:postgresql://DB_HOST:5432/WSO2AM_COMMON_DB",
+					"url": "jdbc:postgresql://DB_HOST:5432/WSO2AM_COMMON_DB?preparedStatementCacheQueries=0",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				},
