@@ -55,13 +55,13 @@
 			"database": [
 				{
 					"name": "WSO2IDENTITY_DB",
-					"url": "jdbc:db2://DB_HOST:50000/WSO2IDENTITY_DB:retrieveMessagesFromServerOnGetMessage=true;",
+					"url": "jdbc:db2://DB_HOST:50000/IAMDB:retrieveMessagesFromServerOnGetMessage=true;",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				},
 				{
 					"name": "WSO2SHARED_DB",
-					"url": "jdbc:db2://DB_HOST:50000/WSO2SHARED_DB:retrieveMessagesFromServerOnGetMessage=true;",
+					"url": "jdbc:db2://DB_HOST:50000/IAMDB:retrieveMessagesFromServerOnGetMessage=true;",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				}
@@ -76,13 +76,13 @@
             [
                 {
 					"name": "WSO2IDENTITY_DB",
-                    "url": "jdbc:mysql://DB_HOST:3306/WSO2IDENTITY_DB?autoReconnect=true&amp;useSSL=false",
+                    "url": "jdbc:mysql://DB_HOST:3306/IAMDB?autoReconnect=true&amp;useSSL=false",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				},
 				{
 					"name": "WSO2SHARED_DB",
-					"url": "jdbc:mysql://DB_HOST:3306/WSO2SHARED_DB?autoReconnect=true&amp;useSSL=false",
+					"url": "jdbc:mysql://DB_HOST:3306/IAMDB?autoReconnect=true&amp;useSSL=false",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				}
@@ -96,13 +96,13 @@
 			"database": [
 				{
 					"name": "WSO2IDENTITY_DB",
-					"url": "jdbc:mysql://DB_HOST:3306/WSO2IDENTITY_DB?permitMysqlScheme&autoReconnect=true&useSSL=false",
+					"url": "jdbc:mysql://DB_HOST:3306/IAMDB?permitMysqlScheme&autoReconnect=true&useSSL=false",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				},
 				{
 					"name": "WSO2SHARED_DB",
-					"url": "jdbc:mysql://DB_HOST:3306/WSO2SHARED_DB?permitMysqlScheme&autoReconnect=true&useSSL=false",
+					"url": "jdbc:mysql://DB_HOST:3306/IAMDB?permitMysqlScheme&autoReconnect=true&useSSL=false",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				}
@@ -117,13 +117,13 @@
             [
                 {
 					"name": "WSO2IDENTITY_DB",
-					"url": "jdbc:postgresql://DB_HOST:5432/WSO2IDENTITY_DB",
+					"url": "jdbc:postgresql://DB_HOST:5432/IAMDB",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				},
 				{
 					"name": "WSO2SHARED_DB",
-					"url": "jdbc:postgresql://DB_HOST:5432/WSO2SHARED_DB",
+					"url": "jdbc:postgresql://DB_HOST:5432/IAMDB",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				}
@@ -138,13 +138,13 @@
             [
                 {
 					"name": "WSO2IDENTITY_DB",
-					"url": "jdbc:sqlserver://DB_HOST:1433;databaseName=WSO2IDENTITY_DB;SendStringParametersAsUnicode=false;encrypt=false",
+					"url": "jdbc:sqlserver://DB_HOST:1433;databaseName=IAMDB;SendStringParametersAsUnicode=false;encrypt=false",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				},
 				{
 					"name": "WSO2SHARED_DB",
-					"url": "jdbc:sqlserver://DB_HOST:1433;databaseName=WSO2SHARED_DB;SendStringParametersAsUnicode=false;encrypt=false",
+					"url": "jdbc:sqlserver://DB_HOST:1433;databaseName=IAMDB;SendStringParametersAsUnicode=false;encrypt=false",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				}
@@ -159,13 +159,13 @@
             [
                 {
 					"name": "WSO2IDENTITY_DB",
-					"url": "jdbc:oracle:thin:@DB_HOST:1521/WSO2IDENTITY_DB",
+					"url": "jdbc:oracle:thin:@DB_HOST:1521/IAMDB",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				},
 				{
 					"name": "WSO2SHARED_DB",
-					"url": "jdbc:oracle:thin:@DB_HOST:1521/WSO2SHARED_DB",
+					"url": "jdbc:oracle:thin:@DB_HOST:1521/IAMDB",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				}
@@ -180,13 +180,13 @@
             [
                 {
 					"name": "WSO2IDENTITY_DB",
-					"url": "jdbc:oracle:thin:@DB_HOST:1521/WSO2IDENTITY_DB",
+					"url": "jdbc:oracle:thin:@DB_HOST:1521/IAMDB",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				},
 				{
 					"name": "WSO2SHARED_DB",
-					"url": "jdbc:oracle:thin:@DB_HOST:1521/WSO2SHARED_DB",
+					"url": "jdbc:oracle:thin:@DB_HOST:1521/IAMDB",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				}
