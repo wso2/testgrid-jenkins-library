@@ -34,6 +34,10 @@
 			"file_name": "OpenJDK21U-jdk_x64_linux_hotspot_21.0.2_13"
 		},
 		{
+			"name": "ADOPT_OPEN_JDK25",
+			"file_name": "openjdk-25.0.2_linux-x64_bin"
+		},
+		{
 			"name": "ADOPT_OPEN_JDK11_ARM",
 			"file_name": "OpenJDK11U-jdk_aarch64_linux_11.0.7_10"
 		},
@@ -44,6 +48,10 @@
 		{
 			"name": "ADOPT_OPEN_JDK21_ARM",
 			"file_name": "OpenJDK21U-jdk_aarch64_linux_hotspot_21.0.2_13"
+		},
+		{
+			"name": "ADOPT_OPEN_JDK25_ARM",
+			"file_name": "openjdk-25.0.2_linux-aarch64_bin"
 		}
 	],
     "jdbc": 
@@ -64,25 +72,37 @@
 					"url": "jdbc:db2://DB_HOST:50000/WSO2SHARED_DB:retrieveMessagesFromServerOnGetMessage=true;",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
+				},
+                {
+					"name": "WSO2AGENTIDENTITY_DB",
+					"url": "jdbc:db2://DB_HOST:50000/WSO2AGENTIDENTITY_DB:retrieveMessagesFromServerOnGetMessage=true;",
+					"username": "DB_USERNAME",
+					"password": "DB_PASSWORD"
 				}
 			],
 			"validation_query": "SELECT 1 FROM SYSIBM.SYSDUMMY1"
 		},
         {
 			"name": "mysql",
-			"file_name": "mysql-connector-java-8.0.28",
-			"driver": "com.mysql.jdbc.Driver",
+			"file_name": "mysql-connector-j-9.6.0",
+			"driver": "com.mysql.cj.jdbc.Driver",
             "database": 
             [
                 {
 					"name": "WSO2IDENTITY_DB",
-                    "url": "jdbc:mysql://DB_HOST:3306/WSO2IDENTITY_DB?autoReconnect=true&amp;useSSL=false",
+					"url": "jdbc:mysql://DB_HOST:3306/WSO2IDENTITY_DB?autoReconnect=true&amp;amp;useSSL=false",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				},
 				{
 					"name": "WSO2SHARED_DB",
-					"url": "jdbc:mysql://DB_HOST:3306/WSO2SHARED_DB?autoReconnect=true&amp;useSSL=false",
+					"url": "jdbc:mysql://DB_HOST:3306/WSO2SHARED_DB?autoReconnect=true&amp;amp;useSSL=false",
+					"username": "DB_USERNAME",
+					"password": "DB_PASSWORD"
+				},
+				{
+					"name": "WSO2AGENTIDENTITY_DB",
+					"url": "jdbc:mysql://DB_HOST:3306/WSO2AGENTIDENTITY_DB?autoReconnect=true&amp;amp;useSSL=false",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				}
@@ -96,13 +116,19 @@
 			"database": [
 				{
 					"name": "WSO2IDENTITY_DB",
-					"url": "jdbc:mysql://DB_HOST:3306/WSO2IDENTITY_DB?permitMysqlScheme&autoReconnect=true&useSSL=false",
+					"url": "jdbc:mysql://DB_HOST:3306/WSO2IDENTITY_DB?permitMysqlScheme&amp;amp;autoReconnect=true&amp;amp;sslMode=trust",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				},
 				{
 					"name": "WSO2SHARED_DB",
-					"url": "jdbc:mysql://DB_HOST:3306/WSO2SHARED_DB?permitMysqlScheme&autoReconnect=true&useSSL=false",
+					"url": "jdbc:mysql://DB_HOST:3306/WSO2SHARED_DB?permitMysqlScheme&amp;amp;autoReconnect=true&amp;amp;sslMode=trust",
+					"username": "DB_USERNAME",
+					"password": "DB_PASSWORD"
+				},
+				{
+					"name": "WSO2AGENTIDENTITY_DB",
+					"url": "jdbc:mysql://DB_HOST:3306/WSO2AGENTIDENTITY_DB?permitMysqlScheme&amp;amp;autoReconnect=true&amp;amp;sslMode=trust",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				}
@@ -111,7 +137,7 @@
 		},
 		{
 			"name": "postgres",
-			"file_name": "postgresql-42.2.14",
+			"file_name": "postgresql-42.7.10",
 			"driver": "org.postgresql.Driver",
             "database": 
             [
@@ -126,13 +152,19 @@
 					"url": "jdbc:postgresql://DB_HOST:5432/WSO2SHARED_DB",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
+				},
+                {
+					"name": "WSO2AGENTIDENTITY_DB",
+					"url": "jdbc:postgresql://DB_HOST:5432/WSO2AGENTIDENTITY_DB",
+					"username": "DB_USERNAME",
+					"password": "DB_PASSWORD"
 				}
 			],
 			"validation_query": "SELECT 1; COMMIT"
 		},
 		{
 			"name": "sqlserver-se",
-			"file_name": "mssql-jdbc-10.2.0.jre8",
+			"file_name": "mssql-jdbc-13.4.0.jre11",
 			"driver": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
             "database": 
             [
@@ -147,25 +179,37 @@
 					"url": "jdbc:sqlserver://DB_HOST:1433;databaseName=WSO2SHARED_DB;SendStringParametersAsUnicode=false;encrypt=false",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
+				},
+                {
+					"name": "WSO2AGENTIDENTITY_DB",
+					"url": "jdbc:sqlserver://DB_HOST:1433;databaseName=WSO2AGENTIDENTITY_DB;SendStringParametersAsUnicode=false;encrypt=false",
+					"username": "DB_USERNAME",
+					"password": "DB_PASSWORD"
 				}
 			],
 			"validation_query": "SELECT 1; COMMIT"
 		},
 		{
 			"name": "oracle-se2",
-			"file_name": "ojdbc8",
+			"file_name": "ojdbc11",
 			"driver": "oracle.jdbc.OracleDriver",
             "database": 
             [
                 {
 					"name": "WSO2IDENTITY_DB",
-					"url": "jdbc:oracle:thin:@DB_HOST:1521/WSO2IDENTITY_DB",
+					"url": "jdbc:oracle:thin:@//DB_HOST:1521/IAMDB",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				},
 				{
 					"name": "WSO2SHARED_DB",
-					"url": "jdbc:oracle:thin:@DB_HOST:1521/WSO2SHARED_DB",
+					"url": "jdbc:oracle:thin:@//DB_HOST:1521/IAMDB",
+					"username": "DB_USERNAME",
+					"password": "DB_PASSWORD"
+				},
+				{
+					"name": "WSO2AGENTIDENTITY_DB",
+					"url": "jdbc:oracle:thin:@//DB_HOST:1521/IAMDB",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				}
@@ -180,13 +224,19 @@
             [
                 {
 					"name": "WSO2IDENTITY_DB",
-					"url": "jdbc:oracle:thin:@DB_HOST:1521/WSO2IDENTITY_DB",
+					"url": "jdbc:oracle:thin:@//DB_HOST:1521/IAMDB",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				},
 				{
 					"name": "WSO2SHARED_DB",
-					"url": "jdbc:oracle:thin:@DB_HOST:1521/WSO2SHARED_DB",
+					"url": "jdbc:oracle:thin:@//DB_HOST:1521/IAMDB",
+					"username": "DB_USERNAME",
+					"password": "DB_PASSWORD"
+				},
+				{
+					"name": "WSO2AGENTIDENTITY_DB",
+					"url": "jdbc:oracle:thin:@//DB_HOST:1521/IAMDB",
 					"username": "DB_USERNAME",
 					"password": "DB_PASSWORD"
 				}
