@@ -678,6 +678,7 @@ pipeline {
                                                         --set wso2.apim.configurations.devportal.enableApplicationSharing=true \
                                                         --set wso2.apim.configurations.devportal.applicationSharingType="default" \
                                                         --set wso2.apim.configurations.encryption.key="${encryptionKey}" \
+                                                        --set kubernetes.gatewayAPI.enabled=false \
                                                         --set wso2.apim.configurations.oauth_config.oauth2JWKSUrl="https://apim-acp-wso2am-acp-service:9443/oauth2/jwks" \
                                                         --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                         --set wso2.deployment.image.repository="${project}-wso2am-acp:${dbEngineNameSafe}-latest" \
@@ -750,6 +751,7 @@ pipeline {
                                                         --set wso2.apim.configurations.security.keystores.internal.keyPassword="wso2carbon" \
                                                         --set wso2.apim.configurations.security.truststore.password="wso2carbon" \
                                                         --set wso2.deployment.resources.requests.cpu="1000m" \
+                                                        --set kubernetes.gatewayAPI.enabled=false \
                                                         --set kubernetes.ingress.gateway.hostname="gw-${dbEngineNameSafe}.wso2.com" \
                                                         --set kubernetes.ingress.websocket.hostname="websocket-${dbEngineNameSafe}.wso2.com" \
                                                         --set kubernetes.ingress.websub.hostname="websub-${dbEngineNameSafe}.wso2.com" \
