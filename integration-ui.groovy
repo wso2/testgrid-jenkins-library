@@ -66,7 +66,7 @@ String apimPackDirectory = "wso2am"
 String githubCredentialId = "WSO2_GITHUB_TOKEN"
 def dbEngineList = [
     "mysql": [
-        version: "8.0.39",
+        version: "8.0.43",
         dbDriver: "com.mysql.cj.jdbc.Driver",
         driverUrl: "https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.29/mysql-connector-java-8.0.29.jar",
         dbType: "mysql",
