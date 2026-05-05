@@ -174,7 +174,7 @@ def buildDockerImage(String project, String product, String productVersion, Stri
             [$class: 'StringParameterValue', name: 'db_driver_url', value: dbDriverUrl],
             [$class: 'StringParameterValue', name: 'docker_apim_branch', value: dockerRepoBranch],
             [$class: 'BooleanParameterValue', name: 'use_staging', value: useStaging],
-            [$class: 'BooleanParameterValue', name: 'skip_update', value: skipUpdate
+            [$class: 'BooleanParameterValue', name: 'skip_update', value: skipUpdate],
         ]
         
         // Invoke the downstream build job
