@@ -45,6 +45,7 @@ Boolean skipTfApply = params.skipTfApply
 Boolean skipDockerBuild = params.skipDockerBuild
 Boolean skipTests = params.skipTests
 Boolean skipUpdate = params.skipUpdate ?: false
+String encryptionKey = params.encryptionKey ?: ""
 
 // Default values
 def deploymentPatterns = []
@@ -673,6 +674,7 @@ pipeline {
                                                         --set wso2.apim.configurations.gateway.environments[0].websubHostname="websub-${dbEngineNameSafe}.wso2.com" \
                                                         --set wso2.apim.configurations.devportal.enableApplicationSharing=true \
                                                         --set wso2.apim.configurations.devportal.applicationSharingType="default" \
+                                                        --set wso2.apim.configurations.encryption.key="${encryptionKey}" \
                                                         --set wso2.apim.configurations.oauth_config.oauth2JWKSUrl="https://apim-acp-wso2am-acp-service:9443/oauth2/jwks" \
                                                         --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                         --set wso2.deployment.image.repository="${project}-wso2am-acp:${dbEngineNameSafe}-latest" \
@@ -711,6 +713,7 @@ pipeline {
                                                         --set wso2.apim.configurations.eventhub.enabled=true \
                                                         --set wso2.apim.configurations.eventhub.serviceUrl="apim-acp-wso2am-acp-service" \
                                                         --set wso2.apim.configurations.eventhub.urls="{apim-acp-wso2am-acp-1-service,apim-acp-wso2am-acp-2-service}" \
+                                                        --set wso2.apim.configurations.encryption.key="${encryptionKey}" \
                                                         --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                         --set wso2.deployment.image.repository="${project}-wso2am-tm:${dbEngineNameSafe}-latest" \
                                                         --set wso2.deployment.image.digest=${wso2amTmImageDigest} \
@@ -753,6 +756,7 @@ pipeline {
                                                         --set wso2.apim.configurations.eventhub.enabled=true \
                                                         --set wso2.apim.configurations.eventhub.serviceUrl="apim-acp-wso2am-acp-service" \
                                                         --set wso2.apim.configurations.eventhub.urls="{apim-acp-wso2am-acp-1-service,apim-acp-wso2am-acp-2-service}" \
+                                                        --set wso2.apim.configurations.encryption.key="${encryptionKey}" \
                                                         --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                         --set wso2.deployment.image.repository="${project}-wso2am-universal-gw:${dbEngineNameSafe}-latest" \
                                                         --set wso2.deployment.image.digest=${wso2amGwImageDigest} \
