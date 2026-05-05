@@ -155,8 +155,8 @@ def executeDBScripts(String dbEngine, String dbEndpoint, String dbUser, String d
     }
 }
 
-def buildDockerImage(String project, String product, String productVersion, String os, String updateLevel, String tag, String dbDriverUrl, 
-    String dockerRegistry, String dockerRegistryUsername, String dockerRegistryPassword, Boolean useStaging, Boolean skipUpdate) {
+def buildDockerImage(String project, String product, String productVersion, String os, String updateLevel, String tag, String dbDriverUrl,
+    String dockerRegistry, String dockerRegistryUsername, String dockerRegistryPassword, Boolean useStaging, Boolean skipUpdate, String dockerRepoBranch) {
     
     println "Building Docker image for ${product} ${productVersion} on ${os} with update level ${updateLevel} and tag ${tag}..."
     try {
@@ -524,13 +524,13 @@ pipeline {
                             def dockerRegistryPassword = pattern.dockerRegistry.password
                             
                             parallelBuilds["Build ${currentOs}-${db} wso2am-acp image"] = {
-                                buildDockerImage(project, "wso2am-acp", productVersion, currentOs, acpUpdateLevel, "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging, skipUpdate)
+                                buildDockerImage(project, "wso2am-acp", productVersion, currentOs, acpUpdateLevel, "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging, skipUpdate, dockerRepoBranch)
                             }
                             parallelBuilds["Build ${currentOs}-${db} wso2am-tm image"] = {
-                                buildDockerImage(project, "wso2am-tm", productVersion, currentOs, tmUpdateLevel, "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging, skipUpdate)
+                                buildDockerImage(project, "wso2am-tm", productVersion, currentOs, tmUpdateLevel, "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging, skipUpdate, dockerRepoBranch)
                             }
                             parallelBuilds["Build ${currentOs}-${db} wso2am-universal-gw image"] = {
-                                buildDockerImage(project, "wso2am-universal-gw", productVersion, currentOs, gwUpdateLevel, "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging, skipUpdate)
+                                buildDockerImage(project, "wso2am-universal-gw", productVersion, currentOs, gwUpdateLevel, "${db}-latest", dbDriverUrl, dockerRegistry, dockerRegistryUsername, dockerRegistryPassword, useStaging, skipUpdate, dockerRepoBranch)
                             }
                         }
                     }
