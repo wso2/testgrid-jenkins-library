@@ -223,7 +223,22 @@ def sendEmail(deploymentDirectories, updateType) {
     for (deploymentDirectory in deploymentDirectories){
         deployments = deployments + deploymentDirectory + "<br>"
     }
-    
+
+    // tests/test.sh writes outputs/flaky-specs.txt for any deployment whose
+    // first cypress pass failed but recovered on the pipeline-side rerun. Surface
+    // those entries in the build email so reviewers see which specs needed a
+    // rerun without having to dig into S3 artifacts.
+    def flakyReport = ""
+    for (deploymentDirectory in deploymentDirectories){
+        def flakyFile = "${WORKSPACE}/deployment/${deploymentDirectory}/outputs/flaky-specs.txt"
+        if (fileExists(flakyFile)) {
+            def contents = readFile(flakyFile).trim()
+            if (contents) {
+                flakyReport += "<br><b>${deploymentDirectory}</b><pre>${contents}</pre>"
+            }
+        }
+    }
+
     if (currentBuild.currentResult.equals("SUCCESS")){
         headerColour = "#05B349"
     }else{
@@ -298,6 +313,15 @@ def sendEmail(deploymentDirectories, updateType) {
         </tr>
         </table>
         <br/>
+        ${flakyReport ? """
+        <p style="height:10px;font-family:Lucida Grande;font-size: 18px;">
+            <font color="black">
+            <b>Flaky specs (passed on pipeline-side rerun):</b>
+            </font>
+        </p>
+        ${flakyReport}
+        <br/>
+        """ : ""}
         <br/>
         <p style="height:10px;font-family:Lucida Grande;font-size: 20px;">
             <font color="black">
