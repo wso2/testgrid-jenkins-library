@@ -45,6 +45,7 @@ Boolean skipDockerBuild = params.skipDockerBuild
 Boolean skipTests = params.skipTests
 Boolean skipUpdate = params.skipUpdate ?: false
 Boolean skipPeerTest = params.skipPeerTest
+String encryptionKey = params.encryptionKey ?: ""
 
 // Default values
 def deploymentPatterns = []
@@ -792,6 +793,9 @@ pipeline {
 
                                         # Wait for nginx to come alive.
                                         kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=480s ||  { echo 'Nginx service is not ready within the expected time limit.';  exit 1; }
+
+                                        # Install Kubernetes Gateway API CRDs required by helm-apim 4.7.x
+                                        kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
                                     """
 
                                     def hostName = sh(script: "kubectl -n ingress-nginx get svc ingress-nginx-controller -o json | jq -r '.status.loadBalancer.ingress[0].hostname'", returnStdout: true).trim()
@@ -1067,6 +1071,9 @@ pipeline {
                                                             --set wso2.apim.configurations.gateway.environments[0].websubHostname="${websubHost}" \
                                                             --set wso2.apim.configurations.devportal.enableApplicationSharing=true \
                                                             --set wso2.apim.configurations.devportal.applicationSharingType="default" \
+                                                            --set wso2.apim.configurations.encryption.key="${encryptionKey}" \
+                                                            --set kubernetes.gatewayAPI.enabled=false \
+                                                            --set kubernetes.ingress.controlPlane.enabled=true \
                                                             --set wso2.apim.configurations.oauth_config.oauth2JWKSUrl="https://apim-acp-wso2am-acp-service:9443/oauth2/jwks" \
                                                             --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                             --set wso2.deployment.image.repository="${project}-wso2am-acp:${acpImageTag}" \
@@ -1106,6 +1113,7 @@ pipeline {
                                                             --set wso2.apim.configurations.eventhub.enabled=true \
                                                             --set wso2.apim.configurations.eventhub.serviceUrl="apim-acp-wso2am-acp-service" \
                                                             --set wso2.apim.configurations.eventhub.urls="{apim-acp-wso2am-acp-1-service,apim-acp-wso2am-acp-2-service}" \
+                                                            --set wso2.apim.configurations.encryption.key="${encryptionKey}" \
                                                             --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                             --set wso2.deployment.image.repository="${project}-wso2am-tm:${tmImageTag}" \
                                                             --set wso2.deployment.image.digest=${wso2amTmImageDigest} \
@@ -1140,8 +1148,12 @@ pipeline {
                                                             --set wso2.apim.configurations.security.keystores.internal.keyPassword="wso2carbon" \
                                                             --set wso2.apim.configurations.security.truststore.password="wso2carbon" \
                                                             --set wso2.deployment.resources.requests.cpu="1000m" \
+                                                            --set kubernetes.gatewayAPI.enabled=false \
+                                                            --set kubernetes.ingress.gateway.enabled=true \
                                                             --set kubernetes.ingress.gateway.hostname="${gwHost}" \
+                                                            --set kubernetes.ingress.websocket.enabled=true \
                                                             --set kubernetes.ingress.websocket.hostname="${wsHost}" \
+                                                            --set kubernetes.ingress.websub.enabled=true \
                                                             --set kubernetes.ingress.websub.hostname="${websubHost}" \
                                                             --set wso2.apim.configurations.km.serviceUrl="apim-acp-wso2am-acp-service" \
                                                             --set wso2.apim.configurations.throttling.serviceUrl="apim-tm-wso2am-tm-service" \
@@ -1149,6 +1161,7 @@ pipeline {
                                                             --set wso2.apim.configurations.eventhub.enabled=true \
                                                             --set wso2.apim.configurations.eventhub.serviceUrl="apim-acp-wso2am-acp-service" \
                                                             --set wso2.apim.configurations.eventhub.urls="{apim-acp-wso2am-acp-1-service,apim-acp-wso2am-acp-2-service}" \
+                                                            --set wso2.apim.configurations.encryption.key="${encryptionKey}" \
                                                             --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                             --set wso2.deployment.image.repository="${project}-wso2am-universal-gw:${gwImageTag}" \
                                                             --set wso2.deployment.image.digest=${wso2amGwImageDigest} \

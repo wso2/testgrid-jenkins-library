@@ -31,7 +31,7 @@ String docker_registry_username = params.docker_registry_username
 String docker_registry_password = params.docker_registry_password
 String db_driver_url = params.db_driver_url
 Boolean use_staging = params.use_staging
-String docker_apim_branch = params.docker_apim_branch ?: "4.5.x"
+String docker_apim_branch = params.docker_apim_branch ?: "4.7.x"
 
 // Default values
 String wso2_product_full_name = "${project}-${wso2_product}"
