@@ -67,7 +67,7 @@ String dbUser = "wso2carbon"
 String helmRepoUrl = "https://github.com/wso2/helm-apim.git"
 String helmDirectory = "helm-apim"
 // APIM Test Integration repository details
-String apimIntgRepoUrl = "https://github.com/IsuruGunarathne/apim-test-integration.git"
+String apimIntgRepoUrl = "https://github.com/wso2/apim-test-integration.git"
 String apimIntgRepoBranch = "${productVersion}-profile-automation"
 String apimIntgDirectory = "apim-test-integration"
 String tfDirectory = "terraform"
