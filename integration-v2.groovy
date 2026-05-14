@@ -1231,9 +1231,12 @@ pipeline {
 
                                                     // All HTTP endpoints are reachable, but under heavy
                                                     // parallel load internal JMS/EventHub subscriber threads
-                                                    // may still be catching up.
-                                                    echo "All HTTP endpoints are ready. Waiting 60s for internal JMS/EventHub sync..."
-                                                    sleep 60
+                                                    // may still be catching up. In peer-test mode 4 namespaces
+                                                    // share the same EKS cluster, so the slowest pattern can
+                                                    // exceed the single-pattern sync budget.
+                                                    int jmsSyncWaitSeconds = (peerTestPatterns.size() > 1) ? 180 : 60
+                                                    echo "All HTTP endpoints are ready. Waiting ${jmsSyncWaitSeconds}s for internal JMS/EventHub sync..."
+                                                    sleep jmsSyncWaitSeconds
 
                                                     sh """#!/bin/bash
                                                         set +e
