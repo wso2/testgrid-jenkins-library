@@ -1090,8 +1090,14 @@ pipeline {
                                                             --set wso2.apim.configurations.databases.shared_db.username="${dbUser}" \
                                                             --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
                                                         
-                                                        # Wait for the deployment to be ready
+                                                        # Stagger ACP replica startup. Both replicas race to insert
+                                                        # REG_PATH rows for /_system/governance/event into the shared
+                                                        # DB at boot; the loser gets FK violations that permanently
+                                                        # break EventBroker for that pod.
+                                                        kubectl --context=${patternDirSafe} scale deployment/apim-acp-wso2am-acp-deployment-2 --replicas=0 -n ${namespace}
                                                         kubectl --context=${patternDirSafe} wait --for=condition=available --timeout=400s deployment/apim-acp-wso2am-acp-deployment-1 -n ${namespace}
+                                                        sleep 30
+                                                        kubectl --context=${patternDirSafe} scale deployment/apim-acp-wso2am-acp-deployment-2 --replicas=1 -n ${namespace}
                                                         kubectl --context=${patternDirSafe} wait --for=condition=available --timeout=400s deployment/apim-acp-wso2am-acp-deployment-2 -n ${namespace}
 
                                                         # Deploy wso2am-tm (variant: ${dpSafe.tmVariant})
@@ -1129,8 +1135,12 @@ pipeline {
                                                             --set wso2.apim.configurations.databases.shared_db.username="${dbUser}" \
                                                             --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
 
-                                                        # Wait for the deployment to be ready
+                                                        # Same registry-race mitigation as ACP — stagger TM replicas
+                                                        # so they don't both race to register the throttledata topic.
+                                                        kubectl --context=${patternDirSafe} scale deployment/apim-tm-wso2am-tm-deployment-2 --replicas=0 -n ${namespace}
                                                         kubectl --context=${patternDirSafe} wait --for=condition=available --timeout=400s deployment/apim-tm-wso2am-tm-deployment-1 -n ${namespace}
+                                                        sleep 30
+                                                        kubectl --context=${patternDirSafe} scale deployment/apim-tm-wso2am-tm-deployment-2 --replicas=1 -n ${namespace}
                                                         kubectl --context=${patternDirSafe} wait --for=condition=available --timeout=400s deployment/apim-tm-wso2am-tm-deployment-2 -n ${namespace}
 
                                                         # Deploy wso2am-gw (variant: ${dpSafe.gwVariant})
