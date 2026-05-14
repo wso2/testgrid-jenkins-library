@@ -203,14 +203,21 @@ def create_build_jobs(deploymentDirectory){
                 '''
                 stage("Testing ${deploymentDirectory}") {
                     println "Deployment testing..."
-                    sh'''
-                        ./scripts/test-deployment.sh '''+deploymentDirectory+''' ${product_repository} ${product_test_branch} ${product_test_script}
-                    '''
-                    stage("Uploading results to ${deploymentDirectory}") {
-                        println "Upoading logs..."
+                    try {
                         sh'''
-                            ./scripts/post-actions.sh '''+deploymentDirectory+'''
+                            ./scripts/test-deployment.sh '''+deploymentDirectory+''' ${product_repository} ${product_test_branch} ${product_test_script}
                         '''
+                    } finally {
+                        // Run post-actions on both pass and fail so test outputs
+                        // (Cypress screenshots, mochawesome HTML, carbon logs) get
+                        // uploaded to S3 — otherwise failed builds archive nothing.
+                        // The original test failure still propagates after this block.
+                        stage("Uploading results to ${deploymentDirectory}") {
+                            println "Upoading logs..."
+                            sh'''
+                                ./scripts/post-actions.sh '''+deploymentDirectory+'''
+                            '''
+                        }
                     }
                 }
             }
