@@ -159,6 +159,54 @@ post {
             aws s3 cp s3://'''+s3BuildLogPath+'''/ ${localLogDir} --recursive --quiet
             echo "Job is completed... Deleting the workspace directories!"
         '''
+        // Print the carbon log tarball uploaded by the EC2's dump-carbon-logs.service
+        // (defined in aws-apim CFN user-data) into the pipeline console for failing
+        // runs. The agent has no SSH key for the deployment EC2, so this S3-roundtrip
+        // is the only path back to the per-deployment server logs. Skipped on success
+        // to keep green console output uncluttered (the tarball is still archived).
+        script {
+            if (currentBuild.currentResult != 'SUCCESS') {
+                sh '''
+                    set +e
+                    localLogDir="build-${BUILD_NUMBER}"
+                    echo ""
+                    echo "===== Begin remote carbon log dump ====="
+                    tarballs=$(find "$localLogDir" -name '*-carbon-logs.tar.gz' 2>/dev/null)
+                    if [ -z "$tarballs" ]; then
+                        echo "[carbon-logs] no carbon-log tarballs found under $localLogDir."
+                        echo "[carbon-logs] dump-carbon-logs.service may not have fired - confirm aws-apim CFN template includes it"
+                    else
+                        for tarball in $tarballs; do
+                            echo ""
+                            echo "## tarball: $tarball"
+                            tmpdir=$(mktemp -d)
+                            if ! tar -xzf "$tarball" -C "$tmpdir"; then
+                                echo "[carbon-logs] tar extract failed for $tarball"
+                                rm -rf "$tmpdir"
+                                continue
+                            fi
+                            for f in "$tmpdir"/logs/wso2carbon.log \
+                                     "$tmpdir"/logs/http_access_*.log \
+                                     "$tmpdir"/logs/wso2carbon-trace-messages.log \
+                                     "$tmpdir"/logs/audit.log; do
+                                [ -e "$f" ] || continue
+                                echo ""
+                                echo "----- $(basename "$f") (tail 5000) -----"
+                                tail -n 5000 "$f"
+                            done
+                            for f in "$tmpdir"/logs/tenants/*/wso2carbon.log; do
+                                [ -e "$f" ] || continue
+                                echo ""
+                                echo "----- $f (tail 500) -----"
+                                tail -n 500 "$f"
+                            done
+                            rm -rf "$tmpdir"
+                        done
+                    fi
+                    echo "===== End remote carbon log dump ====="
+                '''
+            }
+        }
         archiveArtifacts artifacts: "build-${env.BUILD_NUMBER}/**/*.*", fingerprint: true
         script {
             sendEmail(deploymentDirectories, updateType)
