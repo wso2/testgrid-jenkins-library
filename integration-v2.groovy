@@ -1100,6 +1100,12 @@ pipeline {
                                                         kubectl --context=${patternDirSafe} scale deployment/apim-acp-wso2am-acp-deployment-2 --replicas=1 -n ${namespace}
                                                         kubectl --context=${patternDirSafe} wait --for=condition=available --timeout=400s deployment/apim-acp-wso2am-acp-deployment-2 -n ${namespace}
 
+                                                        # Carbon's readiness probe passes before EventBroker finishes
+                                                        # writing /_system/governance/event registry paths. Give the
+                                                        # ACPs a grace period before TM joins, otherwise TM-1 races
+                                                        # the still-finalizing ACP and hits the same FK violations.
+                                                        sleep 60
+
                                                         # Deploy wso2am-tm (variant: ${dpSafe.tmVariant})
                                                         echo "Deploying WSO2 API Manager - Traffic Manager [${dpSafe.tmVariant}] in ${namespace} namespace..."
                                                         helm --kube-context=${patternDirSafe} install apim-tm ${helmChartPath}/distributed/traffic-manager \
@@ -1142,6 +1148,10 @@ pipeline {
                                                         sleep 30
                                                         kubectl --context=${patternDirSafe} scale deployment/apim-tm-wso2am-tm-deployment-2 --replicas=1 -n ${namespace}
                                                         kubectl --context=${patternDirSafe} wait --for=condition=available --timeout=400s deployment/apim-tm-wso2am-tm-deployment-2 -n ${namespace}
+
+                                                        # Same grace as after ACP — let TM finalize throttledata
+                                                        # topic registration before GW pods start subscribing.
+                                                        sleep 60
 
                                                         # Deploy wso2am-gw (variant: ${dpSafe.gwVariant})
                                                         echo "Deploying WSO2 API Manager - Gateway [${dpSafe.gwVariant}] in ${namespace} namespace..."
