@@ -36,8 +36,8 @@ String awsCred = params.awsCred
 String dbPassword = params.dbPassword
 String project = params.project?: "wso2"
 String apimPackS3Bucket = params.apimPackS3Bucket
-String dockerRepoBranch = params.dockerRepoBranch ?: "4.5.x"
-String helmRepoBranch = params.helmRepoBranch ?: "4.5.x"
+String dockerRepoBranch = params.dockerRepoBranch ?: "4.7.x"
+String helmRepoBranch = params.helmRepoBranch ?: "4.7.x"
 Boolean onlyDestroyResources = params.onlyDestroyResources
 Boolean destroyResources = params.destroyResources
 Boolean skipTfApply = params.skipTfApply
@@ -45,6 +45,7 @@ Boolean skipDockerBuild = params.skipDockerBuild
 Boolean skipTests = params.skipTests
 Boolean skipUpdate = params.skipUpdate ?: false
 Boolean skipPeerTest = params.skipPeerTest
+String encryptionKey = params.encryptionKey ?: ""
 
 // Default values
 def deploymentPatterns = []
@@ -792,6 +793,9 @@ pipeline {
 
                                         # Wait for nginx to come alive.
                                         kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=480s ||  { echo 'Nginx service is not ready within the expected time limit.';  exit 1; }
+
+                                        # Install Kubernetes Gateway API CRDs required by helm-apim 4.7.x
+                                        kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
                                     """
 
                                     def hostName = sh(script: "kubectl -n ingress-nginx get svc ingress-nginx-controller -o json | jq -r '.status.loadBalancer.ingress[0].hostname'", returnStdout: true).trim()
@@ -1067,6 +1071,9 @@ pipeline {
                                                             --set wso2.apim.configurations.gateway.environments[0].websubHostname="${websubHost}" \
                                                             --set wso2.apim.configurations.devportal.enableApplicationSharing=true \
                                                             --set wso2.apim.configurations.devportal.applicationSharingType="default" \
+                                                            --set wso2.apim.configurations.encryption.key="${encryptionKey}" \
+                                                            --set kubernetes.gatewayAPI.enabled=false \
+                                                            --set kubernetes.ingress.controlPlane.enabled=true \
                                                             --set wso2.apim.configurations.oauth_config.oauth2JWKSUrl="https://apim-acp-wso2am-acp-service:9443/oauth2/jwks" \
                                                             --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                             --set wso2.deployment.image.repository="${project}-wso2am-acp:${acpImageTag}" \
@@ -1083,9 +1090,21 @@ pipeline {
                                                             --set wso2.apim.configurations.databases.shared_db.username="${dbUser}" \
                                                             --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
                                                         
-                                                        # Wait for the deployment to be ready
+                                                        # Stagger ACP replica startup. Both replicas race to insert
+                                                        # REG_PATH rows for /_system/governance/event into the shared
+                                                        # DB at boot; the loser gets FK violations that permanently
+                                                        # break EventBroker for that pod.
+                                                        kubectl --context=${patternDirSafe} scale deployment/apim-acp-wso2am-acp-deployment-2 --replicas=0 -n ${namespace}
                                                         kubectl --context=${patternDirSafe} wait --for=condition=available --timeout=400s deployment/apim-acp-wso2am-acp-deployment-1 -n ${namespace}
+                                                        sleep 30
+                                                        kubectl --context=${patternDirSafe} scale deployment/apim-acp-wso2am-acp-deployment-2 --replicas=1 -n ${namespace}
                                                         kubectl --context=${patternDirSafe} wait --for=condition=available --timeout=400s deployment/apim-acp-wso2am-acp-deployment-2 -n ${namespace}
+
+                                                        # Carbon's readiness probe passes before EventBroker finishes
+                                                        # writing /_system/governance/event registry paths. Give the
+                                                        # ACPs a grace period before TM joins, otherwise TM-1 races
+                                                        # the still-finalizing ACP and hits the same FK violations.
+                                                        sleep 60
 
                                                         # Deploy wso2am-tm (variant: ${dpSafe.tmVariant})
                                                         echo "Deploying WSO2 API Manager - Traffic Manager [${dpSafe.tmVariant}] in ${namespace} namespace..."
@@ -1106,6 +1125,7 @@ pipeline {
                                                             --set wso2.apim.configurations.eventhub.enabled=true \
                                                             --set wso2.apim.configurations.eventhub.serviceUrl="apim-acp-wso2am-acp-service" \
                                                             --set wso2.apim.configurations.eventhub.urls="{apim-acp-wso2am-acp-1-service,apim-acp-wso2am-acp-2-service}" \
+                                                            --set wso2.apim.configurations.encryption.key="${encryptionKey}" \
                                                             --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                             --set wso2.deployment.image.repository="${project}-wso2am-tm:${tmImageTag}" \
                                                             --set wso2.deployment.image.digest=${wso2amTmImageDigest} \
@@ -1121,9 +1141,17 @@ pipeline {
                                                             --set wso2.apim.configurations.databases.shared_db.username="${dbUser}" \
                                                             --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
 
-                                                        # Wait for the deployment to be ready
+                                                        # Same registry-race mitigation as ACP — stagger TM replicas
+                                                        # so they don't both race to register the throttledata topic.
+                                                        kubectl --context=${patternDirSafe} scale deployment/apim-tm-wso2am-tm-deployment-2 --replicas=0 -n ${namespace}
                                                         kubectl --context=${patternDirSafe} wait --for=condition=available --timeout=400s deployment/apim-tm-wso2am-tm-deployment-1 -n ${namespace}
+                                                        sleep 30
+                                                        kubectl --context=${patternDirSafe} scale deployment/apim-tm-wso2am-tm-deployment-2 --replicas=1 -n ${namespace}
                                                         kubectl --context=${patternDirSafe} wait --for=condition=available --timeout=400s deployment/apim-tm-wso2am-tm-deployment-2 -n ${namespace}
+
+                                                        # Same grace as after ACP — let TM finalize throttledata
+                                                        # topic registration before GW pods start subscribing.
+                                                        sleep 60
 
                                                         # Deploy wso2am-gw (variant: ${dpSafe.gwVariant})
                                                         echo "Deploying WSO2 API Manager - Gateway [${dpSafe.gwVariant}] in ${namespace} namespace..."
@@ -1140,8 +1168,12 @@ pipeline {
                                                             --set wso2.apim.configurations.security.keystores.internal.keyPassword="wso2carbon" \
                                                             --set wso2.apim.configurations.security.truststore.password="wso2carbon" \
                                                             --set wso2.deployment.resources.requests.cpu="1000m" \
+                                                            --set kubernetes.gatewayAPI.enabled=false \
+                                                            --set kubernetes.ingress.gateway.enabled=true \
                                                             --set kubernetes.ingress.gateway.hostname="${gwHost}" \
+                                                            --set kubernetes.ingress.websocket.enabled=true \
                                                             --set kubernetes.ingress.websocket.hostname="${wsHost}" \
+                                                            --set kubernetes.ingress.websub.enabled=true \
                                                             --set kubernetes.ingress.websub.hostname="${websubHost}" \
                                                             --set wso2.apim.configurations.km.serviceUrl="apim-acp-wso2am-acp-service" \
                                                             --set wso2.apim.configurations.throttling.serviceUrl="apim-tm-wso2am-tm-service" \
@@ -1149,6 +1181,7 @@ pipeline {
                                                             --set wso2.apim.configurations.eventhub.enabled=true \
                                                             --set wso2.apim.configurations.eventhub.serviceUrl="apim-acp-wso2am-acp-service" \
                                                             --set wso2.apim.configurations.eventhub.urls="{apim-acp-wso2am-acp-1-service,apim-acp-wso2am-acp-2-service}" \
+                                                            --set wso2.apim.configurations.encryption.key="${encryptionKey}" \
                                                             --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                             --set wso2.deployment.image.repository="${project}-wso2am-universal-gw:${gwImageTag}" \
                                                             --set wso2.deployment.image.digest=${wso2amGwImageDigest} \
@@ -1218,9 +1251,12 @@ pipeline {
 
                                                     // All HTTP endpoints are reachable, but under heavy
                                                     // parallel load internal JMS/EventHub subscriber threads
-                                                    // may still be catching up.
-                                                    echo "All HTTP endpoints are ready. Waiting 60s for internal JMS/EventHub sync..."
-                                                    sleep 60
+                                                    // may still be catching up. In peer-test mode 4 namespaces
+                                                    // share the same EKS cluster, so the slowest pattern can
+                                                    // exceed the single-pattern sync budget.
+                                                    int jmsSyncWaitSeconds = (peerTestPatterns.size() > 1) ? 180 : 60
+                                                    echo "All HTTP endpoints are ready. Waiting ${jmsSyncWaitSeconds}s for internal JMS/EventHub sync..."
+                                                    sleep jmsSyncWaitSeconds
 
                                                     sh """#!/bin/bash
                                                         set +e
