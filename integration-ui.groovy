@@ -847,21 +847,59 @@ pipeline {
                                                     # Wait for the test pod to be running
                                                     kubectl wait --for=condition=ready --timeout=300s pod --selector=app=test-runner -n ${namespace}
 
-                                                    # Tail the logs of the test pod
-                                                    kubectl logs -f -n ${namespace} -l app=test-runner --tail=-1 --follow || echo "Failed to tail logs."
-
                                                 """
 
-                                                // Get the job status
-                                                def jobFailedStatus = sh(script: "kubectl get job -n ${namespace} -l app=test-runner -o json | jq '.items[] | .status.failed'", returnStdout: true).trim()
-                                                def jobSucceededStatus = sh(script: "kubectl get job -n ${namespace} -l app=test-runner -o json | jq '.items[] | .status.succeeded'", returnStdout: true).trim()
+                                                // Completion is decided solely by the Kubernetes Job's terminal
+                                                // condition, polled to a terminal state under a bounded wall-clock
+                                                // timeout. The log stream is best-effort only and auto-reconnects
+                                                // on HTTP/2 GOAWAY, so a dropped tail can no longer abort the run.
+                                                def testResult = sh(returnStatus: true, script: '''
+                                                    set +e
+                                                    NS=''' + namespace + '''
 
-                                                if (jobFailedStatus == "1") {
-                                                    error "Test job failed for ${patternDirSafe}-${dbEngineNameSafe}. Please check the logs for more details."
-                                                } else if (jobSucceededStatus == "1") {
+                                                    cleanup() {
+                                                        kill $TAIL_PID 2>/dev/null
+                                                        pkill -P $TAIL_PID 2>/dev/null
+                                                        pkill -f "kubectl logs -f -n $NS -l app=test-runner" 2>/dev/null
+                                                    }
+                                                    trap cleanup EXIT
+
+                                                    # Best-effort, self-healing log tail (console visibility only).
+                                                    (
+                                                        while true; do
+                                                            C=$(kubectl get job -n $NS -l app=test-runner -o jsonpath='{.items[0].status.conditions[?(@.status=="True")].type}' 2>/dev/null)
+                                                            case "$C" in *Complete*|*Failed*) break;; esac
+                                                            kubectl logs -f -n $NS -l app=test-runner --tail=-1 --since=10s 2>/dev/null
+                                                            sleep 5
+                                                        done
+                                                    ) &
+                                                    TAIL_PID=$!
+
+                                                    # Authoritative gate: poll the Job to a terminal state, bounded to 4h.
+                                                    DEADLINE=$(( $(date +%s) + 4*60*60 ))
+                                                    RESULT=2
+                                                    while [ $(date +%s) -lt $DEADLINE ]; do
+                                                        C=$(kubectl get job -n $NS -l app=test-runner -o jsonpath='{.items[0].status.conditions[?(@.status=="True")].type}' 2>/dev/null)
+                                                        case "$C" in
+                                                            *Complete*) RESULT=0; break;;
+                                                            *Failed*)   RESULT=1; break;;
+                                                        esac
+                                                        sleep 15
+                                                    done
+
+                                                    if [ $RESULT -eq 2 ]; then
+                                                        echo "Test job did not reach a terminal state within 4h. Final logs:"
+                                                        kubectl logs -n $NS -l app=test-runner --tail=-1 2>/dev/null
+                                                    fi
+                                                    exit $RESULT
+                                                ''')
+
+                                                if (testResult == 0) {
                                                     println "Test job succeeded for ${patternDirSafe}-${dbEngineNameSafe}."
+                                                } else if (testResult == 1) {
+                                                    error "Test job failed for ${patternDirSafe}-${dbEngineNameSafe}. Please check the logs for more details."
                                                 } else {
-                                                    error "Test job status is unknown for ${patternDirSafe}-${dbEngineNameSafe}. Please check the logs for more details."
+                                                    error "Test job timed out (>4h) for ${patternDirSafe}-${dbEngineNameSafe}."
                                                 }
                                             }
                                         }
