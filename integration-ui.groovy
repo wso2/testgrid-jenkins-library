@@ -63,6 +63,13 @@ String tfDirectory = "terraform"
 String tfEnvironment = "dev"
 String logsDirectory = "logs"
 String apimPackDirectory = "wso2am"
+// S3 bucket holding the DS UI test artifacts. The cypress helm chart uploads
+// report + flattened screenshots to s3://<bucket>/<s3_prefix>; the pipeline
+// then fetches the same prefix back into ${logsDirectory}/<pattern>-<db>/ so
+// archiveArtifacts attaches the screenshots to the Jenkins build page (parity
+// with the all-in-one pipeline's S3-round-trip pattern in main.groovy).
+String dsArtifactBucket = "apim-ui-testing"
+String dsArtifactRegion = "us-east-1"
 
 String githubCredentialId = "WSO2_GITHUB_TOKEN"
 def dbEngineList = [
@@ -812,6 +819,12 @@ pipeline {
                                             ]
                                         ]) {
                                             String namespace = "${patternSafe.id}-${dbEngineNameSafe}"
+                                            // Build-derived deterministic S3 prefix. The in-pod script uploads
+                                            // cypress/reports + flattened cypress/screenshots here; the finally
+                                            // block below pulls the same prefix back into the workspace so the
+                                            // existing archiveArtifacts attaches them to the build page.
+                                            String s3Prefix = "ds-ui-tests/${env.JOB_NAME}/build-${env.BUILD_NUMBER}/${patternSafe.id}-${dbEngineNameSafe}"
+                                            String localArtifactDir = "${logsDirectory}/${patternSafe.id}-${dbEngineNameSafe}"
                                             dir("${apimIntgDirectory}") {
                                                 sh """
                                                     # Change context
@@ -842,7 +855,10 @@ pipeline {
                                                         --set git_repo="${productRepository}" \
                                                         --set git_branch="${productTestBranch}" \
                                                         --set aws_s3_access_key="${AWS_ACCESS_KEY_ID}" \
-                                                        --set aws_s3_secret_key="${AWS_SECRET_ACCESS_KEY}"
+                                                        --set aws_s3_secret_key="${AWS_SECRET_ACCESS_KEY}" \
+                                                        --set aws_s3_bucket="${dsArtifactBucket}" \
+                                                        --set aws_s3_region="${dsArtifactRegion}" \
+                                                        --set s3_prefix="${s3Prefix}"
 
                                                     # Wait for the test pod to be running
                                                     kubectl wait --for=condition=ready --timeout=300s pod --selector=app=test-runner -n ${namespace}
@@ -853,7 +869,9 @@ pipeline {
                                                 // condition, polled to a terminal state under a bounded wall-clock
                                                 // timeout. The log stream is best-effort only and auto-reconnects
                                                 // on HTTP/2 GOAWAY, so a dropped tail can no longer abort the run.
-                                                def testResult = sh(returnStatus: true, script: '''
+                                                def testResult = -1
+                                                try {
+                                                    testResult = sh(returnStatus: true, script: '''
                                                     set +e
                                                     NS=''' + namespace + '''
 
@@ -893,6 +911,26 @@ pipeline {
                                                     fi
                                                     exit $RESULT
                                                 ''')
+                                                } finally {
+                                                    // Fetch cypress report + flattened screenshots from S3 into the
+                                                    // Jenkins workspace so archiveArtifacts attaches them to the
+                                                    // build page. Best-effort: never fail the build over a missing
+                                                    // upload (the test verdict above is authoritative). Runs on
+                                                    // success and failure so failed builds get UI evidence.
+                                                    sh """
+                                                        set +e
+                                                        DEST="${env.WORKSPACE}/${localArtifactDir}"
+                                                        mkdir -p "\$DEST"
+                                                        echo "Fetching DS UI artifacts from s3://${dsArtifactBucket}/${s3Prefix}/ into \$DEST"
+                                                        aws s3 cp --recursive --region "${dsArtifactRegion}" "s3://${dsArtifactBucket}/${s3Prefix}/" "\$DEST/" || echo "[ds-ui-artifacts] s3 cp returned non-zero; build page may be missing screenshots for ${patternSafe.id}-${dbEngineNameSafe}"
+                                                        echo "===== DS UI artifacts staged for archive ====="
+                                                        echo "Local      : \$DEST"
+                                                        echo "S3 source  : s3://${dsArtifactBucket}/${s3Prefix}/"
+                                                        ls -la "\$DEST" 2>/dev/null || true
+                                                        echo "=============================================="
+                                                        exit 0
+                                                    """
+                                                }
 
                                                 if (testResult == 0) {
                                                     println "Test job succeeded for ${patternDirSafe}-${dbEngineNameSafe}."
