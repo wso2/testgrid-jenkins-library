@@ -687,6 +687,7 @@ pipeline {
                                                         --set wso2.apim.configurations.encryption.key="${encryptionKey}" \
                                                         --set kubernetes.gatewayAPI.enabled=false \
                                                         --set kubernetes.ingress.controlPlane.enabled=true \
+                                                        --set 'kubernetes.ingress.controlPlane.annotations.nginx\\.ingress\\.kubernetes\\.io/proxy-body-size=50m' \
                                                         --set wso2.apim.configurations.oauth_config.oauth2JWKSUrl="https://apim-acp-wso2am-acp-service:9443/oauth2/jwks" \
                                                         --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                         --set wso2.deployment.image.repository="${project}-wso2am-acp:${dbEngineNameSafe}-latest" \
@@ -928,6 +929,40 @@ pipeline {
                                                         echo "S3 source  : s3://${dsArtifactBucket}/${s3Prefix}/"
                                                         ls -la "\$DEST" 2>/dev/null || true
                                                         echo "=============================================="
+                                                        exit 0
+                                                    """
+
+                                                    // Capture APIM-side diagnostics before the cluster is torn
+                                                    // down: pod stdout, the authoritative repository/logs/ files
+                                                    // (rotated wso2carbon.log etc.), and namespace describe/events.
+                                                    // Lands under ${logsDirectory} so archiveArtifacts attaches it
+                                                    // to the build page. Best-effort — exits 0 unconditionally so
+                                                    // a capture hiccup never masks the test verdict.
+                                                    sh """
+                                                        set +e
+                                                        NS=${namespace}
+                                                        CLOGS="${env.WORKSPACE}/${localArtifactDir}/carbon-logs"
+                                                        mkdir -p "\$CLOGS"
+                                                        echo "Capturing APIM diagnostics from namespace \$NS into \$CLOGS"
+
+                                                        # Namespace-wide state — catches restarts, OOMKills, probe failures.
+                                                        kubectl get pods -n "\$NS" -o wide              > "\$CLOGS/pods.txt"        2>&1
+                                                        kubectl describe pods -n "\$NS"                 > "\$CLOGS/describe-pods.txt" 2>&1
+                                                        kubectl get events -n "\$NS" --sort-by=.lastTimestamp > "\$CLOGS/events.txt" 2>&1
+
+                                                        # Per-pod stdout + the in-container repository/logs tarball.
+                                                        for POD in \$(kubectl get pods -n "\$NS" -o jsonpath='{.items[*].metadata.name}' 2>/dev/null); do
+                                                            kubectl logs -n "\$NS" "\$POD" --all-containers --tail=-1 > "\$CLOGS/\$POD.stdout.log" 2>&1
+                                                            # APIM pods keep rotated logs under repository/logs; the
+                                                            # cypress test-runner pod has no such dir — the || true skips it.
+                                                            kubectl exec -n "\$NS" "\$POD" -- sh -c 'cd /home/wso2carbon/wso2am-* 2>/dev/null && tar czf - repository/logs' > "\$CLOGS/\$POD.repository-logs.tar.gz" 2>/dev/null || true
+                                                            # Drop empty tarballs (non-APIM pods).
+                                                            [ -s "\$CLOGS/\$POD.repository-logs.tar.gz" ] || rm -f "\$CLOGS/\$POD.repository-logs.tar.gz"
+                                                        done
+
+                                                        echo "===== APIM diagnostics captured ====="
+                                                        ls -la "\$CLOGS" 2>/dev/null || true
+                                                        echo "====================================="
                                                         exit 0
                                                     """
                                                 }
