@@ -148,7 +148,7 @@ stages {
                 def build_jobs = [:]
                 for (deploymentDirectory in deploymentDirectories){
                     println deploymentDirectory
-                    build_jobs["${deploymentDirectory}"] = create_build_jobs(deploymentDirectory)
+                    build_jobs["${deploymentDirectory}"] = create_build_jobs(deploymentDirectory, testSpecs)
                 }
 
                 parallel build_jobs
@@ -176,7 +176,7 @@ post {
 }
 }
 
-def create_build_jobs(deploymentDirectory){
+def create_build_jobs(deploymentDirectory, testSpecs){
     return{
         stage("${deploymentDirectory}"){
             stage("Deploy ${deploymentDirectory}") {
