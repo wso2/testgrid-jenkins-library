@@ -24,6 +24,7 @@ def updateType = ""
 def s3BucketName = "testgrid-pipeline-logs"
 def s3BuildLogPath = ""
 def s3PathConstructor = ""
+def testSpecs = ""
 
 pipeline {
 agent {label 'pipeline-agent'}
@@ -64,6 +65,13 @@ stages {
     stage('Constructing parameter files'){
         steps {
             script {
+                // Normalize the optional multi-line test_specs parameter into the
+                // single comma-separated form Cypress --spec expects. Undeclared in
+                // most jobs, so read via params (returns null) not a bare global.
+                testSpecs = (params.test_specs ?: '').readLines()
+                                .collect { it.trim() }
+                                .findAll { it }
+                                .join(',')
                 withCredentials([string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'accessKey'),
                 string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'secretAccessKey'),
                 string(credentialsId: 'WUM_USERNAME', variable: 'wumUserName'),
@@ -205,7 +213,7 @@ def create_build_jobs(deploymentDirectory){
                     println "Deployment testing..."
                     try {
                         sh'''
-                            ./scripts/test-deployment.sh '''+deploymentDirectory+''' ${product_repository} ${product_test_branch} ${product_test_script}
+                            ./scripts/test-deployment.sh '''+deploymentDirectory+''' ${product_repository} ${product_test_branch} ${product_test_script} "'''+testSpecs+'''"
                         '''
                     } finally {
                         // Run post-actions on both pass and fail so test outputs
