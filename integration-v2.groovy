@@ -1249,11 +1249,8 @@ pipeline {
                                                     echo "Waiting for Gateway API to be ready for ${stageId}..."
                                                     waitForGatewayApi(patternSafe.hostName, gwHost)
 
-                                                    // All HTTP endpoints are reachable, but under heavy
-                                                    // parallel load internal JMS/EventHub subscriber threads
-                                                    // may still be catching up. In peer-test mode 4 namespaces
-                                                    // share the same EKS cluster, so the slowest pattern can
-                                                    // exceed the single-pattern sync budget.
+                                                    // HTTP endpoints are up, but JMS/EventHub subscribers may still be
+                                                    // catching up; peer-test mode shares a cluster so allow extra time.
                                                     int jmsSyncWaitSeconds = (peerTestPatterns.size() > 1) ? 180 : 60
                                                     echo "All HTTP endpoints are ready. Waiting ${jmsSyncWaitSeconds}s for internal JMS/EventHub sync..."
                                                     sleep jmsSyncWaitSeconds

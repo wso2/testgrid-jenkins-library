@@ -63,11 +63,8 @@ String tfDirectory = "terraform"
 String tfEnvironment = "dev"
 String logsDirectory = "logs"
 String apimPackDirectory = "wso2am"
-// S3 bucket holding the DS UI test artifacts. The cypress helm chart uploads
-// report + flattened screenshots to s3://<bucket>/<s3_prefix>; the pipeline
-// then fetches the same prefix back into ${logsDirectory}/<pattern>-<db>/ so
-// archiveArtifacts attaches the screenshots to the Jenkins build page (parity
-// with the all-in-one pipeline's S3-round-trip pattern in main.groovy).
+// S3 bucket for UI test artifacts. Uploaded by the test chart and pulled back
+// into the workspace so archiveArtifacts attaches them to the build page.
 String dsArtifactBucket = "apim-ui-testing"
 String dsArtifactRegion = "us-east-1"
 
@@ -820,10 +817,8 @@ pipeline {
                                             ]
                                         ]) {
                                             String namespace = "${patternSafe.id}-${dbEngineNameSafe}"
-                                            // Build-derived deterministic S3 prefix. The in-pod script uploads
-                                            // cypress/reports + flattened cypress/screenshots here; the finally
-                                            // block below pulls the same prefix back into the workspace so the
-                                            // existing archiveArtifacts attaches them to the build page.
+                                            // Deterministic S3 prefix for this build. Test artifacts are uploaded
+                                            // here and pulled back into the workspace for archiveArtifacts.
                                             String s3Prefix = "ds-ui-tests/${env.JOB_NAME}/build-${env.BUILD_NUMBER}/${patternSafe.id}-${dbEngineNameSafe}"
                                             String localArtifactDir = "${logsDirectory}/${patternSafe.id}-${dbEngineNameSafe}"
                                             dir("${apimIntgDirectory}") {
@@ -866,10 +861,8 @@ pipeline {
 
                                                 """
 
-                                                // Completion is decided solely by the Kubernetes Job's terminal
-                                                // condition, polled to a terminal state under a bounded wall-clock
-                                                // timeout. The log stream is best-effort only and auto-reconnects
-                                                // on HTTP/2 GOAWAY, so a dropped tail can no longer abort the run.
+                                                // Completion is gated on the Kubernetes Job's terminal condition under
+                                                // a bounded timeout; the log stream is best-effort and self-healing.
                                                 def testResult = -1
                                                 try {
                                                     testResult = sh(returnStatus: true, script: '''
@@ -913,11 +906,8 @@ pipeline {
                                                     exit $RESULT
                                                 ''')
                                                 } finally {
-                                                    // Fetch cypress report + flattened screenshots from S3 into the
-                                                    // Jenkins workspace so archiveArtifacts attaches them to the
-                                                    // build page. Best-effort: never fail the build over a missing
-                                                    // upload (the test verdict above is authoritative). Runs on
-                                                    // success and failure so failed builds get UI evidence.
+                                                    // Pull test artifacts from S3 into the workspace for archiveArtifacts.
+                                                    // Best-effort: a missing upload must not fail the build.
                                                     sh """
                                                         set +e
                                                         DEST="${env.WORKSPACE}/${localArtifactDir}"
@@ -932,12 +922,8 @@ pipeline {
                                                         exit 0
                                                     """
 
-                                                    // Capture APIM-side diagnostics before the cluster is torn
-                                                    // down: pod stdout, the authoritative repository/logs/ files
-                                                    // (rotated wso2carbon.log etc.), and namespace describe/events.
-                                                    // Lands under ${logsDirectory} so archiveArtifacts attaches it
-                                                    // to the build page. Best-effort — exits 0 unconditionally so
-                                                    // a capture hiccup never masks the test verdict.
+                                                    // Capture APIM-side diagnostics (pod logs, repository/logs, namespace
+                                                    // state) before teardown. Best-effort: never fails the build.
                                                     sh """
                                                         set +e
                                                         NS=${namespace}

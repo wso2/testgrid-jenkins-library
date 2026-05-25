@@ -216,9 +216,7 @@ def create_build_jobs(deploymentDirectory, testSpecs){
                             ./scripts/test-deployment.sh '''+deploymentDirectory+''' ${product_repository} ${product_test_branch} ${product_test_script} "'''+testSpecs+'''"
                         '''
                     } finally {
-                        // Run post-actions on both pass and fail so test outputs
-                        // (Cypress screenshots, mochawesome HTML, carbon logs) get
-                        // uploaded to S3 — otherwise failed builds archive nothing.
+                        // Run post-actions on both pass and fail so outputs reach S3.
                         // The original test failure still propagates after this block.
                         stage("Uploading results to ${deploymentDirectory}") {
                             println "Upoading logs..."
@@ -239,10 +237,8 @@ def sendEmail(deploymentDirectories, updateType) {
         deployments = deployments + deploymentDirectory + "<br>"
     }
 
-    // tests/test.sh writes outputs/flaky-specs.txt for any deployment whose
-    // first cypress pass failed but recovered on the pipeline-side rerun. Surface
-    // those entries in the build email so reviewers see which specs needed a
-    // rerun without having to dig into S3 artifacts.
+    // Surface any deployments that needed a rerun in the build email,
+    // so reviewers don't have to dig into S3 artifacts.
     def flakyReport = ""
     for (deploymentDirectory in deploymentDirectories){
         def flakyFile = "${WORKSPACE}/deployment/${deploymentDirectory}/outputs/flaky-specs.txt"
