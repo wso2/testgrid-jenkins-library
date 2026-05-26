@@ -46,6 +46,16 @@ Boolean skipDockerBuild = params.skipDockerBuild
 Boolean skipTests = params.skipTests
 Boolean skipUpdate = params.skipUpdate ?: false
 String encryptionKey = params.encryptionKey ?: ""
+// Normalize the optional multi-line test_specs parameter into the single
+// comma-separated form Cypress --spec expects. Undeclared in older job
+// configs, so read via params (returns null) not a bare global.
+// Commas are then escaped to "\," so helm --set treats the whole value as
+// a single string instead of splitting on its own delimiter.
+String testSpecs = (params.test_specs ?: '').readLines()
+    .collect { it.trim() }
+    .findAll { it }
+    .join(',')
+    .replace(',', '\\,')
 
 // Default values
 def deploymentPatterns = []
@@ -56,7 +66,10 @@ String dbUser = "wso2carbon"
 String helmRepoUrl = "https://github.com/wso2/helm-apim.git"
 String helmDirectory = "helm-apim"
 // APIM Test Integration repository details
-String apimIntgRepoUrl = "https://github.com/wso2/apim-test-integration.git"
+// Temporarily point at the IsuruGunarathne fork while iterating on cypress
+// chart changes (test_specs support, etc.) that aren't yet merged upstream.
+// Flip back to wso2/apim-test-integration before final merge.
+String apimIntgRepoUrl = "https://github.com/IsuruGunarathne/apim-test-integration.git"
 String apimIntgRepoBranch = "${productVersion}-profile-automation"
 String apimIntgDirectory = "apim-test-integration"
 String tfDirectory = "terraform"
@@ -854,7 +867,8 @@ pipeline {
                                                         --set aws_s3_secret_key="${AWS_SECRET_ACCESS_KEY}" \
                                                         --set aws_s3_bucket="${dsArtifactBucket}" \
                                                         --set aws_s3_region="${dsArtifactRegion}" \
-                                                        --set s3_prefix="${s3Prefix}"
+                                                        --set s3_prefix="${s3Prefix}" \
+                                                        --set test_specs="${testSpecs}"
 
                                                     # Wait for the test pod to be running
                                                     kubectl wait --for=condition=ready --timeout=300s pod --selector=app=test-runner -n ${namespace}
