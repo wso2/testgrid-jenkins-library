@@ -209,22 +209,23 @@ def create_build_jobs(deploymentDirectory, testSpecs){
                 sh'''
                     ./scripts/deployment-handler.sh '''+deploymentDirectory+''' '''+cloudformationLocation+''' 
                 '''
+                // catchError marks both this stage and the overall build as
+                // FAILURE when test-deployment.sh exits non-zero, while letting
+                // the upload stage below still run. The previous try/finally
+                // shape let the wfapi stage status stay green on red builds.
                 stage("Testing ${deploymentDirectory}") {
                     println "Deployment testing..."
-                    try {
+                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                         sh'''
                             ./scripts/test-deployment.sh '''+deploymentDirectory+''' ${product_repository} ${product_test_branch} ${product_test_script} "'''+testSpecs+'''"
                         '''
-                    } finally {
-                        // Run post-actions on both pass and fail so outputs reach S3.
-                        // The original test failure still propagates after this block.
-                        stage("Uploading results to ${deploymentDirectory}") {
-                            println "Upoading logs..."
-                            sh'''
-                                ./scripts/post-actions.sh '''+deploymentDirectory+'''
-                            '''
-                        }
                     }
+                }
+                stage("Uploading results to ${deploymentDirectory}") {
+                    println "Upoading logs..."
+                    sh'''
+                        ./scripts/post-actions.sh '''+deploymentDirectory+'''
+                    '''
                 }
             }
         }
