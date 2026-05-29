@@ -1090,20 +1090,16 @@ pipeline {
                                                             --set wso2.apim.configurations.databases.shared_db.username="${dbUser}" \
                                                             --set wso2.apim.configurations.databases.shared_db.password="${dbPassword}"
                                                         
-                                                        # Stagger ACP replica startup. Both replicas race to insert
-                                                        # REG_PATH rows for /_system/governance/event into the shared
-                                                        # DB at boot; the loser gets FK violations that permanently
-                                                        # break EventBroker for that pod.
+                                                        # Stagger replicas: both race to insert REG_PATH rows for /_system/governance/event;
+                                                        # loser hits FK violations that permanently break EventBroker on that pod.
                                                         kubectl --context=${patternDirSafe} scale deployment/apim-acp-wso2am-acp-deployment-2 --replicas=0 -n ${namespace}
                                                         kubectl --context=${patternDirSafe} wait --for=condition=available --timeout=400s deployment/apim-acp-wso2am-acp-deployment-1 -n ${namespace}
                                                         sleep 30
                                                         kubectl --context=${patternDirSafe} scale deployment/apim-acp-wso2am-acp-deployment-2 --replicas=1 -n ${namespace}
                                                         kubectl --context=${patternDirSafe} wait --for=condition=available --timeout=400s deployment/apim-acp-wso2am-acp-deployment-2 -n ${namespace}
 
-                                                        # Carbon's readiness probe passes before EventBroker finishes
-                                                        # writing /_system/governance/event registry paths. Give the
-                                                        # ACPs a grace period before TM joins, otherwise TM-1 races
-                                                        # the still-finalizing ACP and hits the same FK violations.
+                                                        # Readiness probe passes before EventBroker finishes registry writes;
+                                                        # without this grace TM-1 races the still-finalizing ACP and hits the same FK violation.
                                                         sleep 60
 
                                                         # Deploy wso2am-tm (variant: ${dpSafe.tmVariant})

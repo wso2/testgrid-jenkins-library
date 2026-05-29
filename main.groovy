@@ -65,9 +65,8 @@ stages {
     stage('Constructing parameter files'){
         steps {
             script {
-                // Normalize the optional multi-line test_specs parameter into the
-                // single comma-separated form Cypress --spec expects. Undeclared in
-                // most jobs, so read via params (returns null) not a bare global.
+                // Read via params since most jobs don't declare test_specs (returns null, not error).
+                // Cypress --spec expects a single comma-separated form.
                 testSpecs = (params.test_specs ?: '').readLines()
                                 .collect { it.trim() }
                                 .findAll { it }
@@ -209,10 +208,8 @@ def create_build_jobs(deploymentDirectory, testSpecs){
                 sh'''
                     ./scripts/deployment-handler.sh '''+deploymentDirectory+''' '''+cloudformationLocation+''' 
                 '''
-                // catchError marks both this stage and the overall build as
-                // FAILURE when test-deployment.sh exits non-zero, while letting
-                // the upload stage below still run. The previous try/finally
-                // shape let the wfapi stage status stay green on red builds.
+                // catchError marks stage+build FAILURE on test failure but still runs the upload stage;
+                // the prior try/finally shape left wfapi stage status green on red builds.
                 stage("Testing ${deploymentDirectory}") {
                     println "Deployment testing..."
                     catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {

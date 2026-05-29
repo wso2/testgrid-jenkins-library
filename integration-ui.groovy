@@ -46,11 +46,8 @@ Boolean skipDockerBuild = params.skipDockerBuild
 Boolean skipTests = params.skipTests
 Boolean skipUpdate = params.skipUpdate ?: false
 String encryptionKey = params.encryptionKey ?: ""
-// Normalize the optional multi-line test_specs parameter into the single
-// comma-separated form Cypress --spec expects. Undeclared in older job
-// configs, so read via params (returns null) not a bare global.
-// Commas are then escaped to "\," so helm --set treats the whole value as
-// a single string instead of splitting on its own delimiter.
+// Read via params since older jobs don't declare test_specs (returns null, not error).
+// Commas escaped as "\," so helm --set treats the whole value as one string.
 String testSpecs = (params.test_specs ?: '').readLines()
     .collect { it.trim() }
     .findAll { it }
