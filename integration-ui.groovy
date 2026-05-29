@@ -66,10 +66,7 @@ String dbUser = "wso2carbon"
 String helmRepoUrl = "https://github.com/wso2/helm-apim.git"
 String helmDirectory = "helm-apim"
 // APIM Test Integration repository details
-// Temporarily point at the IsuruGunarathne fork while iterating on cypress
-// chart changes (test_specs support, etc.) that aren't yet merged upstream.
-// Flip back to wso2/apim-test-integration before final merge.
-String apimIntgRepoUrl = "https://github.com/IsuruGunarathne/apim-test-integration.git"
+String apimIntgRepoUrl = "https://github.com/wso2/apim-test-integration.git"
 String apimIntgRepoBranch = "${productVersion}-profile-automation"
 String apimIntgDirectory = "apim-test-integration"
 String tfDirectory = "terraform"
