@@ -65,7 +65,6 @@ stages {
     stage('Constructing parameter files'){
         steps {
             script {
-                // Read via params since most jobs don't declare test_specs (returns null, not error).
                 // Cypress --spec expects a single comma-separated form.
                 testSpecs = (params.test_specs ?: '').readLines()
                                 .collect { it.trim() }
