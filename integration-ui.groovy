@@ -972,71 +972,6 @@ spec:
                                                     error "Could not resolve hostname to IP, using hostname directly"
                                                 }
 
-                                                if (useGatewayApi) {
-                                                    // Iteration-2 diagnostic: dump login-page BODY markers (does the page that
-                                                    // loads actually contain id="password"/data-testid, or a JS/meta redirect a
-                                                    // browser follows but curl doesn't?) both EXTERNALLY (Jenkins agent) and from
-                                                    // a pod INSIDE the test namespace (Cypress-style hostAliases), to tell whether
-                                                    // the login failure is in-cluster networking or page content. Non-fatal.
-                                                    sh """
-                                                        set +e
-                                                        AM=am-${dbEngineNameSafe}.wso2.com
-                                                        IP=${hostIP}
-                                                        echo '################ GATEWAY-API LOGIN DIAGNOSTIC ################'
-                                                        echo '############ EXTERNAL (Jenkins agent) ############'
-                                                        echo '--- /carbon/admin/login.jsp body markers ---'
-                                                        curl -sk -L --max-redirs 10 --resolve \$AM:443:\$IP "https://\$AM/carbon/admin/login.jsp" | grep -ioE 'id="password"|name="password"|data-testid="[^"]*"|http-equiv="refresh"|window.location[^;<]*|<title>[^<]*</title>' | sort -u | head -25
-                                                        echo '--- /authenticationendpoint/login.do body markers ---'
-                                                        curl -sk -L --max-redirs 10 --resolve \$AM:443:\$IP "https://\$AM/authenticationendpoint/login.do" | grep -ioE 'id="password"|data-testid="[^"]*"|http-equiv="refresh"|window.location[^;<]*|<title>[^<]*</title>' | sort -u | head -25
-                                                    """
-
-                                                    String netcheckManifest = """apiVersion: v1
-kind: Pod
-metadata:
-  name: netcheck
-  namespace: ${namespace}
-spec:
-  restartPolicy: Never
-  hostAliases:
-  - ip: "${hostIP}"
-    hostnames:
-    - "am-${dbEngineNameSafe}.wso2.com"
-    - "gw-${dbEngineNameSafe}.wso2.com"
-  containers:
-  - name: netcheck
-    image: curlimages/curl:latest
-    command: ["sh", "-c"]
-    args:
-    - |
-      echo 'IN-CLUSTER /carbon/admin/login.jsp:'
-      curl -sk -o /tmp/c.html -w 'status=%{http_code}\\n' "https://am-${dbEngineNameSafe}.wso2.com/carbon/admin/login.jsp"
-      grep -ioE 'id="password"|name="password"|data-testid|http-equiv="refresh"|window.location|<title>[^<]*</title>' /tmp/c.html | sort -u | head
-      echo 'IN-CLUSTER /publisher:'
-      curl -sk -o /dev/null -w 'status=%{http_code} redirect=%{redirect_url}\\n' "https://am-${dbEngineNameSafe}.wso2.com/publisher"
-      echo 'IN-CLUSTER /authenticationendpoint/login.do:'
-      curl -sk -o /tmp/a.html -w 'status=%{http_code}\\n' "https://am-${dbEngineNameSafe}.wso2.com/authenticationendpoint/login.do"
-      grep -ioE 'id="password"|data-testid|http-equiv="refresh"|window.location|<title>[^<]*</title>' /tmp/a.html | sort -u | head
-"""
-                                                    writeFile file: "netcheck-${namespace}.yaml", text: netcheckManifest
-                                                    sh """
-                                                        set +e
-                                                        echo '############ IN-CLUSTER (pod in ${namespace}, Cypress-style hostAliases) ############'
-                                                        kubectl delete pod netcheck -n ${namespace} --ignore-not-found
-                                                        kubectl apply -f netcheck-${namespace}.yaml
-                                                        for i in \$(seq 1 18); do
-                                                            ph=\$(kubectl get pod netcheck -n ${namespace} -o jsonpath='{.status.phase}' 2>/dev/null)
-                                                            echo "netcheck phase: \$ph"
-                                                            [ "\$ph" = "Succeeded" ] && break
-                                                            [ "\$ph" = "Failed" ] && break
-                                                            sleep 5
-                                                        done
-                                                        echo '--- IN-CLUSTER NETCHECK LOGS ---'
-                                                        kubectl logs netcheck -n ${namespace} 2>&1
-                                                        kubectl delete pod netcheck -n ${namespace} --ignore-not-found
-                                                        echo '################ END DIAGNOSTIC ################'
-                                                    """
-                                                }
-
                                                 sh """
                                                     # Run tests
                                                     helm install apim-test ./kubernetes/cypress \
@@ -1195,6 +1130,15 @@ spec:
                                 def deploymentDirName = pattern.directory
                                 dir("${deploymentDirName}") {
                                     println "Destroying resources for ${deploymentDirName}..."
+                                    // Gateway API provisions Envoy LoadBalancer(s) (AWS ELBs) that Terraform doesn't
+                                    // manage. Delete the Gateways (controller reaps their LB services) and uninstall
+                                    // Envoy Gateway before destroy, else orphaned ELBs keep ENIs on the VPC subnets and
+                                    // stall terraform destroy for ~30 min. No-op on the nginx Ingress path.
+                                    String gatewayTeardown = useGatewayApi ?
+                                        "kubectl delete gateway --all --all-namespaces --ignore-not-found --timeout=180s || echo 'No Gateways to delete.'\n" +
+                                        "                                        kubectl wait --for=delete svc -n envoy-gateway-system -l gateway.envoyproxy.io/owning-gateway-namespace --timeout=300s || echo 'Envoy LB services not fully removed; continuing.'\n" +
+                                        "                                        helm uninstall eg -n envoy-gateway-system || echo 'Envoy Gateway release not present.'" :
+                                        "echo 'Ingress path: no Gateway API load balancers to release.'"
                                     sh """
                                         # Configure EKS cluster
                                         aws eks --region ${productDeploymentRegion} \
@@ -1204,6 +1148,8 @@ spec:
                                         kubectl delete -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.4/deploy/static/provider/aws/deploy.yaml || echo "Failed to delete ingress controller."
 
                                         kubectl wait --namespace ingress-nginx --for=delete pod --selector=app.kubernetes.io/component=controller --timeout=480s || echo "Ingress controller pods were not deleted within the expected time limit."
+
+                                        ${gatewayTeardown}
 
                                         terraform destroy -auto-approve \
                                             -var="project=${project}" \
