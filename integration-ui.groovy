@@ -778,8 +778,13 @@ spec:
                                                 // The control-plane chart creates the CA ConfigMap (from confs/wso2.crt, CN/SAN
                                                 // localhost) via defaultConfigMapCreation; the gateway release reuses it.
                                                 String backendTls = "--set kubernetes.gatewayAPI.backendTLSPolicy.enabled=true --set kubernetes.gatewayAPI.backendTLSPolicy.caCertificateConfigMap=wso2-backend-ca --set kubernetes.gatewayAPI.backendTLSPolicy.hostname=localhost"
+                                                // backendTrafficPolicy enables cookie-based session affinity (ConsistentHash),
+                                                // the Gateway-API equivalent of the nginx 'affinity: cookie' annotation the chart
+                                                // sets for Ingress. The control plane runs 2 ACP replicas with per-pod (unclustered)
+                                                // Carbon/portal sessions; without affinity Envoy round-robins them and the session
+                                                // is lost right after login (302 back to login), failing every UI spec.
                                                 String acpNetworking = useGatewayApi ?
-                                                    "--set kubernetes.gatewayAPI.enabled=true --set kubernetes.gatewayAPI.gatewayName=wso2-apim-gateway --set kubernetes.gatewayAPI.controlPlane.enabled=true --set kubernetes.gatewayAPI.controlPlane.hostname=am-${dbEngineNameSafe}.wso2.com --set kubernetes.gatewayAPI.defaultConfigMapCreation=true ${backendTls}" :
+                                                    "--set kubernetes.gatewayAPI.enabled=true --set kubernetes.gatewayAPI.gatewayName=wso2-apim-gateway --set kubernetes.gatewayAPI.controlPlane.enabled=true --set kubernetes.gatewayAPI.controlPlane.hostname=am-${dbEngineNameSafe}.wso2.com --set kubernetes.gatewayAPI.defaultConfigMapCreation=true --set kubernetes.gatewayAPI.backendTrafficPolicy.enabled=true ${backendTls}" :
                                                     "--set kubernetes.gatewayAPI.enabled=false --set kubernetes.ingress.controlPlane.enabled=true --set 'kubernetes.ingress.controlPlane.annotations.nginx\\.ingress\\.kubernetes\\.io/proxy-body-size=50m'"
                                                 String gwNetworking = useGatewayApi ?
                                                     "--set kubernetes.gatewayAPI.enabled=true --set kubernetes.gatewayAPI.gatewayName=wso2-apim-gateway --set kubernetes.gatewayAPI.gateway.enabled=true --set kubernetes.gatewayAPI.gateway.hostname=gw-${dbEngineNameSafe}.wso2.com --set kubernetes.gatewayAPI.websocket.enabled=true --set kubernetes.gatewayAPI.websocket.hostname=websocket-${dbEngineNameSafe}.wso2.com --set kubernetes.gatewayAPI.websub.enabled=true --set kubernetes.gatewayAPI.websub.hostname=websub-${dbEngineNameSafe}.wso2.com ${backendTls}" :
@@ -1131,13 +1136,28 @@ spec:
                                 dir("${deploymentDirName}") {
                                     println "Destroying resources for ${deploymentDirName}..."
                                     // Gateway API provisions Envoy LoadBalancer(s) (AWS ELBs) that Terraform doesn't
-                                    // manage. Delete the Gateways (controller reaps their LB services) and uninstall
-                                    // Envoy Gateway before destroy, else orphaned ELBs keep ENIs on the VPC subnets and
-                                    // stall terraform destroy for ~30 min. No-op on the nginx Ingress path.
+                                    // manage. Delete the Gateways + uninstall Envoy Gateway, then wait for the cloud
+                                    // controller to ACTUALLY delete the ELBs (deleting the k8s Service is async — its
+                                    // ENIs linger and stall VPC/subnet teardown ~20 min). No-op on the nginx path.
+                                    if (useGatewayApi) {
+                                        writeFile file: 'gw-teardown.sh', text: '''#!/usr/bin/env bash
+set +e
+CL="$1"; REGION="$2"
+echo "Releasing Gateway API load balancers for cluster $CL"
+kubectl delete gateway --all --all-namespaces --ignore-not-found --timeout=180s || echo "No Gateways to delete."
+helm uninstall eg -n envoy-gateway-system || echo "Envoy Gateway release not present."
+for i in $(seq 1 24); do
+  LEFT=""
+  for lb in $(aws elb describe-load-balancers --region "$REGION" --query "LoadBalancerDescriptions[].LoadBalancerName" --output text 2>/dev/null); do
+    aws elb describe-tags --region "$REGION" --load-balancer-names "$lb" --query "TagDescriptions[].Tags[?Key=='kubernetes.io/cluster/$CL'].Value" --output text 2>/dev/null | grep -q owned && LEFT="$LEFT $lb"
+  done
+  [ -z "$LEFT" ] && { echo "Cluster ELBs released."; break; }
+  echo "Waiting for cluster ELBs to delete:$LEFT"; sleep 15
+done
+'''
+                                    }
                                     String gatewayTeardown = useGatewayApi ?
-                                        "kubectl delete gateway --all --all-namespaces --ignore-not-found --timeout=180s || echo 'No Gateways to delete.'\n" +
-                                        "                                        kubectl wait --for=delete svc -n envoy-gateway-system -l gateway.envoyproxy.io/owning-gateway-namespace --timeout=300s || echo 'Envoy LB services not fully removed; continuing.'\n" +
-                                        "                                        helm uninstall eg -n envoy-gateway-system || echo 'Envoy Gateway release not present.'" :
+                                        "bash gw-teardown.sh ${project}-${pattern.id}-${tfEnvironment}-${productDeploymentRegion}-eks ${productDeploymentRegion}" :
                                         "echo 'Ingress path: no Gateway API load balancers to release.'"
                                     sh """
                                         # Configure EKS cluster
