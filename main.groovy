@@ -237,14 +237,18 @@ def setFlakyDescription(deploymentDirectories) {
     for (deploymentDirectory in deploymentDirectories) {
         def flakyFile = "${WORKSPACE}/deployment/${deploymentDirectory}/outputs/flaky-specs.txt"
         if (fileExists(flakyFile)) {
-            def contents = readFile(flakyFile).trim()
-            if (contents) {
-                flaky << "${deploymentDirectory}: ${contents.replaceAll('\\s+', ', ')}"
+            // List only the spec paths, one per line, indented under the
+            // deployment name. Robust to any header/verdict noise in the file.
+            def specs = readFile(flakyFile).readLines()
+                .collect { it.trim() }
+                .findAll { it ==~ /.*\.(spec|cy)\.js$/ }
+            if (specs) {
+                flaky << "${deploymentDirectory}:\n  " + specs.join("\n  ")
             }
         }
     }
     if (flaky) {
-        currentBuild.description = "⚠ Flaky specs (passed on rerun)\n" + flaky.join("\n")
+        currentBuild.description = "⚠ Flaky specs (failed first pass, rerun)\n" + flaky.join("\n")
     }
 }
 
