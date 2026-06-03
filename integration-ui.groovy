@@ -972,6 +972,30 @@ spec:
                                                     error "Could not resolve hostname to IP, using hostname directly"
                                                 }
 
+                                                if (useGatewayApi) {
+                                                    // One-off diagnostic: reproduce the test client's path (resolve the APIM
+                                                    // hostname to the Envoy LB IP) and dump the redirect chain + login-form
+                                                    // presence, to pinpoint why redirect-based login flows fail under Gateway
+                                                    // API. Non-fatal; remove once the login issue is understood.
+                                                    sh """
+                                                        set +e
+                                                        AM=am-${dbEngineNameSafe}.wso2.com
+                                                        IP=${hostIP}
+                                                        echo '################ GATEWAY-API LOGIN DIAGNOSTIC ################'
+                                                        echo '--- 1) /carbon/admin/login.jsp redirect chain ---'
+                                                        curl -sk -i -L --max-redirs 10 --resolve \$AM:443:\$IP "https://\$AM/carbon/admin/login.jsp" | grep -iE '^HTTP/|^location:|^refresh:' | head -40
+                                                        echo '--- carbon login form present? ---'
+                                                        curl -sk -L --max-redirs 10 --resolve \$AM:443:\$IP "https://\$AM/carbon/admin/login.jsp" | grep -ioE 'j_password|j_username|name="password"|<title>[^<]*</title>' | head
+                                                        echo '--- 2) /publisher portal redirect chain (OIDC) ---'
+                                                        curl -sk -i -L --max-redirs 10 --resolve \$AM:443:\$IP "https://\$AM/publisher" | grep -iE '^HTTP/|^location:' | head -40
+                                                        echo '--- 3) single-hop status -> redirect for key endpoints ---'
+                                                        for p in /carbon/admin/login.jsp /publisher /devportal /admin /authenticationendpoint/login.do /oauth2/authorize; do
+                                                            echo "  \$p : \$(curl -sk -o /dev/null -w '%{http_code} -> %{redirect_url}' --resolve \$AM:443:\$IP "https://\$AM\$p")"
+                                                        done
+                                                        echo '################ END DIAGNOSTIC ################'
+                                                    """
+                                                }
+
                                                 sh """
                                                     # Run tests
                                                     helm install apim-test ./kubernetes/cypress \
