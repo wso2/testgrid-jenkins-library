@@ -22,6 +22,10 @@ import groovy.json.JsonSlurperClassic
 // Input parameters
 String product = params.product
 String productVersion = params.productVersion
+// APIM 4.7.0 exposes APIM through the Kubernetes Gateway API (helm-apim defaults
+// gatewayAPI.enabled=true) instead of nginx Ingress. Gate every Gateway-API-specific
+// step on this so all earlier versions keep the existing nginx Ingress path untouched.
+boolean useGatewayApi = (productVersion == "4.7.0")
 String productDeploymentRegion = params.productDeploymentRegion
 String[] osList = params.osList?.split(',')?.collect { it.trim() } ?: []
 String[] databaseList = params.databaseList?.split(',')?.collect { it.trim() } ?: []
@@ -477,23 +481,44 @@ pipeline {
                                         aws eks --region ${productDeploymentRegion} \
                                         update-kubeconfig --name ${project}-${pattern.id}-${tfEnvironment}-${productDeploymentRegion}-eks \
                                         --alias ${pattern.directory}
-
-                                        # Install nginx ingress controller
-                                        kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.4/deploy/static/provider/aws/deploy.yaml || { echo "failed to install nginx ingress controller." ; exit 1 ; }
-
-                                        # Delete Nginx admission if it exists.
-                                        kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission || echo "WARNING : Failed to delete nginx admission."
-
-                                        # Wait for nginx to come alive.
-                                        kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=480s ||  { echo 'Nginx service is not ready within the expected time limit.';  exit 1; }
-
-                                        # Install Kubernetes Gateway API CRDs required by helm-apim 4.7.x
-                                        kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
                                     """
 
-                                    hostName = sh(script: "kubectl -n ingress-nginx get svc ingress-nginx-controller -o json | jq -r '.status.loadBalancer.ingress[0].hostname'", returnStdout: true).trim()
-                                    println "Ingress Host Name: ${hostName}"
-                                    pattern.hostName = hostName
+                                    if (useGatewayApi) {
+                                        // 4.7.0: install the Envoy Gateway controller (cluster-scoped) and a GatewayClass.
+                                        // The Gateway API CRDs ship with the Envoy Gateway chart. The per-namespace Gateway
+                                        // resource and its load-balancer hostname are created later in the Deploy stage,
+                                        // once the deployment namespace exists.
+                                        writeFile file: 'gatewayclass-eg.yaml', text: '''apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: eg
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+'''
+                                        sh """
+                                            # Install the Envoy Gateway controller (idempotent across patterns/reruns).
+                                            helm upgrade --install eg oci://docker.io/envoyproxy/gateway-helm --version v1.2.4 \
+                                                --namespace envoy-gateway-system --create-namespace
+                                            kubectl rollout status deployment/envoy-gateway -n envoy-gateway-system --timeout=300s
+                                            kubectl apply -f gatewayclass-eg.yaml
+                                        """
+                                        println "Envoy Gateway controller ready; LB hostname is captured per-namespace in the Deploy stage."
+                                    } else {
+                                        sh """
+                                            # Install nginx ingress controller
+                                            kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.4/deploy/static/provider/aws/deploy.yaml || { echo "failed to install nginx ingress controller." ; exit 1 ; }
+
+                                            # Delete Nginx admission if it exists.
+                                            kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission || echo "WARNING : Failed to delete nginx admission."
+
+                                            # Wait for nginx to come alive.
+                                            kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=480s ||  { echo 'Nginx service is not ready within the expected time limit.';  exit 1; }
+                                        """
+
+                                        hostName = sh(script: "kubectl -n ingress-nginx get svc ingress-nginx-controller -o json | jq -r '.status.loadBalancer.ingress[0].hostname'", returnStdout: true).trim()
+                                        println "Ingress Host Name: ${hostName}"
+                                        pattern.hostName = hostName
+                                    }
 
                                     def ecrWso2AcpURL = sh(script: "terraform output -json | jq -r '.ecr_wso2am_acp_url.value'", returnStdout: true).trim()
                                     def ecrCommonURL = ecrWso2AcpURL.split('/')[0]
@@ -632,6 +657,94 @@ pipeline {
                                                 """
                                                 println "Namespace created: ${namespace}"
 
+                                                if (useGatewayApi) {
+                                                    // Create the Gateway the helm-apim HTTPRoutes attach to. The listener
+                                                    // sectionNames (control-plane-https/gateway-https/websocket-https/websub-https)
+                                                    // and per-listener hostnames must match the chart's HTTPRoute parentRefs and
+                                                    // hostnames; allowedRoutes is "Same", so the Gateway lives in this namespace.
+                                                    String gatewayManifest = """apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: wso2-apim-gateway
+  namespace: ${namespace}
+spec:
+  gatewayClassName: eg
+  listeners:
+  - name: control-plane-https
+    hostname: "am-${dbEngineNameSafe}.wso2.com"
+    port: 443
+    protocol: HTTPS
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: wso2-apim-tls
+    allowedRoutes:
+      namespaces:
+        from: Same
+  - name: gateway-https
+    hostname: "gw-${dbEngineNameSafe}.wso2.com"
+    port: 443
+    protocol: HTTPS
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: wso2-apim-tls
+    allowedRoutes:
+      namespaces:
+        from: Same
+  - name: websocket-https
+    hostname: "websocket-${dbEngineNameSafe}.wso2.com"
+    port: 443
+    protocol: HTTPS
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: wso2-apim-tls
+    allowedRoutes:
+      namespaces:
+        from: Same
+  - name: websub-https
+    hostname: "websub-${dbEngineNameSafe}.wso2.com"
+    port: 443
+    protocol: HTTPS
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: wso2-apim-tls
+    allowedRoutes:
+      namespaces:
+        from: Same
+"""
+                                                    writeFile file: "gateway-${namespace}.yaml", text: gatewayManifest
+                                                    sh """
+                                                        # Self-signed wildcard cert for the Gateway HTTPS listeners (test-only; Cypress ignores trust).
+                                                        openssl req -x509 -nodes -newkey rsa:2048 -days 365 \
+                                                            -keyout /tmp/${namespace}-tls.key -out /tmp/${namespace}-tls.crt \
+                                                            -subj "/CN=*.wso2.com" -addext "subjectAltName=DNS:*.wso2.com"
+                                                        kubectl create secret tls wso2-apim-tls --cert=/tmp/${namespace}-tls.crt --key=/tmp/${namespace}-tls.key -n ${namespace} || echo "TLS secret already exists."
+                                                        kubectl apply -f gateway-${namespace}.yaml
+                                                        kubectl wait --namespace ${namespace} --for=condition=Programmed --timeout=300s gateway/wso2-apim-gateway
+                                                    """
+                                                    // Envoy provisions one load balancer per Gateway; resolve its hostname (all
+                                                    // *.wso2.com hostnames for this namespace resolve to it). Poll until provisioned.
+                                                    String envoyLbHost = ""
+                                                    for (int i = 0; i < 30; i++) {
+                                                        envoyLbHost = sh(script: "kubectl -n envoy-gateway-system get svc -l gateway.envoyproxy.io/owning-gateway-name=wso2-apim-gateway,gateway.envoyproxy.io/owning-gateway-namespace=${namespace} -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true", returnStdout: true).trim()
+                                                        if (envoyLbHost) { break }
+                                                        echo "Waiting for Envoy Gateway load balancer hostname (${namespace}, attempt ${i})..."
+                                                        sleep 10
+                                                    }
+                                                    if (!envoyLbHost) {
+                                                        error "Envoy Gateway load balancer hostname was not provisioned for ${namespace}."
+                                                    }
+                                                    patternSafe.hostName = envoyLbHost
+                                                    println "Envoy Gateway LB hostname for ${namespace}: ${envoyLbHost}"
+                                                }
+
                                                 sh """
                                                 # Delete existing release if it exists
                                                 helm list -n ${namespace} -q | xargs -n1 -I{} helm uninstall {} -n ${namespace} || echo "Failed to delete existing release."
@@ -650,13 +763,26 @@ pipeline {
                                                 executeDBScripts(dbEngineNameSafe, endpoint, dbUser, dbPassword, "${pwd}/${patternDirSafe}/${apimPackDirectory}/${product}-${productVersion}")
 
                                                 String helmChartPath = "${pwd}/${helmDirectory}"
+
+                                                // Networking flags differ by exposure model. 4.7.0 uses the Gateway API
+                                                // (HTTPRoutes attaching to the per-namespace Gateway above); earlier versions
+                                                // use nginx Ingress. Each fragment is a single line spliced into the helm
+                                                // commands below, so non-4.7.0 behaviour is byte-for-byte unchanged.
+                                                String gwRestExposure = useGatewayApi ? "echo 'Gateway REST API is exposed via the gateway-https HTTPRoute; skipping gw-ingress.'" :
+                                                    "helm install apim-ing ${pwd}/${apimIntgDirectory}/kubernetes/gw-ingress --set hostname=gw-${dbEngineNameSafe}.wso2.com --namespace ${namespace}"
+                                                String acpNetworking = useGatewayApi ?
+                                                    "--set kubernetes.gatewayAPI.enabled=true --set kubernetes.gatewayAPI.gatewayName=wso2-apim-gateway --set kubernetes.gatewayAPI.controlPlane.enabled=true --set kubernetes.gatewayAPI.controlPlane.hostname=am-${dbEngineNameSafe}.wso2.com" :
+                                                    "--set kubernetes.gatewayAPI.enabled=false --set kubernetes.ingress.controlPlane.enabled=true --set 'kubernetes.ingress.controlPlane.annotations.nginx\\.ingress\\.kubernetes\\.io/proxy-body-size=50m'"
+                                                String gwNetworking = useGatewayApi ?
+                                                    "--set kubernetes.gatewayAPI.enabled=true --set kubernetes.gatewayAPI.gatewayName=wso2-apim-gateway --set kubernetes.gatewayAPI.gateway.enabled=true --set kubernetes.gatewayAPI.gateway.hostname=gw-${dbEngineNameSafe}.wso2.com --set kubernetes.gatewayAPI.websocket.enabled=true --set kubernetes.gatewayAPI.websocket.hostname=websocket-${dbEngineNameSafe}.wso2.com --set kubernetes.gatewayAPI.websub.enabled=true --set kubernetes.gatewayAPI.websub.hostname=websub-${dbEngineNameSafe}.wso2.com" :
+                                                    "--set kubernetes.gatewayAPI.enabled=false --set kubernetes.ingress.gateway.enabled=true --set kubernetes.ingress.gateway.hostname=gw-${dbEngineNameSafe}.wso2.com --set kubernetes.ingress.websocket.enabled=true --set kubernetes.ingress.websocket.hostname=websocket-${dbEngineNameSafe}.wso2.com --set kubernetes.ingress.websub.enabled=true --set kubernetes.ingress.websub.hostname=websub-${dbEngineNameSafe}.wso2.com"
+
                                                 // Install the product using Helm
                                                 sh """
-                                                    # Helm-apim does not have a ingress to expose gateway REST API. So we need to create a ingress resource to expose the REST API.
-                                                    helm install apim-ing ${pwd}/${apimIntgDirectory}/kubernetes/gw-ingress \
-                                                        --set hostname=gw-${dbEngineNameSafe}.wso2.com \
-                                                        --namespace ${namespace}
-                                                    
+                                                    # Expose the gateway REST API. nginx Ingress path installs a dedicated ingress;
+                                                    # the Gateway API path relies on the chart's gateway-https HTTPRoute instead.
+                                                    ${gwRestExposure}
+
                                                     # Deploy wso2am-acp
                                                     echo "Deploying WSO2 API Manager - API Control Plane in ${namespace} namespace..."
                                                     helm install apim-acp ${helmChartPath}/distributed/control-plane \
@@ -689,9 +815,7 @@ pipeline {
                                                         --set wso2.apim.configurations.devportal.enableApplicationSharing=true \
                                                         --set wso2.apim.configurations.devportal.applicationSharingType="default" \
                                                         --set wso2.apim.configurations.encryption.key="${encryptionKey}" \
-                                                        --set kubernetes.gatewayAPI.enabled=false \
-                                                        --set kubernetes.ingress.controlPlane.enabled=true \
-                                                        --set 'kubernetes.ingress.controlPlane.annotations.nginx\\.ingress\\.kubernetes\\.io/proxy-body-size=50m' \
+                                                        ${acpNetworking} \
                                                         --set wso2.apim.configurations.oauth_config.oauth2JWKSUrl="https://apim-acp-wso2am-acp-service:9443/oauth2/jwks" \
                                                         --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                         --set wso2.deployment.image.repository="${project}-wso2am-acp:${dbEngineNameSafe}-latest" \
@@ -764,13 +888,7 @@ pipeline {
                                                         --set wso2.apim.configurations.security.keystores.internal.keyPassword="wso2carbon" \
                                                         --set wso2.apim.configurations.security.truststore.password="wso2carbon" \
                                                         --set wso2.deployment.resources.requests.cpu="1000m" \
-                                                        --set kubernetes.gatewayAPI.enabled=false \
-                                                        --set kubernetes.ingress.gateway.enabled=true \
-                                                        --set kubernetes.ingress.gateway.hostname="gw-${dbEngineNameSafe}.wso2.com" \
-                                                        --set kubernetes.ingress.websocket.enabled=true \
-                                                        --set kubernetes.ingress.websocket.hostname="websocket-${dbEngineNameSafe}.wso2.com" \
-                                                        --set kubernetes.ingress.websub.enabled=true \
-                                                        --set kubernetes.ingress.websub.hostname="websub-${dbEngineNameSafe}.wso2.com" \
+                                                        ${gwNetworking} \
                                                         --set wso2.apim.configurations.km.serviceUrl="apim-acp-wso2am-acp-service" \
                                                         --set wso2.apim.configurations.throttling.serviceUrl="apim-tm-wso2am-tm-service" \
                                                         --set wso2.apim.configurations.throttling.urls="{apim-tm-wso2am-tm-1-service,apim-tm-wso2am-tm-2-service}" \
