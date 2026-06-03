@@ -1142,22 +1142,24 @@ spec:
                                     if (useGatewayApi) {
                                         writeFile file: 'gw-teardown.sh', text: '''#!/usr/bin/env bash
 set +e
-CL="$1"; REGION="$2"
-echo "Releasing Gateway API load balancers for cluster $CL"
+REGION="$1"; LBHOST="$2"
+echo "Releasing Gateway API load balancer (region $REGION, lb ${LBHOST:-none})"
+# Delete the Gateways so the Envoy Gateway controller garbage-collects the EnvoyProxy
+# LoadBalancer Services (and their AWS ELBs). Keep the controller running until the
+# ELB is actually gone — uninstalling it first orphans the Service and its ELB, whose
+# ENIs then stall terraform destroy ~20 min. Wait on the captured ELB DNS name.
 kubectl delete gateway --all --all-namespaces --ignore-not-found --timeout=180s || echo "No Gateways to delete."
-helm uninstall eg -n envoy-gateway-system || echo "Envoy Gateway release not present."
-for i in $(seq 1 24); do
-  LEFT=""
-  for lb in $(aws elb describe-load-balancers --region "$REGION" --query "LoadBalancerDescriptions[].LoadBalancerName" --output text 2>/dev/null); do
-    aws elb describe-tags --region "$REGION" --load-balancer-names "$lb" --query "TagDescriptions[].Tags[?Key=='kubernetes.io/cluster/$CL'].Value" --output text 2>/dev/null | grep -q owned && LEFT="$LEFT $lb"
+if [ -n "$LBHOST" ]; then
+  for i in $(seq 1 40); do
+    aws elb describe-load-balancers --region "$REGION" --query "LoadBalancerDescriptions[].DNSName" --output text 2>/dev/null | grep -qiF "$LBHOST" || { echo "Envoy ELB released."; break; }
+    echo "Waiting for Envoy ELB to delete ($i): $LBHOST"; sleep 15
   done
-  [ -z "$LEFT" ] && { echo "Cluster ELBs released."; break; }
-  echo "Waiting for cluster ELBs to delete:$LEFT"; sleep 15
-done
+fi
+helm uninstall eg -n envoy-gateway-system || echo "Envoy Gateway release not present."
 '''
                                     }
                                     String gatewayTeardown = useGatewayApi ?
-                                        "bash gw-teardown.sh ${project}-${pattern.id}-${tfEnvironment}-${productDeploymentRegion}-eks ${productDeploymentRegion}" :
+                                        "bash gw-teardown.sh ${productDeploymentRegion} ${pattern.hostName ?: ''}" :
                                         "echo 'Ingress path: no Gateway API load balancers to release.'"
                                     sh """
                                         # Configure EKS cluster
