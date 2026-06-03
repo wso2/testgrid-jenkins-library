@@ -973,25 +973,66 @@ spec:
                                                 }
 
                                                 if (useGatewayApi) {
-                                                    // One-off diagnostic: reproduce the test client's path (resolve the APIM
-                                                    // hostname to the Envoy LB IP) and dump the redirect chain + login-form
-                                                    // presence, to pinpoint why redirect-based login flows fail under Gateway
-                                                    // API. Non-fatal; remove once the login issue is understood.
+                                                    // Iteration-2 diagnostic: dump login-page BODY markers (does the page that
+                                                    // loads actually contain id="password"/data-testid, or a JS/meta redirect a
+                                                    // browser follows but curl doesn't?) both EXTERNALLY (Jenkins agent) and from
+                                                    // a pod INSIDE the test namespace (Cypress-style hostAliases), to tell whether
+                                                    // the login failure is in-cluster networking or page content. Non-fatal.
                                                     sh """
                                                         set +e
                                                         AM=am-${dbEngineNameSafe}.wso2.com
                                                         IP=${hostIP}
                                                         echo '################ GATEWAY-API LOGIN DIAGNOSTIC ################'
-                                                        echo '--- 1) /carbon/admin/login.jsp redirect chain ---'
-                                                        curl -sk -i -L --max-redirs 10 --resolve \$AM:443:\$IP "https://\$AM/carbon/admin/login.jsp" | grep -iE '^HTTP/|^location:|^refresh:' | head -40
-                                                        echo '--- carbon login form present? ---'
-                                                        curl -sk -L --max-redirs 10 --resolve \$AM:443:\$IP "https://\$AM/carbon/admin/login.jsp" | grep -ioE 'j_password|j_username|name="password"|<title>[^<]*</title>' | head
-                                                        echo '--- 2) /publisher portal redirect chain (OIDC) ---'
-                                                        curl -sk -i -L --max-redirs 10 --resolve \$AM:443:\$IP "https://\$AM/publisher" | grep -iE '^HTTP/|^location:' | head -40
-                                                        echo '--- 3) single-hop status -> redirect for key endpoints ---'
-                                                        for p in /carbon/admin/login.jsp /publisher /devportal /admin /authenticationendpoint/login.do /oauth2/authorize; do
-                                                            echo "  \$p : \$(curl -sk -o /dev/null -w '%{http_code} -> %{redirect_url}' --resolve \$AM:443:\$IP "https://\$AM\$p")"
+                                                        echo '############ EXTERNAL (Jenkins agent) ############'
+                                                        echo '--- /carbon/admin/login.jsp body markers ---'
+                                                        curl -sk -L --max-redirs 10 --resolve \$AM:443:\$IP "https://\$AM/carbon/admin/login.jsp" | grep -ioE 'id="password"|name="password"|data-testid="[^"]*"|http-equiv="refresh"|window.location[^;<]*|<title>[^<]*</title>' | sort -u | head -25
+                                                        echo '--- /authenticationendpoint/login.do body markers ---'
+                                                        curl -sk -L --max-redirs 10 --resolve \$AM:443:\$IP "https://\$AM/authenticationendpoint/login.do" | grep -ioE 'id="password"|data-testid="[^"]*"|http-equiv="refresh"|window.location[^;<]*|<title>[^<]*</title>' | sort -u | head -25
+                                                    """
+
+                                                    String netcheckManifest = """apiVersion: v1
+kind: Pod
+metadata:
+  name: netcheck
+  namespace: ${namespace}
+spec:
+  restartPolicy: Never
+  hostAliases:
+  - ip: "${hostIP}"
+    hostnames:
+    - "am-${dbEngineNameSafe}.wso2.com"
+    - "gw-${dbEngineNameSafe}.wso2.com"
+  containers:
+  - name: netcheck
+    image: curlimages/curl:latest
+    command: ["sh", "-c"]
+    args:
+    - |
+      echo 'IN-CLUSTER /carbon/admin/login.jsp:'
+      curl -sk -o /tmp/c.html -w 'status=%{http_code}\\n' "https://am-${dbEngineNameSafe}.wso2.com/carbon/admin/login.jsp"
+      grep -ioE 'id="password"|name="password"|data-testid|http-equiv="refresh"|window.location|<title>[^<]*</title>' /tmp/c.html | sort -u | head
+      echo 'IN-CLUSTER /publisher:'
+      curl -sk -o /dev/null -w 'status=%{http_code} redirect=%{redirect_url}\\n' "https://am-${dbEngineNameSafe}.wso2.com/publisher"
+      echo 'IN-CLUSTER /authenticationendpoint/login.do:'
+      curl -sk -o /tmp/a.html -w 'status=%{http_code}\\n' "https://am-${dbEngineNameSafe}.wso2.com/authenticationendpoint/login.do"
+      grep -ioE 'id="password"|data-testid|http-equiv="refresh"|window.location|<title>[^<]*</title>' /tmp/a.html | sort -u | head
+"""
+                                                    writeFile file: "netcheck-${namespace}.yaml", text: netcheckManifest
+                                                    sh """
+                                                        set +e
+                                                        echo '############ IN-CLUSTER (pod in ${namespace}, Cypress-style hostAliases) ############'
+                                                        kubectl delete pod netcheck -n ${namespace} --ignore-not-found
+                                                        kubectl apply -f netcheck-${namespace}.yaml
+                                                        for i in \$(seq 1 18); do
+                                                            ph=\$(kubectl get pod netcheck -n ${namespace} -o jsonpath='{.status.phase}' 2>/dev/null)
+                                                            echo "netcheck phase: \$ph"
+                                                            [ "\$ph" = "Succeeded" ] && break
+                                                            [ "\$ph" = "Failed" ] && break
+                                                            sleep 5
                                                         done
+                                                        echo '--- IN-CLUSTER NETCHECK LOGS ---'
+                                                        kubectl logs netcheck -n ${namespace} 2>&1
+                                                        kubectl delete pod netcheck -n ${namespace} --ignore-not-found
                                                         echo '################ END DIAGNOSTIC ################'
                                                     """
                                                 }
