@@ -167,6 +167,7 @@ post {
         '''
         archiveArtifacts artifacts: "build-${env.BUILD_NUMBER}/**/*.*", fingerprint: true
         script {
+            setFlakyDescription(deploymentDirectories)
             sendEmail(deploymentDirectories, updateType)
         }
         cleanWs deleteDirs: true, notFailBuild: true
@@ -228,23 +229,29 @@ def create_build_jobs(deploymentDirectory, testSpecs){
     }
 }
 
-def sendEmail(deploymentDirectories, updateType) {
-    def deployments = ""
-    for (deploymentDirectory in deploymentDirectories){
-        deployments = deployments + deploymentDirectory + "<br>"
-    }
-
-    // Surface any deployments that needed a rerun in the build email,
-    // so reviewers don't have to dig into S3 artifacts.
-    def flakyReport = ""
-    for (deploymentDirectory in deploymentDirectories){
+// Surface any deployments whose specs only passed after a pipeline-side rerun on
+// the build overview (build description), so reviewers see flaky runs without
+// digging into S3 artifacts. Flaky != failure, so the build result is left as-is.
+def setFlakyDescription(deploymentDirectories) {
+    def flaky = []
+    for (deploymentDirectory in deploymentDirectories) {
         def flakyFile = "${WORKSPACE}/deployment/${deploymentDirectory}/outputs/flaky-specs.txt"
         if (fileExists(flakyFile)) {
             def contents = readFile(flakyFile).trim()
             if (contents) {
-                flakyReport += "<br><b>${deploymentDirectory}</b><pre>${contents}</pre>"
+                flaky << "${deploymentDirectory}: ${contents.replaceAll('\\s+', ', ')}"
             }
         }
+    }
+    if (flaky) {
+        currentBuild.description = "⚠ Flaky specs (passed on rerun)\n" + flaky.join("\n")
+    }
+}
+
+def sendEmail(deploymentDirectories, updateType) {
+    def deployments = ""
+    for (deploymentDirectory in deploymentDirectories){
+        deployments = deployments + deploymentDirectory + "<br>"
     }
 
     if (currentBuild.currentResult.equals("SUCCESS")){
@@ -321,15 +328,6 @@ def sendEmail(deploymentDirectories, updateType) {
         </tr>
         </table>
         <br/>
-        ${flakyReport ? """
-        <p style="height:10px;font-family:Lucida Grande;font-size: 18px;">
-            <font color="black">
-            <b>Flaky specs (passed on pipeline-side rerun):</b>
-            </font>
-        </p>
-        ${flakyReport}
-        <br/>
-        """ : ""}
         <br/>
         <p style="height:10px;font-family:Lucida Grande;font-size: 20px;">
             <font color="black">
