@@ -1124,6 +1124,31 @@ spec:
         from: Same
 """
                                                         writeFile file: "gateway-${namespace}.yaml", text: gatewayManifest
+                                                        // The chart's gateway HTTPRoute routes gw- -> 8243 (API traffic). The gateway
+                                                        // management REST API (/api/am/gateway/v2/, used by the readiness check and the
+                                                        // profile tests) is on 9443 — under nginx the gw-ingress chart exposed it. Add an
+                                                        // equivalent HTTPRoute so that path reaches the gateway's 9443 service.
+                                                        String gwRestHttpRoute = """apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: gw-rest-httproute
+  namespace: ${namespace}
+spec:
+  parentRefs:
+  - name: wso2-apim-gateway
+    sectionName: gateway-https
+  hostnames:
+  - "${gwHost}"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api/am/gateway/v2/
+    backendRefs:
+    - name: apim-universal-gw-wso2am-universal-gw-service
+      port: 9443
+"""
+                                                        writeFile file: "gw-rest-httproute-${namespace}.yaml", text: gwRestHttpRoute
                                                         sh """
                                                             set +e
                                                             openssl req -x509 -nodes -newkey rsa:2048 -days 365 \
@@ -1131,6 +1156,7 @@ spec:
                                                                 -subj "/CN=*.wso2.com" -addext "subjectAltName=DNS:*.wso2.com"
                                                             kubectl --context=${patternDirSafe} create secret tls wso2-apim-tls --cert=/tmp/${namespace}-tls.crt --key=/tmp/${namespace}-tls.key -n ${namespace} || echo "TLS secret already exists."
                                                             kubectl --context=${patternDirSafe} apply -f gateway-${namespace}.yaml
+                                                            kubectl --context=${patternDirSafe} apply -f gw-rest-httproute-${namespace}.yaml
                                                             kubectl --context=${patternDirSafe} wait --namespace ${namespace} --for=condition=Programmed --timeout=300s gateway/wso2-apim-gateway
                                                         """
                                                         String envoyLbHost = ""
