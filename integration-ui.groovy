@@ -1144,18 +1144,25 @@ spec:
 set +e
 REGION="$1"; LBHOST="$2"
 echo "Releasing Gateway API load balancer (region $REGION, lb ${LBHOST:-none})"
-# Delete the Gateways so the Envoy Gateway controller garbage-collects the EnvoyProxy
-# LoadBalancer Services (and their AWS ELBs). Keep the controller running until the
-# ELB is actually gone — uninstalling it first orphans the Service and its ELB, whose
-# ENIs then stall terraform destroy ~20 min. Wait on the captured ELB DNS name.
+# Delete the Gateways AND the EnvoyProxy LoadBalancer Services directly, so the cloud
+# controller deletes their AWS ELBs. Do NOT uninstall the Envoy Gateway controller
+# here — removing it before the Service is gone orphans the ELB, whose ENIs then stall
+# terraform destroy ~20 min (the cluster is about to be destroyed anyway). Wait until
+# the ELB is confirmed gone (query succeeds AND DNS name absent twice) before returning.
 kubectl delete gateway --all --all-namespaces --ignore-not-found --timeout=180s || echo "No Gateways to delete."
+kubectl delete svc -n envoy-gateway-system -l gateway.envoyproxy.io/owning-gateway-namespace --ignore-not-found || true
 if [ -n "$LBHOST" ]; then
+  gone=0
   for i in $(seq 1 40); do
-    aws elb describe-load-balancers --region "$REGION" --query "LoadBalancerDescriptions[].DNSName" --output text 2>/dev/null | grep -qiF "$LBHOST" || { echo "Envoy ELB released."; break; }
+    out=$(aws elb describe-load-balancers --region "$REGION" --query "LoadBalancerDescriptions[].DNSName" --output text 2>/dev/null)
+    if [ $? -eq 0 ] && ! printf '%s' "$out" | grep -qiF "$LBHOST"; then
+      gone=$((gone+1)); [ $gone -ge 2 ] && { echo "Envoy ELB confirmed deleted."; break; }
+    else
+      gone=0
+    fi
     echo "Waiting for Envoy ELB to delete ($i): $LBHOST"; sleep 15
   done
 fi
-helm uninstall eg -n envoy-gateway-system || echo "Envoy Gateway release not present."
 '''
                                     }
                                     String gatewayTeardown = useGatewayApi ?
