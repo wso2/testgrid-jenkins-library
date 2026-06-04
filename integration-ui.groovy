@@ -772,23 +772,51 @@ spec:
                                                 // commands below, so non-4.7.0 behaviour is byte-for-byte unchanged.
                                                 String gwRestExposure = useGatewayApi ? "echo 'Gateway REST API is exposed via the gateway-https HTTPRoute; skipping gw-ingress.'" :
                                                     "helm install apim-ing ${pwd}/${apimIntgDirectory}/kubernetes/gw-ingress --set hostname=gw-${dbEngineNameSafe}.wso2.com --namespace ${namespace}"
-                                                // Gateway API terminates TLS at the listener and connects to the backend over
-                                                // a fresh connection; APIM's 9443/8243 are TLS ports, so a BackendTLSPolicy is
-                                                // required (the nginx path used backend-protocol=HTTPS for the same reason).
-                                                // The control-plane chart creates the CA ConfigMap (from confs/wso2.crt, CN/SAN
-                                                // localhost) via defaultConfigMapCreation; the gateway release reuses it.
-                                                String backendTls = "--set kubernetes.gatewayAPI.backendTLSPolicy.enabled=true --set kubernetes.gatewayAPI.backendTLSPolicy.caCertificateConfigMap=wso2-backend-ca --set kubernetes.gatewayAPI.backendTLSPolicy.hostname=localhost"
-                                                // backendTrafficPolicy enables cookie-based session affinity (ConsistentHash),
-                                                // the Gateway-API equivalent of the nginx 'affinity: cookie' annotation the chart
-                                                // sets for Ingress. The control plane runs 2 ACP replicas with per-pod (unclustered)
-                                                // Carbon/portal sessions; without affinity Envoy round-robins them and the session
-                                                // is lost right after login (302 back to login), failing every UI spec.
-                                                String acpNetworking = useGatewayApi ?
-                                                    "--set kubernetes.gatewayAPI.enabled=true --set kubernetes.gatewayAPI.gatewayName=wso2-apim-gateway --set kubernetes.gatewayAPI.controlPlane.enabled=true --set kubernetes.gatewayAPI.controlPlane.hostname=am-${dbEngineNameSafe}.wso2.com --set kubernetes.gatewayAPI.defaultConfigMapCreation=true --set kubernetes.gatewayAPI.backendTrafficPolicy.enabled=true ${backendTls}" :
-                                                    "--set kubernetes.gatewayAPI.enabled=false --set kubernetes.ingress.controlPlane.enabled=true --set 'kubernetes.ingress.controlPlane.annotations.nginx\\.ingress\\.kubernetes\\.io/proxy-body-size=50m'"
-                                                String gwNetworking = useGatewayApi ?
-                                                    "--set kubernetes.gatewayAPI.enabled=true --set kubernetes.gatewayAPI.gatewayName=wso2-apim-gateway --set kubernetes.gatewayAPI.gateway.enabled=true --set kubernetes.gatewayAPI.gateway.hostname=gw-${dbEngineNameSafe}.wso2.com --set kubernetes.gatewayAPI.websocket.enabled=true --set kubernetes.gatewayAPI.websocket.hostname=websocket-${dbEngineNameSafe}.wso2.com --set kubernetes.gatewayAPI.websub.enabled=true --set kubernetes.gatewayAPI.websub.hostname=websub-${dbEngineNameSafe}.wso2.com ${backendTls}" :
-                                                    "--set kubernetes.gatewayAPI.enabled=false --set kubernetes.ingress.gateway.enabled=true --set kubernetes.ingress.gateway.hostname=gw-${dbEngineNameSafe}.wso2.com --set kubernetes.ingress.websocket.enabled=true --set kubernetes.ingress.websocket.hostname=websocket-${dbEngineNameSafe}.wso2.com --set kubernetes.ingress.websub.enabled=true --set kubernetes.ingress.websub.hostname=websub-${dbEngineNameSafe}.wso2.com"
+                                                // BackendTLSPolicy: Gateway API terminates TLS at the listener and opens a fresh
+                                                // connection to the backend; APIM's 9443/8243 are TLS ports (nginx used
+                                                // backend-protocol=HTTPS). The control-plane chart creates the CA ConfigMap from
+                                                // confs/wso2.crt (CN/SAN localhost) via defaultConfigMapCreation; the gateway reuses it.
+                                                List backendTlsFlags = [
+                                                    "--set kubernetes.gatewayAPI.backendTLSPolicy.enabled=true",
+                                                    "--set kubernetes.gatewayAPI.backendTLSPolicy.caCertificateConfigMap=wso2-backend-ca",
+                                                    "--set kubernetes.gatewayAPI.backendTLSPolicy.hostname=localhost",
+                                                ]
+                                                // backendTrafficPolicy enables cookie-based session affinity (ConsistentHash) — the
+                                                // Gateway-API equivalent of the nginx 'affinity: cookie' annotation. The 2 ACP replicas
+                                                // keep Carbon/portal sessions per-pod (unclustered), so without affinity the session is
+                                                // lost right after login (302 back to login). On the non-4.7.0 (else) branches,
+                                                // 'gatewayAPI.enabled=false' is required because the helm-apim 4.7.x chart DEFAULTS it
+                                                // on, so the nginx Ingress path must explicitly opt out.
+                                                String acpNetworking = (useGatewayApi ? [
+                                                    "--set kubernetes.gatewayAPI.enabled=true",
+                                                    "--set kubernetes.gatewayAPI.gatewayName=wso2-apim-gateway",
+                                                    "--set kubernetes.gatewayAPI.controlPlane.enabled=true",
+                                                    "--set kubernetes.gatewayAPI.controlPlane.hostname=am-${dbEngineNameSafe}.wso2.com",
+                                                    "--set kubernetes.gatewayAPI.defaultConfigMapCreation=true",
+                                                    "--set kubernetes.gatewayAPI.backendTrafficPolicy.enabled=true",
+                                                ] + backendTlsFlags : [
+                                                    "--set kubernetes.gatewayAPI.enabled=false",
+                                                    "--set kubernetes.ingress.controlPlane.enabled=true",
+                                                    "--set 'kubernetes.ingress.controlPlane.annotations.nginx\\.ingress\\.kubernetes\\.io/proxy-body-size=50m'",
+                                                ]).join(' ')
+                                                String gwNetworking = (useGatewayApi ? [
+                                                    "--set kubernetes.gatewayAPI.enabled=true",
+                                                    "--set kubernetes.gatewayAPI.gatewayName=wso2-apim-gateway",
+                                                    "--set kubernetes.gatewayAPI.gateway.enabled=true",
+                                                    "--set kubernetes.gatewayAPI.gateway.hostname=gw-${dbEngineNameSafe}.wso2.com",
+                                                    "--set kubernetes.gatewayAPI.websocket.enabled=true",
+                                                    "--set kubernetes.gatewayAPI.websocket.hostname=websocket-${dbEngineNameSafe}.wso2.com",
+                                                    "--set kubernetes.gatewayAPI.websub.enabled=true",
+                                                    "--set kubernetes.gatewayAPI.websub.hostname=websub-${dbEngineNameSafe}.wso2.com",
+                                                ] + backendTlsFlags : [
+                                                    "--set kubernetes.gatewayAPI.enabled=false",
+                                                    "--set kubernetes.ingress.gateway.enabled=true",
+                                                    "--set kubernetes.ingress.gateway.hostname=gw-${dbEngineNameSafe}.wso2.com",
+                                                    "--set kubernetes.ingress.websocket.enabled=true",
+                                                    "--set kubernetes.ingress.websocket.hostname=websocket-${dbEngineNameSafe}.wso2.com",
+                                                    "--set kubernetes.ingress.websub.enabled=true",
+                                                    "--set kubernetes.ingress.websub.hostname=websub-${dbEngineNameSafe}.wso2.com",
+                                                ]).join(' ')
 
                                                 // Install the product using Helm
                                                 sh """
