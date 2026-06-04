@@ -22,10 +22,11 @@ import groovy.json.JsonSlurperClassic
 // Input parameters
 String product = params.product
 String productVersion = params.productVersion
-// APIM 4.7.0 exposes APIM through the Kubernetes Gateway API (helm-apim defaults
-// gatewayAPI.enabled=true) instead of nginx Ingress. Gate every Gateway-API-specific
-// step on this so all earlier versions keep the existing nginx Ingress path untouched.
-boolean useGatewayApi = (productVersion == "4.7.0")
+// 4.5.0 and 4.6.0 use nginx Ingress; 4.7.0 and later expose APIM through the
+// Kubernetes Gateway API (helm-apim 4.7.x+ defaults gatewayAPI.enabled=true).
+// Gating on the known Ingress versions (rather than ==4.7.0) keeps every newer
+// version on the Gateway API path by default — no edit needed for 4.8.0+.
+boolean useGatewayApi = !(productVersion in ["4.5.0", "4.6.0"])
 String productDeploymentRegion = params.productDeploymentRegion
 String[] osList = params.osList?.split(',')?.collect { it.trim() } ?: []
 String[] databaseList = params.databaseList?.split(',')?.collect { it.trim() } ?: []
