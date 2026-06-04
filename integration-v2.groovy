@@ -67,7 +67,13 @@ String dbUser = "wso2carbon"
 String helmRepoUrl = "https://github.com/wso2/helm-apim.git"
 String helmDirectory = "helm-apim"
 // APIM Test Integration repository details
-String apimIntgRepoUrl = "https://github.com/wso2/apim-test-integration.git"
+// 4.5.0/4.6.0 use nginx Ingress; 4.7.0+ use the Kubernetes Gateway API (Envoy
+// Gateway). Gating on the known Ingress versions keeps newer versions on Gateway
+// API by default. Mirrors the 4.7.0 UI pipeline switch.
+boolean useGatewayApi = !(productVersion in ["4.5.0", "4.6.0"])
+// apim-test-integration fork carries the Gateway-API connection changes (main.sh
+// /etc/hosts + the collection pre-request host rewrite) on 4.7.0-profile-automation.
+String apimIntgRepoUrl = "https://github.com/IsuruGunarathne/apim-test-integration.git"
 String apimIntgRepoBranch = "${productVersion}-profile-automation"
 String apimIntgDirectory = "apim-test-integration"
 String tfDirectory = "terraform"
@@ -199,18 +205,22 @@ def resolvePeerTestPatterns(Boolean skipPeerTest) {
  * @param waitSeconds Seconds to wait between attempts (default 10).
  * @param consecutiveSuccesses Number of consecutive successful checks required to mark as ready (default 3).
  */
-def waitForDcrEndpoint(String hostName, String portalHost, int maxAttempts = 45, int waitSeconds = 10, int consecutiveSuccesses = 3) {
+def waitForDcrEndpoint(String hostName, String portalHost, String hostIP = "", boolean useGw = false, int maxAttempts = 45, int waitSeconds = 10, int consecutiveSuccesses = 3) {
+    // Gateway API routes HTTPS by SNI, so connect to the real hostname (resolved to
+    // the Envoy LB IP). Ingress routes by Host header against the shared ELB.
+    def reqOpts = useGw ? "--resolve ${portalHost}:443:${hostIP}" : "-H \"Host: ${portalHost}\""
+    def reqUrl  = "https://" + (useGw ? portalHost : hostName) + "/client-registration/v0.17/register"
     sh """#!/bin/bash
         success_streak=0
         STATUS=000
         for i in \$(seq 1 ${maxAttempts}); do
             STATUS=\$(curl -s -o /dev/null -w "%{http_code}" -k --connect-timeout 10 --max-time 30 \\
                 -X POST \\
-                -H "Host: ${portalHost}" \\
+                ${reqOpts} \\
                 -H "Content-Type: application/json" \\
                 -H "Authorization: Basic YWRtaW46YWRtaW4=" \\
                 -d '{}' \\
-                https://${hostName}/client-registration/v0.17/register)
+                ${reqUrl})
             echo "Readiness Check \$i: DCR endpoint returned HTTP \$STATUS"
             if [[ "\$STATUS" == "400" || "\$STATUS" == "201" ]]; then
                 success_streak=\$((success_streak + 1))
@@ -246,12 +256,14 @@ def waitForDcrEndpoint(String hostName, String portalHost, int maxAttempts = 45,
  * @param waitSeconds Seconds to wait between attempts (default 10).
  * @param consecutiveSuccesses Number of consecutive successful checks required to mark as ready (default 3).
  */
-def waitForPublisherApi(String hostName, String portalHost, int maxAttempts = 45, int waitSeconds = 10, int consecutiveSuccesses = 3) {
+def waitForPublisherApi(String hostName, String portalHost, String hostIP = "", boolean useGw = false, int maxAttempts = 45, int waitSeconds = 10, int consecutiveSuccesses = 3) {
+    def reqOpts = useGw ? "--resolve ${portalHost}:443:${hostIP}" : "-H \"Host: ${portalHost}\""
+    def reqUrl  = "https://" + (useGw ? portalHost : hostName) + "/api/am/publisher/v4/apis"
     sh """#!/bin/bash
         success_streak=0
         STATUS=000
         for i in \$(seq 1 ${maxAttempts}); do
-            STATUS=\$(curl -s -o /dev/null -w "%{http_code}" -k --connect-timeout 10 --max-time 30 -H "Host: ${portalHost}" https://${hostName}/api/am/publisher/v4/apis)
+            STATUS=\$(curl -s -o /dev/null -w "%{http_code}" -k --connect-timeout 10 --max-time 30 ${reqOpts} ${reqUrl})
             echo "Readiness Check \$i: Publisher API returned HTTP \$STATUS"
             if [[ "\$STATUS" =~ ^(200|401|403)\$ ]]; then
                 success_streak=\$((success_streak + 1))
@@ -293,12 +305,14 @@ def waitForPublisherApi(String hostName, String portalHost, int maxAttempts = 45
  * @param waitSeconds Seconds to wait between attempts (default 10).
  * @param consecutiveSuccesses Number of consecutive successful checks required to mark as ready (default 3).
  */
-def waitForGatewayApi(String hostName, String gwHost, int maxAttempts = 45, int waitSeconds = 10, int consecutiveSuccesses = 3) {
+def waitForGatewayApi(String hostName, String gwHost, String hostIP = "", boolean useGw = false, int maxAttempts = 45, int waitSeconds = 10, int consecutiveSuccesses = 3) {
+    def reqOpts = useGw ? "--resolve ${gwHost}:443:${hostIP}" : "-H \"Host: ${gwHost}\""
+    def reqUrl  = "https://" + (useGw ? gwHost : hostName) + "/api/am/gateway/v2/apis"
     sh """#!/bin/bash
         success_streak=0
         STATUS=000
         for i in \$(seq 1 ${maxAttempts}); do
-            STATUS=\$(curl -s -o /dev/null -w "%{http_code}" -k --connect-timeout 10 --max-time 30 -H "Host: ${gwHost}" https://${hostName}/api/am/gateway/v2/apis)
+            STATUS=\$(curl -s -o /dev/null -w "%{http_code}" -k --connect-timeout 10 --max-time 30 ${reqOpts} ${reqUrl})
             echo "Readiness Check \$i: Gateway API returned HTTP \$STATUS"
             if [[ "\$STATUS" =~ ^(200|401|403)\$ ]]; then
                 success_streak=\$((success_streak + 1))
@@ -780,27 +794,46 @@ pipeline {
                                         aws eks --region ${productDeploymentRegion} \
                                         update-kubeconfig --name ${project}-${pattern.id}-${tfEnvironment}-${productDeploymentRegion}-eks \
                                         --alias ${pattern.directory}
-
-                                        # Install nginx ingress controller
-                                        kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.4/deploy/static/provider/aws/deploy.yaml || { echo "failed to install nginx ingress controller." ; exit 1 ; }
-
-                                        # Scale Nginx to handle parallel test traffic from multiple
-                                        # peer-test patterns hitting the same ELB concurrently.
-                                        kubectl -n ingress-nginx scale deployment ingress-nginx-controller --replicas=4
-
-                                        # Delete Nginx admission if it exists.
-                                        kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission || echo "WARNING : Failed to delete nginx admission."
-
-                                        # Wait for nginx to come alive.
-                                        kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=480s ||  { echo 'Nginx service is not ready within the expected time limit.';  exit 1; }
-
-                                        # Install Kubernetes Gateway API CRDs required by helm-apim 4.7.x
-                                        kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
                                     """
 
-                                    def hostName = sh(script: "kubectl -n ingress-nginx get svc ingress-nginx-controller -o json | jq -r '.status.loadBalancer.ingress[0].hostname'", returnStdout: true).trim()
-                                    println "Ingress Host Name: ${hostName}"
-                                    pattern.hostName = hostName
+                                    if (useGatewayApi) {
+                                        // 4.7.0+: install the Envoy Gateway controller (cluster-scoped) + a GatewayClass.
+                                        // Per-namespace Gateway resources and their LB hostnames are created in the Deploy
+                                        // stage (peer-test puts several namespaces, each its own Gateway/ELB, in this cluster).
+                                        writeFile file: 'gatewayclass-eg.yaml', text: '''apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: eg
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+'''
+                                        sh """
+                                            helm upgrade --install eg oci://docker.io/envoyproxy/gateway-helm --version v1.7.3 \
+                                                --namespace envoy-gateway-system --create-namespace
+                                            kubectl rollout status deployment/envoy-gateway -n envoy-gateway-system --timeout=300s
+                                            kubectl apply -f gatewayclass-eg.yaml
+                                        """
+                                        println "Envoy Gateway controller ready for ${pattern.directory}; per-namespace LB captured in Deploy stage."
+                                    } else {
+                                        sh """
+                                            # Install nginx ingress controller
+                                            kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.4/deploy/static/provider/aws/deploy.yaml || { echo "failed to install nginx ingress controller." ; exit 1 ; }
+
+                                            # Scale Nginx to handle parallel test traffic from multiple
+                                            # peer-test patterns hitting the same ELB concurrently.
+                                            kubectl -n ingress-nginx scale deployment ingress-nginx-controller --replicas=4
+
+                                            # Delete Nginx admission if it exists.
+                                            kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission || echo "WARNING : Failed to delete nginx admission."
+
+                                            # Wait for nginx to come alive.
+                                            kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=480s ||  { echo 'Nginx service is not ready within the expected time limit.';  exit 1; }
+                                        """
+
+                                        def hostName = sh(script: "kubectl -n ingress-nginx get svc ingress-nginx-controller -o json | jq -r '.status.loadBalancer.ingress[0].hostname'", returnStdout: true).trim()
+                                        println "Ingress Host Name: ${hostName}"
+                                        pattern.hostName = hostName
+                                    }
 
                                     def ecrWso2AcpURL = sh(script: "terraform output -json | jq -r '.ecr_wso2am_acp_url.value'", returnStdout: true).trim()
                                     def ecrCommonURL = ecrWso2AcpURL.split('/')[0]
@@ -1023,6 +1056,93 @@ pipeline {
                                                     """
                                                     println "Namespace created: ${namespace}"
 
+                                                    // Connection target for readiness checks + main.sh. Ingress: the shared nginx
+                                                    // ELB (routed by Host header). Gateway API: this namespace's own Envoy LB, and
+                                                    // the test client must connect with the real hostname so TLS SNI matches the
+                                                    // listener (a Host header alone won't route on Envoy) — so we also resolve its IP.
+                                                    String connectHost = patternSafe.hostName
+                                                    String connectIP = ""
+                                                    if (useGatewayApi) {
+                                                        String gatewayManifest = """apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: wso2-apim-gateway
+  namespace: ${namespace}
+spec:
+  gatewayClassName: eg
+  listeners:
+  - name: control-plane-https
+    hostname: "${portalHost}"
+    port: 443
+    protocol: HTTPS
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: wso2-apim-tls
+    allowedRoutes:
+      namespaces:
+        from: Same
+  - name: gateway-https
+    hostname: "${gwHost}"
+    port: 443
+    protocol: HTTPS
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: wso2-apim-tls
+    allowedRoutes:
+      namespaces:
+        from: Same
+  - name: websocket-https
+    hostname: "${wsHost}"
+    port: 443
+    protocol: HTTPS
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: wso2-apim-tls
+    allowedRoutes:
+      namespaces:
+        from: Same
+  - name: websub-https
+    hostname: "${websubHost}"
+    port: 443
+    protocol: HTTPS
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: wso2-apim-tls
+    allowedRoutes:
+      namespaces:
+        from: Same
+"""
+                                                        writeFile file: "gateway-${namespace}.yaml", text: gatewayManifest
+                                                        sh """
+                                                            set +e
+                                                            openssl req -x509 -nodes -newkey rsa:2048 -days 365 \
+                                                                -keyout /tmp/${namespace}-tls.key -out /tmp/${namespace}-tls.crt \
+                                                                -subj "/CN=*.wso2.com" -addext "subjectAltName=DNS:*.wso2.com"
+                                                            kubectl --context=${patternDirSafe} create secret tls wso2-apim-tls --cert=/tmp/${namespace}-tls.crt --key=/tmp/${namespace}-tls.key -n ${namespace} || echo "TLS secret already exists."
+                                                            kubectl --context=${patternDirSafe} apply -f gateway-${namespace}.yaml
+                                                            kubectl --context=${patternDirSafe} wait --namespace ${namespace} --for=condition=Programmed --timeout=300s gateway/wso2-apim-gateway
+                                                        """
+                                                        String envoyLbHost = ""
+                                                        for (int i = 0; i < 30; i++) {
+                                                            envoyLbHost = sh(script: "kubectl --context=${patternDirSafe} -n envoy-gateway-system get svc -l gateway.envoyproxy.io/owning-gateway-name=wso2-apim-gateway,gateway.envoyproxy.io/owning-gateway-namespace=${namespace} -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true", returnStdout: true).trim()
+                                                            if (envoyLbHost) { break }
+                                                            echo "Waiting for Envoy LB hostname (${namespace}, attempt ${i})..."
+                                                            sleep 10
+                                                        }
+                                                        if (!envoyLbHost) { error "Envoy Gateway LB hostname not provisioned for ${namespace}." }
+                                                        connectHost = envoyLbHost
+                                                        connectIP = sh(script: "nslookup ${envoyLbHost} | grep Address | tail -n1 | awk '{print \$2}'", returnStdout: true).trim()
+                                                        println "Envoy Gateway LB for ${namespace}: ${envoyLbHost} (${connectIP})"
+                                                    }
+
                                                     // Fetch image digests using variant-specific tags
                                                     String wso2amAcpImageDigest = sh(script: "aws ecr describe-images --repository-name ${project}-wso2am-acp --query 'imageDetails[?imageTags != null && contains(imageTags, `${acpImageTag}`)].imageDigest' --region ${productDeploymentRegion} --output text", returnStdout: true).trim()
                                                     String wso2amTmImageDigest = sh(script: "aws ecr describe-images --repository-name ${project}-wso2am-tm --query 'imageDetails[?imageTags != null && contains(imageTags, `${tmImageTag}`)].imageDigest' --region ${productDeploymentRegion} --output text", returnStdout: true).trim()
@@ -1033,13 +1153,54 @@ pipeline {
                                                     executeDBScripts(dbEngineNameSafe, endpoint, dbUser, dbPassword, "${pwd}/${patternDirSafe}/${apimPackDirectory}/${product}-${productVersion}", dbSuffix)
 
                                                     String helmChartPath = "${pwd}/${helmDirectory}"
+
+                                                    // Networking flags by exposure model (4.7.0+ Gateway API vs nginx Ingress),
+                                                    // joined to one string spliced into the helm commands. On the Gateway path,
+                                                    // backendTLSPolicy lets Envoy reach APIM's TLS ports, backendTrafficPolicy gives
+                                                    // cookie session affinity, and the gateway-https HTTPRoute replaces gw-ingress.
+                                                    List backendTlsFlags = [
+                                                        "--set kubernetes.gatewayAPI.backendTLSPolicy.enabled=true",
+                                                        "--set kubernetes.gatewayAPI.backendTLSPolicy.caCertificateConfigMap=wso2-backend-ca",
+                                                        "--set kubernetes.gatewayAPI.backendTLSPolicy.hostname=localhost",
+                                                    ]
+                                                    String gwRestExposure = useGatewayApi ?
+                                                        "echo 'Gateway REST API exposed via the gateway-https HTTPRoute; skipping gw-ingress.'" :
+                                                        "helm --kube-context=${patternDirSafe} install apim-ing ${pwd}/${apimIntgDirectory}/kubernetes/gw-ingress --set hostname=${gwHost} --namespace ${namespace}"
+                                                    String acpNetworking = (useGatewayApi ? [
+                                                        "--set kubernetes.gatewayAPI.enabled=true",
+                                                        "--set kubernetes.gatewayAPI.gatewayName=wso2-apim-gateway",
+                                                        "--set kubernetes.gatewayAPI.controlPlane.enabled=true",
+                                                        "--set kubernetes.gatewayAPI.controlPlane.hostname=${portalHost}",
+                                                        "--set kubernetes.gatewayAPI.defaultConfigMapCreation=true",
+                                                        "--set kubernetes.gatewayAPI.backendTrafficPolicy.enabled=true",
+                                                    ] + backendTlsFlags : [
+                                                        "--set kubernetes.gatewayAPI.enabled=false",
+                                                        "--set kubernetes.ingress.controlPlane.enabled=true",
+                                                        "--set kubernetes.ingress.controlPlane.hostname=${portalHost}",
+                                                    ]).join(' ')
+                                                    String gwNetworking = (useGatewayApi ? [
+                                                        "--set kubernetes.gatewayAPI.enabled=true",
+                                                        "--set kubernetes.gatewayAPI.gatewayName=wso2-apim-gateway",
+                                                        "--set kubernetes.gatewayAPI.gateway.enabled=true",
+                                                        "--set kubernetes.gatewayAPI.gateway.hostname=${gwHost}",
+                                                        "--set kubernetes.gatewayAPI.websocket.enabled=true",
+                                                        "--set kubernetes.gatewayAPI.websocket.hostname=${wsHost}",
+                                                        "--set kubernetes.gatewayAPI.websub.enabled=true",
+                                                        "--set kubernetes.gatewayAPI.websub.hostname=${websubHost}",
+                                                    ] + backendTlsFlags : [
+                                                        "--set kubernetes.gatewayAPI.enabled=false",
+                                                        "--set kubernetes.ingress.gateway.enabled=true",
+                                                        "--set kubernetes.ingress.gateway.hostname=${gwHost}",
+                                                        "--set kubernetes.ingress.websocket.enabled=true",
+                                                        "--set kubernetes.ingress.websocket.hostname=${wsHost}",
+                                                        "--set kubernetes.ingress.websub.enabled=true",
+                                                        "--set kubernetes.ingress.websub.hostname=${websubHost}",
+                                                    ]).join(' ')
                                                     // Install the product using Helm
                                                     sh """
-                                                        # Gateway REST ingress
-                                                        helm --kube-context=${patternDirSafe} install apim-ing ${pwd}/${apimIntgDirectory}/kubernetes/gw-ingress \
-                                                            --set hostname=${gwHost} \
-                                                            --namespace ${namespace}
-                                                        
+                                                        # Expose the gateway REST API (nginx Ingress path only; Gateway API uses the chart HTTPRoute)
+                                                        ${gwRestExposure}
+
                                                         # Deploy wso2am-acp (variant: ${dpSafe.acpVariant})
                                                         echo "Deploying WSO2 API Manager - API Control Plane [${dpSafe.acpVariant}] in ${namespace} namespace..."
                                                         helm --kube-context=${patternDirSafe} install apim-acp ${helmChartPath}/distributed/control-plane \
@@ -1056,7 +1217,6 @@ pipeline {
                                                             --set wso2.apim.configurations.security.truststore.password="wso2carbon" \
                                                             --set wso2.deployment.resources.requests.cpu="1000m" \
                                                             --set wso2.apim.configurations.userStore.properties.ReadGroups=true \
-                                                            --set kubernetes.ingress.controlPlane.hostname="${portalHost}" \
                                                             --set wso2.apim.configurations.gateway.environments[0].name="Default" \
                                                             --set wso2.apim.configurations.gateway.environments[0].type="hybrid" \
                                                             --set wso2.apim.configurations.gateway.environments[0].gatewayType="Regular" \
@@ -1072,8 +1232,7 @@ pipeline {
                                                             --set wso2.apim.configurations.devportal.enableApplicationSharing=true \
                                                             --set wso2.apim.configurations.devportal.applicationSharingType="default" \
                                                             --set wso2.apim.configurations.encryption.key="${encryptionKey}" \
-                                                            --set kubernetes.gatewayAPI.enabled=false \
-                                                            --set kubernetes.ingress.controlPlane.enabled=true \
+                                                            ${acpNetworking} \
                                                             --set wso2.apim.configurations.oauth_config.oauth2JWKSUrl="https://apim-acp-wso2am-acp-service:9443/oauth2/jwks" \
                                                             --set wso2.deployment.image.registry="${dockerRegistrySafe}" \
                                                             --set wso2.deployment.image.repository="${project}-wso2am-acp:${acpImageTag}" \
@@ -1164,13 +1323,7 @@ pipeline {
                                                             --set wso2.apim.configurations.security.keystores.internal.keyPassword="wso2carbon" \
                                                             --set wso2.apim.configurations.security.truststore.password="wso2carbon" \
                                                             --set wso2.deployment.resources.requests.cpu="1000m" \
-                                                            --set kubernetes.gatewayAPI.enabled=false \
-                                                            --set kubernetes.ingress.gateway.enabled=true \
-                                                            --set kubernetes.ingress.gateway.hostname="${gwHost}" \
-                                                            --set kubernetes.ingress.websocket.enabled=true \
-                                                            --set kubernetes.ingress.websocket.hostname="${wsHost}" \
-                                                            --set kubernetes.ingress.websub.enabled=true \
-                                                            --set kubernetes.ingress.websub.hostname="${websubHost}" \
+                                                            ${gwNetworking} \
                                                             --set wso2.apim.configurations.km.serviceUrl="apim-acp-wso2am-acp-service" \
                                                             --set wso2.apim.configurations.throttling.serviceUrl="apim-tm-wso2am-tm-service" \
                                                             --set wso2.apim.configurations.throttling.urls="{apim-tm-wso2am-tm-1-service,apim-tm-wso2am-tm-2-service}" \
@@ -1237,13 +1390,13 @@ pipeline {
                                                     waitForApimPodStability(patternDirSafe, namespace)
 
                                                     echo "Waiting for DCR endpoint to be ready for ${stageId}..."
-                                                    waitForDcrEndpoint(patternSafe.hostName, portalHost)
+                                                    waitForDcrEndpoint(connectHost, portalHost, connectIP, useGatewayApi)
 
                                                     echo "Waiting for Publisher API to be ready for ${stageId}..."
-                                                    waitForPublisherApi(patternSafe.hostName, portalHost)
+                                                    waitForPublisherApi(connectHost, portalHost, connectIP, useGatewayApi)
 
                                                     echo "Waiting for Gateway API to be ready for ${stageId}..."
-                                                    waitForGatewayApi(patternSafe.hostName, gwHost)
+                                                    waitForGatewayApi(connectHost, gwHost, connectIP, useGatewayApi)
 
                                                     // HTTP endpoints are up, but JMS/EventHub subscribers may still be
                                                     // catching up; peer-test mode shares a cluster so allow extra time.
@@ -1253,9 +1406,11 @@ pipeline {
 
                                                     sh """#!/bin/bash
                                                         set +e
-                                                        ./main.sh --HOSTNAME="${patternSafe.hostName}" \\
+                                                        ./main.sh --HOSTNAME="${connectHost}" \\
                                                             --PORTAL_HOST="${portalHost}" \\
                                                             --GATEWAY_HOST="${gwHost}" \\
+                                                            --LB_IP="${connectIP}" \\
+                                                            --USE_GATEWAY_API="${useGatewayApi}" \\
                                                             --kubernetes_namespace="${namespace}"
                                                         TEST_EXIT_CODE=\$?
                                                         if [[ \$TEST_EXIT_CODE -ne 0 ]]; then
@@ -1319,6 +1474,36 @@ pipeline {
                                 def deploymentDirName = pattern.directory
                                 dir("${deploymentDirName}") {
                                     println "Destroying resources for ${deploymentDirName}..."
+                                    // Gateway API leaves one Envoy LoadBalancer (AWS ELB) per namespace that Terraform
+                                    // doesn't manage. Delete all Gateways + their LB Services (controller kept alive), then
+                                    // wait for the cluster's ELBs to actually be gone before destroy — orphaned ENIs stall it.
+                                    if (useGatewayApi) {
+                                        writeFile file: 'gw-teardown.sh', text: '''#!/usr/bin/env bash
+set +e
+KCTX="$1"; REGION="$2"; CLUSTER="$3"
+echo "Releasing Gateway API load balancers for cluster $CLUSTER"
+kubectl --context="$KCTX" delete gateway --all --all-namespaces --ignore-not-found --timeout=180s || echo "No Gateways to delete."
+kubectl --context="$KCTX" delete svc -n envoy-gateway-system -l gateway.envoyproxy.io/owning-gateway-namespace --ignore-not-found || true
+gone=0
+for i in $(seq 1 40); do
+  out=$(aws elb describe-load-balancers --region "$REGION" --query "LoadBalancerDescriptions[].LoadBalancerName" --output text 2>/dev/null)
+  rc=$?
+  LEFT=""
+  if [ $rc -eq 0 ]; then
+    for lb in $out; do
+      aws elb describe-tags --region "$REGION" --load-balancer-names "$lb" --query "TagDescriptions[].Tags[?Key=='kubernetes.io/cluster/$CLUSTER'].Value" --output text 2>/dev/null | grep -q owned && LEFT="$LEFT $lb"
+    done
+    if [ -z "$LEFT" ]; then gone=$((gone+1)); [ $gone -ge 2 ] && { echo "Cluster ELBs released."; break; }; else gone=0; fi
+  else
+    gone=0
+  fi
+  echo "Waiting for cluster ELBs to delete:${LEFT:- (rechecking)}"; sleep 15
+done
+'''
+                                    }
+                                    String gatewayTeardown = useGatewayApi ?
+                                        "bash gw-teardown.sh ${pattern.directory} ${productDeploymentRegion} ${project}-${pattern.id}-${tfEnvironment}-${productDeploymentRegion}-eks" :
+                                        "echo 'Ingress path: no Gateway API load balancers to release.'"
                                     sh """
                                         # Configure EKS cluster
                                         aws eks --region ${productDeploymentRegion} \
@@ -1328,6 +1513,8 @@ pipeline {
                                         kubectl delete -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.4/deploy/static/provider/aws/deploy.yaml || echo "Failed to delete ingress controller."
 
                                         kubectl wait --namespace ingress-nginx --for=delete pod --selector=app.kubernetes.io/component=controller --timeout=480s || echo "Ingress controller pods were not deleted within the expected time limit."
+
+                                        ${gatewayTeardown}
 
                                         terraform destroy -auto-approve \
                                             -var="project=${project}" \
