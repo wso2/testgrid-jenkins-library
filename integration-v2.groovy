@@ -1004,6 +1004,10 @@ spec:
                                 def gwHost     = "gw-${hostSuffix}.wso2.com"
                                 def wsHost     = "websocket-${hostSuffix}.wso2.com"
                                 def websubHost = "websub-${hostSuffix}.wso2.com"
+                                // Connection target for readiness + main.sh, set in the Deploy stage and read in
+                                // the Test stage — declared here so it's visible to both stage closures.
+                                def connectHost = ""
+                                def connectIP = ""
                                 def branchLogsDir = "${env.WORKSPACE}/${collectedLogsDirectory}"
                                 def branchLogPrefix = "${patternSafe.os}-${dpName}-${dbEngineNameSafe}"
                                 
@@ -1060,8 +1064,7 @@ spec:
                                                     // ELB (routed by Host header). Gateway API: this namespace's own Envoy LB, and
                                                     // the test client must connect with the real hostname so TLS SNI matches the
                                                     // listener (a Host header alone won't route on Envoy) — so we also resolve its IP.
-                                                    String connectHost = patternSafe.hostName
-                                                    String connectIP = ""
+                                                    connectHost = patternSafe.hostName
                                                     if (useGatewayApi) {
                                                         String gatewayManifest = """apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
@@ -1139,7 +1142,15 @@ spec:
                                                         }
                                                         if (!envoyLbHost) { error "Envoy Gateway LB hostname not provisioned for ${namespace}." }
                                                         connectHost = envoyLbHost
-                                                        connectIP = sh(script: "nslookup ${envoyLbHost} | grep Address | tail -n1 | awk '{print \$2}'", returnStdout: true).trim()
+                                                        // The ELB was just created, so its DNS may not resolve yet — retry, and
+                                                        // skip the resolver line (127.0.0.53#53) by taking only real A-record IPs.
+                                                        for (int j = 0; j < 30; j++) {
+                                                            connectIP = sh(script: "nslookup ${envoyLbHost} 2>/dev/null | awk '/^Address/{print \$NF}' | grep -vE '#|^127[.]' | head -1", returnStdout: true).trim()
+                                                            if (connectIP) { break }
+                                                            echo "Waiting for ${envoyLbHost} to resolve to an IP (attempt ${j})..."
+                                                            sleep 10
+                                                        }
+                                                        if (!connectIP) { error "Could not resolve ${envoyLbHost} to an IP for ${namespace}." }
                                                         println "Envoy Gateway LB for ${namespace}: ${envoyLbHost} (${connectIP})"
                                                     }
 
