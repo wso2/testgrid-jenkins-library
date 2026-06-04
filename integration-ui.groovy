@@ -977,6 +977,21 @@ spec:
                                                     error "Could not resolve hostname to IP, using hostname directly"
                                                 }
 
+                                                if (useGatewayApi) {
+                                                    // nginx Ingress allowed a 60s proxy-read-timeout; Envoy Gateway's default
+                                                    // request timeout (~15s) is far tighter and 504s the distributed cluster's
+                                                    // slow API-create/eventhub responses (the same latency that stretched the
+                                                    // ingress runs). Match nginx by setting a generous request timeout on every
+                                                    // HTTPRoute so propagation latency doesn't surface as gateway timeouts.
+                                                    sh """
+                                                        set +e
+                                                        for r in \$(kubectl get httproute -n ${namespace} -o jsonpath='{.items[*].metadata.name}'); do
+                                                            echo "Setting 120s request timeout on httproute \$r"
+                                                            kubectl patch httproute "\$r" -n ${namespace} --type=json -p '[{"op":"add","path":"/spec/rules/0/timeouts","value":{"request":"120s","backendRequest":"120s"}}]' || echo "Failed to patch \$r"
+                                                        done
+                                                    """
+                                                }
+
                                                 sh """
                                                     # Run tests
                                                     helm install apim-test ./kubernetes/cypress \
