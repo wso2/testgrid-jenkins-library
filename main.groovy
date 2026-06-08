@@ -167,7 +167,7 @@ post {
         '''
         archiveArtifacts artifacts: "build-${env.BUILD_NUMBER}/**/*.*", fingerprint: true
         script {
-            setFlakyDescription(deploymentDirectories)
+            logFlakySpecs(deploymentDirectories)
             sendEmail(deploymentDirectories, updateType)
         }
         cleanWs deleteDirs: true, notFailBuild: true
@@ -229,10 +229,13 @@ def create_build_jobs(deploymentDirectory, testSpecs){
     }
 }
 
-// Surface any deployments whose specs only passed after a pipeline-side rerun on
-// the build overview (build description), so reviewers see flaky runs without
-// digging into S3 artifacts. Flaky != failure, so the build result is left as-is.
-def setFlakyDescription(deploymentDirectories) {
+// Surface any deployments whose specs only passed after a pipeline-side rerun in
+// the build console log, so reviewers see flaky runs without digging into S3
+// artifacts. We deliberately avoid currentBuild.description here: a description
+// is rendered in the Build History sidebar on every page and clutters the run
+// list. The console log shows the same info on the build page only. Flaky !=
+// failure, so the build result is left as-is.
+def logFlakySpecs(deploymentDirectories) {
     def flaky = []
     for (deploymentDirectory in deploymentDirectories) {
         def flakyFile = "${WORKSPACE}/deployment/${deploymentDirectory}/outputs/flaky-specs.txt"
@@ -248,7 +251,7 @@ def setFlakyDescription(deploymentDirectories) {
         }
     }
     if (flaky) {
-        currentBuild.description = "⚠ Flaky specs (failed first pass, rerun)\n" + flaky.join("\n")
+        echo "⚠ Flaky specs (failed first pass, rerun)\n" + flaky.join("\n")
     }
 }
 
