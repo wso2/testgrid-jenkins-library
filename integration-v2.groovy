@@ -67,9 +67,8 @@ String dbUser = "wso2carbon"
 String helmRepoUrl = "https://github.com/wso2/helm-apim.git"
 String helmDirectory = "helm-apim"
 // APIM Test Integration repository details
-// 4.5.0/4.6.0 use nginx Ingress; 4.7.0+ use the Kubernetes Gateway API (Envoy
-// Gateway). Gating on the known Ingress versions keeps newer versions on Gateway
-// API by default. Mirrors the 4.7.0 UI pipeline switch.
+// 4.5.0/4.6.0 use nginx Ingress; 4.7.0+ use the Kubernetes Gateway API (Envoy Gateway). Gating on the
+// Ingress versions keeps newer versions on Gateway API. Mirrors the 4.7.0 UI pipeline switch.
 boolean useGatewayApi = !(productVersion in ["4.5.0", "4.6.0"])
 // apim-test-integration fork carries the Gateway-API connection changes (main.sh
 // /etc/hosts + the collection pre-request host rewrite) on 4.7.0-profile-automation.
@@ -797,9 +796,8 @@ pipeline {
                                     """
 
                                     if (useGatewayApi) {
-                                        // 4.7.0+: install the Envoy Gateway controller (cluster-scoped) + a GatewayClass.
-                                        // Per-namespace Gateway resources and their LB hostnames are created in the Deploy
-                                        // stage (peer-test puts several namespaces, each its own Gateway/ELB, in this cluster).
+                                        // 4.7.0+: install the Envoy Gateway controller (cluster-scoped) + GatewayClass. Per-namespace Gateways and
+                                        // their LB hostnames are created in Deploy (peer-test puts several namespaces, each its own ELB, in this cluster).
                                         writeFile file: 'gatewayclass-eg.yaml', text: '''apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
@@ -1060,10 +1058,8 @@ spec:
                                                     """
                                                     println "Namespace created: ${namespace}"
 
-                                                    // Connection target for readiness checks + main.sh. Ingress: the shared nginx
-                                                    // ELB (routed by Host header). Gateway API: this namespace's own Envoy LB, and
-                                                    // the test client must connect with the real hostname so TLS SNI matches the
-                                                    // listener (a Host header alone won't route on Envoy) — so we also resolve its IP.
+                                                    // Connection target for readiness + main.sh. Ingress: shared nginx ELB (Host-routed). Gateway API: this
+                                                    // namespace's Envoy LB — client must use the real hostname so TLS SNI matches the listener, so we resolve its IP.
                                                     connectHost = patternSafe.hostName
                                                     if (useGatewayApi) {
                                                         String gatewayManifest = """apiVersion: gateway.networking.k8s.io/v1
@@ -1124,10 +1120,8 @@ spec:
         from: Same
 """
                                                         writeFile file: "gateway-${namespace}.yaml", text: gatewayManifest
-                                                        // The chart's gateway HTTPRoute routes gw- -> 8243 (API traffic). The gateway
-                                                        // management REST API (/api/am/gateway/v2/, used by the readiness check and the
-                                                        // profile tests) is on 9443 — under nginx the gw-ingress chart exposed it. Add an
-                                                        // equivalent HTTPRoute so that path reaches the gateway's 9443 service.
+                                                        // The chart's gateway HTTPRoute sends gw- -> 8243 (API traffic), but the gateway mgmt REST API
+                                                        // (/api/am/gateway/v2/) is on 9443 (nginx used gw-ingress). Add an HTTPRoute so that path reaches 9443.
                                                         String gwRestHttpRoute = """apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -1191,10 +1185,8 @@ spec:
 
                                                     String helmChartPath = "${pwd}/${helmDirectory}"
 
-                                                    // Networking flags by exposure model (4.7.0+ Gateway API vs nginx Ingress),
-                                                    // joined to one string spliced into the helm commands. On the Gateway path,
-                                                    // backendTLSPolicy lets Envoy reach APIM's TLS ports, backendTrafficPolicy gives
-                                                    // cookie session affinity, and the gateway-https HTTPRoute replaces gw-ingress.
+                                                    // Networking flags by exposure model (4.7.0+ Gateway API vs nginx Ingress), joined into the helm commands.
+                                                    // Gateway path adds backendTLSPolicy (Envoy->TLS ports), backendTrafficPolicy (cookie affinity), gw-https HTTPRoute.
                                                     List backendTlsFlags = [
                                                         "--set kubernetes.gatewayAPI.backendTLSPolicy.enabled=true",
                                                         "--set kubernetes.gatewayAPI.backendTLSPolicy.caCertificateConfigMap=wso2-backend-ca",
@@ -1511,9 +1503,8 @@ spec:
                                 def deploymentDirName = pattern.directory
                                 dir("${deploymentDirName}") {
                                     println "Destroying resources for ${deploymentDirName}..."
-                                    // Gateway API leaves one Envoy LoadBalancer (AWS ELB) per namespace that Terraform
-                                    // doesn't manage. Delete all Gateways + their LB Services (controller kept alive), then
-                                    // wait for the cluster's ELBs to actually be gone before destroy — orphaned ENIs stall it.
+                                    // Gateway API leaves one Envoy LoadBalancer (AWS ELB) per namespace that Terraform doesn't manage. Delete all
+                                    // Gateways + their LB Services, then wait for the ELBs to be gone before destroy (orphaned ENIs stall it).
                                     if (useGatewayApi) {
                                         writeFile file: 'gw-teardown.sh', text: '''#!/usr/bin/env bash
 set +e

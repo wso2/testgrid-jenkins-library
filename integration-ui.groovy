@@ -22,10 +22,8 @@ import groovy.json.JsonSlurperClassic
 // Input parameters
 String product = params.product
 String productVersion = params.productVersion
-// 4.5.0 and 4.6.0 use nginx Ingress; 4.7.0 and later expose APIM through the
-// Kubernetes Gateway API (helm-apim 4.7.x+ defaults gatewayAPI.enabled=true).
-// Gating on the known Ingress versions (rather than ==4.7.0) keeps every newer
-// version on the Gateway API path by default — no edit needed for 4.8.0+.
+// 4.5.0/4.6.0 use nginx Ingress; 4.7.0+ use the Kubernetes Gateway API (helm-apim 4.7.x+ defaults
+// gatewayAPI.enabled=true). Gating on the Ingress versions keeps every newer version on Gateway API.
 boolean useGatewayApi = !(productVersion in ["4.5.0", "4.6.0"])
 String productDeploymentRegion = params.productDeploymentRegion
 String[] osList = params.osList?.split(',')?.collect { it.trim() } ?: []
@@ -485,10 +483,8 @@ pipeline {
                                     """
 
                                     if (useGatewayApi) {
-                                        // 4.7.0: install the Envoy Gateway controller (cluster-scoped) and a GatewayClass.
-                                        // The Gateway API CRDs ship with the Envoy Gateway chart. The per-namespace Gateway
-                                        // resource and its load-balancer hostname are created later in the Deploy stage,
-                                        // once the deployment namespace exists.
+                                        // 4.7.0: install the Envoy Gateway controller (cluster-scoped) + GatewayClass; CRDs ship with the chart.
+                                        // The per-namespace Gateway and its LB hostname are created later, once the Deploy namespace exists.
                                         writeFile file: 'gatewayclass-eg.yaml', text: '''apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
@@ -661,10 +657,8 @@ spec:
                                                 println "Namespace created: ${namespace}"
 
                                                 if (useGatewayApi) {
-                                                    // Create the Gateway the helm-apim HTTPRoutes attach to. The listener
-                                                    // sectionNames (control-plane-https/gateway-https/websocket-https/websub-https)
-                                                    // and per-listener hostnames must match the chart's HTTPRoute parentRefs and
-                                                    // hostnames; allowedRoutes is "Same", so the Gateway lives in this namespace.
+                                                    // Create the Gateway the helm-apim HTTPRoutes attach to: listener sectionNames (control-plane/gateway/
+                                                    // websocket/websub-https) and hostnames must match the chart; allowedRoutes=Same (Gateway lives in this ns).
                                                     String gatewayManifest = """apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
@@ -767,27 +761,19 @@ spec:
 
                                                 String helmChartPath = "${pwd}/${helmDirectory}"
 
-                                                // Networking flags differ by exposure model. 4.7.0 uses the Gateway API
-                                                // (HTTPRoutes attaching to the per-namespace Gateway above); earlier versions
-                                                // use nginx Ingress. Each fragment is a single line spliced into the helm
-                                                // commands below, so non-4.7.0 behaviour is byte-for-byte unchanged.
+                                                // Networking flags differ by exposure model: 4.7.0 = Gateway API (HTTPRoutes), earlier = nginx Ingress.
+                                                // Each fragment is one line spliced into the helm commands, so non-4.7.0 behaviour is unchanged.
                                                 String gwRestExposure = useGatewayApi ? "echo 'Gateway REST API is exposed via the gateway-https HTTPRoute; skipping gw-ingress.'" :
                                                     "helm install apim-ing ${pwd}/${apimIntgDirectory}/kubernetes/gw-ingress --set hostname=gw-${dbEngineNameSafe}.wso2.com --namespace ${namespace}"
-                                                // BackendTLSPolicy: Gateway API terminates TLS at the listener and opens a fresh
-                                                // connection to the backend; APIM's 9443/8243 are TLS ports (nginx used
-                                                // backend-protocol=HTTPS). The control-plane chart creates the CA ConfigMap from
-                                                // confs/wso2.crt (CN/SAN localhost) via defaultConfigMapCreation; the gateway reuses it.
+                                                // BackendTLSPolicy: Envoy re-opens TLS to APIM's 9443/8243 (nginx used backend-protocol=HTTPS). The
+                                                // control-plane chart creates the CA ConfigMap from confs/wso2.crt via defaultConfigMapCreation.
                                                 List backendTlsFlags = [
                                                     "--set kubernetes.gatewayAPI.backendTLSPolicy.enabled=true",
                                                     "--set kubernetes.gatewayAPI.backendTLSPolicy.caCertificateConfigMap=wso2-backend-ca",
                                                     "--set kubernetes.gatewayAPI.backendTLSPolicy.hostname=localhost",
                                                 ]
-                                                // backendTrafficPolicy enables cookie-based session affinity (ConsistentHash) — the
-                                                // Gateway-API equivalent of the nginx 'affinity: cookie' annotation. The 2 ACP replicas
-                                                // keep Carbon/portal sessions per-pod (unclustered), so without affinity the session is
-                                                // lost right after login (302 back to login). On the non-4.7.0 (else) branches,
-                                                // 'gatewayAPI.enabled=false' is required because the helm-apim 4.7.x chart DEFAULTS it
-                                                // on, so the nginx Ingress path must explicitly opt out.
+                                                // backendTrafficPolicy = cookie session affinity (nginx 'affinity: cookie' equivalent); the 2 unclustered ACP
+                                                // replicas otherwise lose the session after login. Non-4.7.0 sets gatewayAPI.enabled=false (chart defaults it on).
                                                 String acpNetworking = (useGatewayApi ? [
                                                     "--set kubernetes.gatewayAPI.enabled=true",
                                                     "--set kubernetes.gatewayAPI.gatewayName=wso2-apim-gateway",
@@ -1164,10 +1150,8 @@ spec:
                                 def deploymentDirName = pattern.directory
                                 dir("${deploymentDirName}") {
                                     println "Destroying resources for ${deploymentDirName}..."
-                                    // Gateway API provisions Envoy LoadBalancer(s) (AWS ELBs) that Terraform doesn't
-                                    // manage. Delete the Gateways + uninstall Envoy Gateway, then wait for the cloud
-                                    // controller to ACTUALLY delete the ELBs (deleting the k8s Service is async — its
-                                    // ENIs linger and stall VPC/subnet teardown ~20 min). No-op on the nginx path.
+                                    // Gateway API provisions Envoy LoadBalancers (AWS ELBs) Terraform doesn't manage. Delete Gateways + uninstall
+                                    // Envoy Gateway, then wait for the ELBs to actually delete (async; ENIs stall VPC teardown ~20 min). No-op on nginx.
                                     if (useGatewayApi) {
                                         writeFile file: 'gw-teardown.sh', text: '''#!/usr/bin/env bash
 set +e
