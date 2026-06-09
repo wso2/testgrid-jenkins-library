@@ -24,7 +24,7 @@ readonly WSO2_USERNAME=$1
 readonly WSO2_PASSWORD=$2
 readonly WSO2_PRODUCT=$3
 
-# Newer packs (4.7.0+) don't bundle wso2update_linux; download when missing
+# Newer packs (4.6.0+) don't bundle wso2update_linux; download when missing
 # (copy-if-missing, version-agnostic). Source matches docker-builder.groovy.
 readonly UPDATE_TOOL_S3_URI="s3://wum-for-testgrid/testgrid-intg/wso2update_linux"
 readonly BACKUP_DIR="/opt/testgrid/workspace/backup"
