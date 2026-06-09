@@ -24,10 +24,8 @@ readonly WSO2_USERNAME=$1
 readonly WSO2_PASSWORD=$2
 readonly WSO2_PRODUCT=$3
 
-# Standalone update tool. Newer packs (4.7.0+) no longer bundle wso2update_linux,
-# so it is downloaded from S3 when missing. On older packs that still ship it this
-# download is skipped (copy-if-missing), keeping the script version-agnostic.
-# Path matches docker-builder.groovy's proven source (s3://<bucket>/testgrid-intg/).
+# Newer packs (4.7.0+) don't bundle wso2update_linux; download when missing
+# (copy-if-missing, version-agnostic). Source matches docker-builder.groovy.
 readonly UPDATE_TOOL_S3_URI="s3://wum-for-testgrid/testgrid-intg/wso2update_linux"
 readonly BACKUP_DIR="/opt/testgrid/workspace/backup"
 
