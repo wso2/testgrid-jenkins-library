@@ -229,12 +229,8 @@ def create_build_jobs(deploymentDirectory, testSpecs){
     }
 }
 
-// Surface any deployments whose specs only passed after a pipeline-side rerun in
-// the build console log, so reviewers see flaky runs without digging into S3
-// artifacts. We deliberately avoid currentBuild.description here: a description
-// is rendered in the Build History sidebar on every page and clutters the run
-// list. The console log shows the same info on the build page only. Flaky !=
-// failure, so the build result is left as-is.
+// Log deployments whose specs only passed after a pipeline-side rerun to the build
+// console (not currentBuild.description, which would clutter the run list). Flaky != failure.
 def logFlakySpecs(deploymentDirectories) {
     def flaky = []
     for (deploymentDirectory in deploymentDirectories) {

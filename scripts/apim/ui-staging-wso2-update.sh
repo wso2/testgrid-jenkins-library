@@ -76,8 +76,6 @@ case $update_exit_code in
   0)
     echo "Successfully updated."
     cd ../../
-    #rm -rf $WSO2_PRODUCT.zip
-    #zip -r -q $WSO2_PRODUCT.zip $WSO2_PRODUCT
     exit 0
     ;;
   1)

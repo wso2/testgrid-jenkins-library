@@ -1157,11 +1157,8 @@ spec:
 set +e
 REGION="$1"; LBHOST="$2"
 echo "Releasing Gateway API load balancer (region $REGION, lb ${LBHOST:-none})"
-# Delete the Gateways AND the EnvoyProxy LoadBalancer Services directly, so the cloud
-# controller deletes their AWS ELBs. Do NOT uninstall the Envoy Gateway controller
-# here — removing it before the Service is gone orphans the ELB, whose ENIs then stall
-# terraform destroy ~20 min (the cluster is about to be destroyed anyway). Wait until
-# the ELB is confirmed gone (query succeeds AND DNS name absent twice) before returning.
+# Delete the Gateways + EnvoyProxy LB Services directly (cloud controller then deletes the ELBs);
+# don't uninstall the controller first, or the orphaned ELB's ENIs stall terraform destroy ~20 min.
 kubectl delete gateway --all --all-namespaces --ignore-not-found --timeout=180s || echo "No Gateways to delete."
 kubectl delete svc -n envoy-gateway-system -l gateway.envoyproxy.io/owning-gateway-namespace --ignore-not-found || true
 if [ -n "$LBHOST" ]; then
