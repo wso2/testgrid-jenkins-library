@@ -66,7 +66,9 @@ String dbUser = "wso2carbon"
 String helmRepoUrl = "https://github.com/wso2/helm-apim.git"
 String helmDirectory = "helm-apim"
 // APIM Test Integration repository details
-String apimIntgRepoUrl = "https://github.com/wso2/apim-test-integration.git"
+// apim-test-integration fork carries the Gateway-API changes (main.sh + kubernetes/gateway-api
+// manifests) on 4.7.0-profile-automation, pending upstream merge (wso2/apim-test-integration#343).
+String apimIntgRepoUrl = "https://github.com/IsuruGunarathne/apim-test-integration.git"
 String apimIntgRepoBranch = "${productVersion}-profile-automation"
 String apimIntgDirectory = "apim-test-integration"
 String tfDirectory = "terraform"
@@ -498,15 +500,8 @@ pipeline {
                                     """
 
                                     if (useGatewayApi) {
-                                        // 4.7.0: install the Envoy Gateway controller (cluster-scoped) + GatewayClass; CRDs ship with the chart.
-                                        // The per-namespace Gateway and its LB hostname are created later, once the Deploy namespace exists.
-                                        writeFile file: 'gatewayclass-eg.yaml', text: '''apiVersion: gateway.networking.k8s.io/v1
-kind: GatewayClass
-metadata:
-  name: eg
-spec:
-  controllerName: gateway.envoyproxy.io/gatewayclass-controller
-'''
+                                        // 4.7.0: install the Envoy Gateway controller (cluster-scoped) + GatewayClass (from
+                                        // apim-test-integration/kubernetes/gateway-api). Per-namespace Gateway/LB created later, in Deploy.
                                         sh """
                                             # Install the Envoy Gateway controller (idempotent across patterns/reruns).
                                             # v1.7.x bundles Gateway API v1.4, which serves BackendTLSPolicy at v1 (the
@@ -514,7 +509,7 @@ spec:
                                             helm upgrade --install eg oci://docker.io/envoyproxy/gateway-helm --version v1.7.3 \
                                                 --namespace envoy-gateway-system --create-namespace
                                             kubectl rollout status deployment/envoy-gateway -n envoy-gateway-system --timeout=300s
-                                            kubectl apply -f gatewayclass-eg.yaml
+                                            kubectl apply -f ../${apimIntgDirectory}/kubernetes/gateway-api/gatewayclass-eg.yaml
                                         """
                                         println "Envoy Gateway controller ready; LB hostname is captured per-namespace in the Deploy stage."
                                     } else {
@@ -674,65 +669,17 @@ spec:
                                                 if (useGatewayApi) {
                                                     // Create the Gateway the helm-apim HTTPRoutes attach to: listener sectionNames (control-plane/gateway/
                                                     // websocket/websub-https) and hostnames must match the chart; allowedRoutes=Same (Gateway lives in this ns).
-                                                    String gatewayManifest = """apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
-  name: wso2-apim-gateway
-  namespace: ${namespace}
-spec:
-  gatewayClassName: eg
-  listeners:
-  - name: control-plane-https
-    hostname: "am-${dbEngineNameSafe}.wso2.com"
-    port: 443
-    protocol: HTTPS
-    tls:
-      mode: Terminate
-      certificateRefs:
-      - kind: Secret
-        name: wso2-apim-tls
-    allowedRoutes:
-      namespaces:
-        from: Same
-  - name: gateway-https
-    hostname: "gw-${dbEngineNameSafe}.wso2.com"
-    port: 443
-    protocol: HTTPS
-    tls:
-      mode: Terminate
-      certificateRefs:
-      - kind: Secret
-        name: wso2-apim-tls
-    allowedRoutes:
-      namespaces:
-        from: Same
-  - name: websocket-https
-    hostname: "websocket-${dbEngineNameSafe}.wso2.com"
-    port: 443
-    protocol: HTTPS
-    tls:
-      mode: Terminate
-      certificateRefs:
-      - kind: Secret
-        name: wso2-apim-tls
-    allowedRoutes:
-      namespaces:
-        from: Same
-  - name: websub-https
-    hostname: "websub-${dbEngineNameSafe}.wso2.com"
-    port: 443
-    protocol: HTTPS
-    tls:
-      mode: Terminate
-      certificateRefs:
-      - kind: Secret
-        name: wso2-apim-tls
-    allowedRoutes:
-      namespaces:
-        from: Same
-"""
-                                                    writeFile file: "gateway-${namespace}.yaml", text: gatewayManifest
+                                                    // Render the Gateway from apim-test-integration/kubernetes/gateway-api (namespace + listener
+                                                    // hostnames substituted per pattern). UI has no gw-rest HTTPRoute (gw- REST uses gw-ingress on nginx).
+                                                    String gwApiDir = "${pwd}/${apimIntgDirectory}/kubernetes/gateway-api"
                                                     sh """
+                                                        set +e
+                                                        sed -e 's|__NAMESPACE__|${namespace}|g' \
+                                                            -e 's|__CONTROL_PLANE_HOST__|am-${dbEngineNameSafe}.wso2.com|g' \
+                                                            -e 's|__GATEWAY_HOST__|gw-${dbEngineNameSafe}.wso2.com|g' \
+                                                            -e 's|__WEBSOCKET_HOST__|websocket-${dbEngineNameSafe}.wso2.com|g' \
+                                                            -e 's|__WEBSUB_HOST__|websub-${dbEngineNameSafe}.wso2.com|g' \
+                                                            ${gwApiDir}/gateway.yaml > gateway-${namespace}.yaml
                                                         # Self-signed wildcard cert for the Gateway HTTPS listeners (test-only; Cypress ignores trust).
                                                         openssl req -x509 -nodes -newkey rsa:2048 -days 365 \
                                                             -keyout /tmp/${namespace}-tls.key -out /tmp/${namespace}-tls.crt \
@@ -1167,31 +1114,8 @@ spec:
                                     println "Destroying resources for ${deploymentDirName}..."
                                     // Gateway API provisions Envoy LoadBalancers (AWS ELBs) Terraform doesn't manage. Delete Gateways + uninstall
                                     // Envoy Gateway, then wait for the ELBs to actually delete (async; ENIs stall VPC teardown ~20 min). No-op on nginx.
-                                    if (useGatewayApi) {
-                                        writeFile file: 'gw-teardown.sh', text: '''#!/usr/bin/env bash
-set +e
-REGION="$1"; LBHOST="$2"
-echo "Releasing Gateway API load balancer (region $REGION, lb ${LBHOST:-none})"
-# Delete the Gateways + EnvoyProxy LB Services directly (cloud controller then deletes the ELBs);
-# don't uninstall the controller first, or the orphaned ELB's ENIs stall terraform destroy ~20 min.
-kubectl delete gateway --all --all-namespaces --ignore-not-found --timeout=180s || echo "No Gateways to delete."
-kubectl delete svc -n envoy-gateway-system -l gateway.envoyproxy.io/owning-gateway-namespace --ignore-not-found || true
-if [ -n "$LBHOST" ]; then
-  gone=0
-  for i in $(seq 1 40); do
-    out=$(aws elb describe-load-balancers --region "$REGION" --query "LoadBalancerDescriptions[].DNSName" --output text 2>/dev/null)
-    if [ $? -eq 0 ] && ! printf '%s' "$out" | grep -qiF "$LBHOST"; then
-      gone=$((gone+1)); [ $gone -ge 2 ] && { echo "Envoy ELB confirmed deleted."; break; }
-    else
-      gone=0
-    fi
-    echo "Waiting for Envoy ELB to delete ($i): $LBHOST"; sleep 15
-  done
-fi
-'''
-                                    }
                                     String gatewayTeardown = useGatewayApi ?
-                                        "bash gw-teardown.sh ${productDeploymentRegion} ${pattern.hostName ?: ''}" :
+                                        "bash ../${apimIntgDirectory}/kubernetes/gateway-api/gw-teardown.sh ${pattern.directory} ${productDeploymentRegion} ${project}-${pattern.id}-${tfEnvironment}-${productDeploymentRegion}-eks" :
                                         "echo 'Ingress path: no Gateway API load balancers to release.'"
                                     sh """
                                         # Configure EKS cluster
