@@ -494,16 +494,31 @@ def installKubectl() {
 }
 
 def installHelm() {
-    if (!fileExists('/usr/local/bin/helm')) {
-        println "Helm not found. Installing..."
+    // Envoy Gateway chart v1.7.x RBAC template relies on Go>=1.18 short-circuit `and` (helm>=3.9);
+    // older helm eager-evaluates a nil provider.kubernetes map and dies with "nil pointer ... .watch".
+    // Reused agents kept ancient helm because we skipped whenever any helm existed. Pin a modern helm.
+    String pinHelm = "v3.16.3"
+    int reinstall = sh(returnStatus: true, script: '''
+        set +e
+        if ! command -v helm >/dev/null 2>&1; then echo "helm not found"; exit 0; fi
+        v=$(helm version --short 2>/dev/null | grep -oE 'v?[0-9]+\\.[0-9]+' | head -1 | tr -d v)
+        maj=${v%%.*}; min=${v##*.}
+        if [ -z "$maj" ]; then echo "helm version undetermined"; exit 0; fi
+        if [ "$maj" -gt 3 ] || { [ "$maj" -eq 3 ] && [ "$min" -ge 9 ]; }; then
+            echo "helm $v satisfies >=3.9; keeping"; exit 1
+        fi
+        echo "helm $v is < 3.9; reinstalling"; exit 0
+    ''')
+    if (reinstall == 0) {
+        println "Installing helm ${pinHelm}..."
         sh """
             curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
             chmod 700 get_helm.sh
-            ./get_helm.sh
+            ./get_helm.sh --version ${pinHelm}
             helm version
         """
     } else {
-        println "Helm is already installed."
+        println "Existing helm satisfies >= 3.9; keeping it."
     }
 }
 
