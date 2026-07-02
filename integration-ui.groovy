@@ -240,9 +240,9 @@ def installKubectl() {
 }
 
 def installHelm() {
-    // Envoy Gateway chart v1.7.x RBAC template relies on Go>=1.18 short-circuit `and` (helm>=3.9);
-    // older helm eager-evaluates a nil provider.kubernetes map and dies with "nil pointer ... .watch".
-    // Reused agents kept ancient helm because we skipped whenever any helm existed. Pin a modern helm.
+    // Envoy Gateway chart v1.7.x RBAC template needs Go>=1.18 short-circuit `and` (helm>=3.10);
+    // verified: helm 3.9.0 (Go 1.17) nil-pointers on the nil provider.kubernetes map, 3.10.0
+    // (Go 1.18) renders fine. Reused agents carry mixed/old helm, so pin a modern one.
     String pinHelm = "v3.16.3"
     int reinstall = sh(returnStatus: true, script: '''
         set +e
@@ -250,10 +250,10 @@ def installHelm() {
         v=$(helm version --short 2>/dev/null | grep -oE 'v?[0-9]+\\.[0-9]+' | head -1 | tr -d v)
         maj=${v%%.*}; min=${v##*.}
         if [ -z "$maj" ]; then echo "helm version undetermined"; exit 0; fi
-        if [ "$maj" -gt 3 ] || { [ "$maj" -eq 3 ] && [ "$min" -ge 9 ]; }; then
-            echo "helm $v satisfies >=3.9; keeping"; exit 1
+        if [ "$maj" -gt 3 ] || { [ "$maj" -eq 3 ] && [ "$min" -ge 10 ]; }; then
+            echo "helm $v satisfies >=3.10; keeping"; exit 1
         fi
-        echo "helm $v is < 3.9; reinstalling"; exit 0
+        echo "helm $v is < 3.10; reinstalling"; exit 0
     ''')
     if (reinstall == 0) {
         println "Installing helm ${pinHelm}..."
@@ -264,7 +264,7 @@ def installHelm() {
             helm version
         """
     } else {
-        println "Existing helm satisfies >= 3.9; keeping it."
+        println "Existing helm satisfies >= 3.10; keeping it."
     }
 }
 
