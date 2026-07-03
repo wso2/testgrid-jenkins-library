@@ -70,9 +70,9 @@ String helmDirectory = "helm-apim"
 // 4.5.0/4.6.0 use nginx Ingress; 4.7.0+ use the Kubernetes Gateway API (Envoy Gateway). Gating on the
 // Ingress versions keeps newer versions on Gateway API. Mirrors the 4.7.0 UI pipeline switch.
 boolean useGatewayApi = !(productVersion in ["4.5.0", "4.6.0"])
-// apim-test-integration fork carries the Gateway-API connection changes (main.sh
-// /etc/hosts + the collection pre-request host rewrite) on 4.7.0-profile-automation.
-String apimIntgRepoUrl = "https://github.com/IsuruGunarathne/apim-test-integration.git"
+// APIM Test Integration repository details. The Gateway-API changes (main.sh /etc/hosts +
+// collection pre-request host rewrite + kubernetes/gateway-api manifests) live on 4.7.0-profile-automation.
+String apimIntgRepoUrl = "https://github.com/wso2/apim-test-integration.git"
 String apimIntgRepoBranch = "${productVersion}-profile-automation"
 String apimIntgDirectory = "apim-test-integration"
 String tfDirectory = "terraform"
