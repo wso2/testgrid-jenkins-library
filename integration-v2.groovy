@@ -1444,9 +1444,6 @@ pipeline {
                                     println "Destroying resources for ${deploymentDirName}..."
                                     // Gateway API leaves one Envoy LoadBalancer (AWS ELB) per namespace that Terraform doesn't manage. Delete all
                                     // Gateways + their LB Services, then wait for the ELBs to be gone before destroy (orphaned ENIs stall it).
-                                    String gatewayTeardown = useGatewayApi ?
-                                        "bash ../${apimIntgDirectory}/kubernetes/gateway-api/gw-teardown.sh ${pattern.directory} ${productDeploymentRegion} ${project}-${pattern.id}-${tfEnvironment}-${productDeploymentRegion}-eks" :
-                                        "echo 'Ingress path: no Gateway API load balancers to release.'"
                                     sh """
                                         # Configure EKS cluster
                                         aws eks --region ${productDeploymentRegion} \
@@ -1457,7 +1454,7 @@ pipeline {
 
                                         kubectl wait --namespace ingress-nginx --for=delete pod --selector=app.kubernetes.io/component=controller --timeout=480s || echo "Ingress controller pods were not deleted within the expected time limit."
 
-                                        ${gatewayTeardown}
+                                        ${useGatewayApi ? "bash ../${apimIntgDirectory}/kubernetes/gateway-api/gw-teardown.sh ${pattern.directory} ${productDeploymentRegion} ${project}-${pattern.id}-${tfEnvironment}-${productDeploymentRegion}-eks" : "echo 'Ingress path: no Gateway API load balancers to release.'"}
 
                                         terraform destroy -auto-approve \
                                             -var="project=${project}" \

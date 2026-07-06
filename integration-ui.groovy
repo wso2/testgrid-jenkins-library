@@ -1028,7 +1028,8 @@ pipeline {
                                                         DEST="${env.WORKSPACE}/${localArtifactDir}"
                                                         mkdir -p "\$DEST"
                                                         echo "Fetching DS UI artifacts from s3://${dsArtifactBucket}/${s3Prefix}/ into \$DEST"
-                                                        aws s3 cp --recursive --region "${dsArtifactRegion}" "s3://${dsArtifactBucket}/${s3Prefix}/" "\$DEST/" || echo "[ds-ui-artifacts] s3 cp returned non-zero; build page may be missing screenshots for ${patternSafe.id}-${dbEngineNameSafe}"
+                                                        aws s3 cp --recursive --region "${dsArtifactRegion}" "s3://${dsArtifactBucket}/${s3Prefix}/" "\$DEST/" \
+                                                            || echo "[ds-ui-artifacts] s3 cp returned non-zero; build page may be missing screenshots for ${patternSafe.id}-${dbEngineNameSafe}"
                                                         echo "===== DS UI artifacts staged for archive ====="
                                                         echo "Local      : \$DEST"
                                                         echo "S3 source  : s3://${dsArtifactBucket}/${s3Prefix}/"
@@ -1113,9 +1114,6 @@ pipeline {
                                     println "Destroying resources for ${deploymentDirName}..."
                                     // Gateway API provisions Envoy LoadBalancers (AWS ELBs) Terraform doesn't manage. Delete Gateways + uninstall
                                     // Envoy Gateway, then wait for the ELBs to actually delete (async; ENIs stall VPC teardown ~20 min). No-op on nginx.
-                                    String gatewayTeardown = useGatewayApi ?
-                                        "bash ../${apimIntgDirectory}/kubernetes/gateway-api/gw-teardown.sh ${pattern.directory} ${productDeploymentRegion} ${project}-${pattern.id}-${tfEnvironment}-${productDeploymentRegion}-eks" :
-                                        "echo 'Ingress path: no Gateway API load balancers to release.'"
                                     sh """
                                         # Configure EKS cluster
                                         aws eks --region ${productDeploymentRegion} \
@@ -1126,7 +1124,7 @@ pipeline {
 
                                         kubectl wait --namespace ingress-nginx --for=delete pod --selector=app.kubernetes.io/component=controller --timeout=480s || echo "Ingress controller pods were not deleted within the expected time limit."
 
-                                        ${gatewayTeardown}
+                                        ${useGatewayApi ? "bash ../${apimIntgDirectory}/kubernetes/gateway-api/gw-teardown.sh ${pattern.directory} ${productDeploymentRegion} ${project}-${pattern.id}-${tfEnvironment}-${productDeploymentRegion}-eks" : "echo 'Ingress path: no Gateway API load balancers to release.'"}
 
                                         terraform destroy -auto-approve \
                                             -var="project=${project}" \
