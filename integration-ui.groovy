@@ -281,7 +281,9 @@ if (!fileExists('/usr/bin/docker')) {
             sudo apt install docker-ce -y
             
             sudo usermod -aG docker ${USER}
-            su - ${USER}
+            # usermod only applies on next login; 'su - ${USER}' needs a password (fails in CI).
+            # Grant the current session docker access directly instead.
+            sudo chmod 666 /var/run/docker.sock || true
         """
     } else {
         println "Docker is already installed."
