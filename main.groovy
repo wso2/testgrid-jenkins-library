@@ -24,6 +24,7 @@ def updateType = ""
 def s3BucketName = "testgrid-pipeline-logs"
 def s3BuildLogPath = ""
 def s3PathConstructor = ""
+def testSpecs = ""
 
 pipeline {
 agent {label 'pipeline-agent'}
@@ -64,6 +65,11 @@ stages {
     stage('Constructing parameter files'){
         steps {
             script {
+                // Cypress --spec expects a single comma-separated form.
+                testSpecs = (params.test_specs ?: '').readLines()
+                                .collect { it.trim() }
+                                .findAll { it }
+                                .join(',')
                 withCredentials([string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'accessKey'),
                 string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'secretAccessKey'),
                 string(credentialsId: 'WUM_USERNAME', variable: 'wumUserName'),
@@ -140,7 +146,7 @@ stages {
                 def build_jobs = [:]
                 for (deploymentDirectory in deploymentDirectories){
                     println deploymentDirectory
-                    build_jobs["${deploymentDirectory}"] = create_build_jobs(deploymentDirectory)
+                    build_jobs["${deploymentDirectory}"] = create_build_jobs(deploymentDirectory, testSpecs)
                 }
 
                 parallel build_jobs
@@ -161,6 +167,7 @@ post {
         '''
         archiveArtifacts artifacts: "build-${env.BUILD_NUMBER}/**/*.*", fingerprint: true
         script {
+            logFlakySpecs(deploymentDirectories)
             sendEmail(deploymentDirectories, updateType)
         }
         cleanWs deleteDirs: true, notFailBuild: true
@@ -168,7 +175,7 @@ post {
 }
 }
 
-def create_build_jobs(deploymentDirectory){
+def create_build_jobs(deploymentDirectory, testSpecs){
     return{
         stage("${deploymentDirectory}"){
             stage("Deploy ${deploymentDirectory}") {
@@ -201,20 +208,46 @@ def create_build_jobs(deploymentDirectory){
                 sh'''
                     ./scripts/deployment-handler.sh '''+deploymentDirectory+''' '''+cloudformationLocation+''' 
                 '''
+                // catchError marks stage+build FAILURE on test failure but still runs the upload stage;
+                // the prior try/finally shape left wfapi stage status green on red builds.
                 stage("Testing ${deploymentDirectory}") {
                     println "Deployment testing..."
-                    sh'''
-                        ./scripts/test-deployment.sh '''+deploymentDirectory+''' ${product_repository} ${product_test_branch} ${product_test_script}
-                    '''
-                    stage("Uploading results to ${deploymentDirectory}") {
-                        println "Upoading logs..."
+                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                         sh'''
-                            ./scripts/post-actions.sh '''+deploymentDirectory+'''
+                            ./scripts/test-deployment.sh '''+deploymentDirectory+''' ${product_repository} ${product_test_branch} ${product_test_script} "'''+testSpecs+'''"
                         '''
                     }
                 }
+                stage("Uploading results to ${deploymentDirectory}") {
+                    println "Upoading logs..."
+                    sh'''
+                        ./scripts/post-actions.sh '''+deploymentDirectory+'''
+                    '''
+                }
             }
         }
+    }
+}
+
+// Log deployments whose specs only passed after a pipeline-side rerun to the build
+// console (not currentBuild.description, which would clutter the run list). Flaky != failure.
+def logFlakySpecs(deploymentDirectories) {
+    def flaky = []
+    for (deploymentDirectory in deploymentDirectories) {
+        def flakyFile = "${WORKSPACE}/deployment/${deploymentDirectory}/outputs/flaky-specs.txt"
+        if (fileExists(flakyFile)) {
+            // List only the spec paths, one per line, indented under the
+            // deployment name. Robust to any header/verdict noise in the file.
+            def specs = readFile(flakyFile).readLines()
+                .collect { it.trim() }
+                .findAll { it ==~ /.*\.(spec|cy)\.js$/ }
+            if (specs) {
+                flaky << "${deploymentDirectory}:\n  " + specs.join("\n  ")
+            }
+        }
+    }
+    if (flaky) {
+        echo "⚠ Flaky specs (failed first pass, rerun)\n" + flaky.join("\n")
     }
 }
 
@@ -223,7 +256,7 @@ def sendEmail(deploymentDirectories, updateType) {
     for (deploymentDirectory in deploymentDirectories){
         deployments = deployments + deploymentDirectory + "<br>"
     }
-    
+
     if (currentBuild.currentResult.equals("SUCCESS")){
         headerColour = "#05B349"
     }else{

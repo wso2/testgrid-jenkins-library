@@ -22,6 +22,7 @@ deploymentName=$1
 productRepository=$2
 productTestBranch=$3
 productTestScript=$4
+testSpecs=$5
 currentScript=$(dirname $(realpath "$0"))
 
 deploymentDirectory="${WORKSPACE}/deployment/${deploymentName}"
@@ -62,7 +63,7 @@ function deploymentTest(){
     local scriptDir="${productDirectoryLocation}/${productTestScript}"
     local scriptDirPath=$(dirname ${scriptDir})
     cd ${scriptDirPath}
-    source ${productDirectoryLocation}/${productTestScript} --input-dir "${deploymentDirectory}"  --output-dir "${testOutputDir}"
+    source ${productDirectoryLocation}/${productTestScript} --input-dir "${deploymentDirectory}"  --output-dir "${testOutputDir}" --test-specs "${testSpecs}"
     if [ ${MVNSTATE} -gt 0 ];
     then
         log_error "Test Execution Failed with exit code ${MVNSTATE}"
