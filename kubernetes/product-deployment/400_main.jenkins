@@ -27,6 +27,7 @@ pipeline {
         DB_PASSWORD = '613296496' 
         WUM_USER = credentials('WUM_USERNAME')
         WUM_PWD = credentials('WUM_PASSWORD')
+        REGISTRY_CREDS = credentials('wso2-apim_jenkins_image_pull_user')
         SHORT_PRODUCT_VERSION = '400'
     }
     stages {
@@ -97,7 +98,7 @@ pipeline {
                             ),
                             string(
                                 name: 'db_version',
-                                defaultValue: '5.7.44',
+                                defaultValue: '5.7.44-rds.20250508',
                                 description: 'Database engine version',
                                 trim: true
                             ),
