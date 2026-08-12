@@ -98,7 +98,7 @@ pipeline {
                             ),
                             string(
                                 name: 'db_version',
-                                defaultValue: '5.7.44',
+                                defaultValue: '5.7.44-rds.20250508',
                                 description: 'Database engine version',
                                 trim: true
                             ),
