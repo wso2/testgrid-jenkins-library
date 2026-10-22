@@ -58,6 +58,10 @@ SCRIPT_LOCATION=$(grep -w "ProductTestScriptLocation" ${PROP_FILE} | cut -d'=' -
 TEST_SCRIPT_NAME=$(echo $SCRIPT_LOCATION | rev | cut -d'/' -f1 | rev)
 TEST_REPORTS_DIR="$(grep -w "SurefireReportDir" ${PROP_FILE} | cut -d'=' -f2 )"
 TEST_MODE=$(grep -w "UpdateType" ${PROP_FILE} | cut -d'=' -f2)
+# Only set for a test group on a shared stack (see prepare-shared-stack-group.sh): every
+# group shares one RDS, so it gets its own logical databases. Empty for every other flow.
+DB_GROUP_SUFFIX=$(grep -w "DBGroupSuffix" ${PROP_FILE} | cut -d'=' -f2)
+DB_GROUP_NUM=$(grep -w "DBGroupNum" ${PROP_FILE} | cut -d'=' -f2)
 
 if [[ ${PRODUCT_NAME} == "wso2am" ]];
 then
@@ -93,8 +97,30 @@ function phaseSetup(){
     log_info "Copying ${TEST_SCRIPT_NAME} to remote ec2 instance"
     scp ${SSH_OPTS} ${testScriptFile} $instanceUser@${WSO2InstanceName}:/opt/testgrid/workspace/${TEST_SCRIPT_NAME} || { log_error "Copying ${TEST_SCRIPT_NAME} to remote instance failed"; return 1; }
 
-    log_info "Copying ${INFRA_JSON} to remote ec2 instance"
-    scp ${SSH_OPTS} ${INFRA_JSON} $instanceUser@${WSO2InstanceName}:/opt/testgrid/workspace/infra.json || { log_error "Copying ${INFRA_JSON} to remote instance failed"; return 1; }
+    local infraJson=${INFRA_JSON}
+    if [[ -n "${DB_GROUP_SUFFIX}" ]]; then
+        infraJson="${INPUTS_DIR}/infra.json"
+        writeGroupInfraJson "${infraJson}" || { log_error "Writing per-group infra.json failed"; return 1; }
+    fi
+
+    log_info "Copying ${infraJson} to remote ec2 instance"
+    scp ${SSH_OPTS} ${infraJson} $instanceUser@${WSO2InstanceName}:/opt/testgrid/workspace/infra.json || { log_error "Copying ${infraJson} to remote instance failed"; return 1; }
+}
+
+# Point the datasources at this group's logical databases, matching the names created by
+# provision_db_<product>-v2.sh: WSO2AM_*_DB<suffix> (DB name in the JDBC URL, or the
+# Oracle schema user) and SHRD_G<n>/APIM_G<n> for DB2. Only URL/username values are
+# rewritten - the datasource "name" keys must stay as-is for run-int-test.sh to find them.
+function writeGroupInfraJson(){
+    local target=$1
+    log_info "Writing infra.json for databases with suffix '${DB_GROUP_SUFFIX}' to ${target}"
+    jq --arg sfx "${DB_GROUP_SUFFIX}" --arg num "${DB_GROUP_NUM}" '
+        (.jdbc[]?.database[]?) |= (
+            .url |= (gsub("(?<p>[/=])(?<n>WSO2AM_(COMMON|APIMGT)_DB)(?<s>[?;]|$)"; "\(.p)\(.n)\($sfx)\(.s)")
+                     | sub("/SHRD_DB$"; "/SHRD_G\($num)")
+                     | sub("/APIM_DB$"; "/APIM_G\($num)"))
+            | .username |= (if test("^WSO2AM_(COMMON|APIMGT)_DB$") then . + $sfx else . end)
+        )' "${INFRA_JSON}" > "${target}"
 }
 
 function phaseUpdate(){
@@ -114,7 +140,9 @@ function phaseUpdate(){
 
 function phaseProvisionDb(){
     log_info "Executing /opt/testgrid/workspace/provision_db_${PRODUCT_NAME}.sh on remote Instance"
-    ssh ${SSH_OPTS} $instanceUser@${WSO2InstanceName} "cd /opt/testgrid/workspace && sudo bash /opt/testgrid/workspace/provision_db_${PRODUCT_NAME}.sh"
+    # The group args are only understood by the v2 provisioning script that the
+    # shared-stack CFN installs; other flows keep calling it without arguments.
+    ssh ${SSH_OPTS} $instanceUser@${WSO2InstanceName} "cd /opt/testgrid/workspace && sudo bash /opt/testgrid/workspace/provision_db_${PRODUCT_NAME}.sh ${DB_GROUP_SUFFIX} ${DB_GROUP_NUM}"
 }
 
 function phaseTest(){

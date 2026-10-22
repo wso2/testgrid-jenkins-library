@@ -21,6 +21,9 @@ import hudson.model.*
 
 def deploymentDirectories = []
 def updateType = ""
+// Test groups run on a shared stack. Only populated when the v2 (one EC2 per group) CFN
+// template is selected - see isSharedStackTemplate().
+def sharedStackGroups = []
 
 pipeline {
 agent {label 'pipeline-agent'}
@@ -89,6 +92,22 @@ stages {
                         ./scripts/write-parameter-file.sh "GithubPassword" ${githubPassword} "${WORKSPACE}/parameters/parameters.json"
                     '''
                 }
+                if (isSharedStackTemplate()) {
+                    // An empty test_groups means "run every group", each on its own EC2.
+                    // The same list drives the CFN InstanceNames parameter and the
+                    // parallel group branches in the next stage.
+                    sharedStackGroups = (test_groups?.trim()) ? test_groups.split(",").collect{ it.trim() }.findAll{ it } : ["group1", "group2", "group3", "group4"]
+                    // Group names become CFN logical IDs and shell arguments - alphanumeric only.
+                    def invalidGroups = sharedStackGroups.findAll{ !(it ==~ /[A-Za-z0-9]+/) }
+                    if (invalidGroups) {
+                        error "Test groups must be alphanumeric for the shared-stack CFN: ${invalidGroups}"
+                    }
+                    println "Shared-stack CFN selected. One EC2 per test group: ${sharedStackGroups}"
+                    sh """
+                        echo "Writting instance names (one per test group) to parameter file"
+                        ./scripts/write-parameter-file.sh "InstanceNames" "${sharedStackGroups.join(",")}" "\${WORKSPACE}/parameters/parameters.json"
+                    """
+                }
                 sh '''
                     echo --- Adding common parameters to parameter file! ---
                     echo "Writting product name to parameter file"
@@ -142,7 +161,9 @@ stages {
                 for (deploymentDirectory in deploymentDirectories){
                     println deploymentDirectory
                     def dir = deploymentDirectory
-                    if (test_groups != "") {
+                    if (sharedStackGroups) {
+                        build_jobs["${dir}"] = create_shared_stack_deployment(dir, sharedStackGroups)
+                    } else if (test_groups != "") {
                         for (productTestGroup in test_groups.split(",")) {
                             def group = productTestGroup
                             build_jobs["${dir} :: ${group}"] = create_group_deployment(dir, group)
@@ -191,7 +212,7 @@ post {
 def create_build_jobs(deploymentDirectory){
     return{
         deployStack(deploymentDirectory)
-        executeTests(deploymentDirectory, "")
+        executeTests(deploymentDirectory, "", true)
     }
 }
 
@@ -206,8 +227,44 @@ def create_group_deployment(deploymentDirectory, productTestGroup){
         ).trim()
         println "Prepared group deployment directory: ${groupDeploymentDirectory}"
         deployStack(groupDeploymentDirectory)
-        executeTests(groupDeploymentDirectory, productTestGroup)
+        executeTests(groupDeploymentDirectory, productTestGroup, true)
     }
+}
+
+// One shared stack per combination (v2 CFN): one EC2 per test group plus one RDS that
+// every group uses through its own logical databases. The stack is deployed once, the
+// groups run as parallel branches against it, and it is torn down once after all of
+// them finish (pass or fail). Nested parallel stages are not drawn by Blue Ocean, but
+// each group still writes its own build-logs/<combo>-<group>.log.
+def create_shared_stack_deployment(deploymentDirectory, groups){
+    return {
+        try {
+            deployStack(deploymentDirectory)
+            def group_jobs = [:]
+            for (g in groups) {
+                def group = g
+                group_jobs["${deploymentDirectory} :: ${group}"] = {
+                    def groupDeploymentDirectory = sh(
+                        returnStdout: true,
+                        script: "./scripts/prepare-shared-stack-group.sh ${deploymentDirectory} ${group}"
+                    ).trim()
+                    println "Prepared shared-stack group directory: ${groupDeploymentDirectory}"
+                    executeTests(groupDeploymentDirectory, group, false)
+                }
+            }
+            parallel group_jobs
+        } finally {
+            stage("Teardown [${deploymentDirectory}]") {
+                runTestPhase(deploymentDirectory, "", "teardown")
+            }
+        }
+    }
+}
+
+// The v2 CFN provisions one EC2 per test group behind a single shared RDS. Every other
+// template keeps the existing one-stack-per-combination / one-stack-per-group flows.
+def isSharedStackTemplate() {
+    return cloudformation_location.trim().endsWith("wso2-u2-intg-test-cfn-v2.yaml")
 }
 
 def deployStack(deploymentDirectory){
@@ -240,7 +297,9 @@ exit \${PIPESTATUS[0]}
 // still a separate step within the stage (its own log line), so granularity is kept
 // without exploding the graph. The run is wrapped in try/finally so reports are
 // always collected and the stack is always torn down, even when the tests fail.
-def executeTests(deploymentDirectory, productTestGroup) {
+// teardown=false is used for groups on a shared stack: sibling groups still use the
+// stack, so it is torn down once by create_shared_stack_deployment instead.
+def executeTests(deploymentDirectory, productTestGroup, teardown) {
     def label = productTestGroup ? "${productTestGroup} @ ${deploymentDirectory}" : "${deploymentDirectory}"
     println "Executing test ${productTestGroup} for ${product_repository}"
     try {
@@ -252,7 +311,7 @@ def executeTests(deploymentDirectory, productTestGroup) {
             runTestPhase(deploymentDirectory, productTestGroup, "test")
         }
     } finally {
-        stage("Teardown [${label}]") {
+        stage(teardown ? "Teardown [${label}]" : "Collect [${label}]") {
             // Report collection is best-effort: a collect failure must never block
             // the teardown below, or the stack would leak until the post-build sweep.
             try {
@@ -260,7 +319,9 @@ def executeTests(deploymentDirectory, productTestGroup) {
             } catch (err) {
                 println "Report collection failed for ${label} (best-effort, continuing to teardown): ${err}"
             }
-            runTestPhase(deploymentDirectory, productTestGroup, "teardown")
+            if (teardown) {
+                runTestPhase(deploymentDirectory, productTestGroup, "teardown")
+            }
         }
     }
 }
